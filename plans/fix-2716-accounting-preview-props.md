@@ -35,27 +35,35 @@ component (`<component :is="...">`), whose props TypeScript cannot check. This
 class of bug is structurally invisible to the typechecker and can only be held
 by a test.
 
-## A correction to the issue's own framing
+## #2716's framing was right, and I got it wrong first
 
-#2716 says adding `getReport` to `PREVIEW_ACTIONS` is a product call because
-"サイドバーにカードを出す = ノイズが増える". That premise does not hold: **the card
-is already there.**
+I initially claimed the opposite of what follows, and the record is worth
+keeping because the mistake is an easy one to repeat.
 
-The `v-if` gate reads `getPlugin(result.toolName)?.previewComponent` — whether the
-PLUGIN has a preview component — not whether `result.data` exists. Upstream,
-`sidebarResults` is `deduplicateResults(toolResults)`, which only collapses
-consecutive updating results of the same tool. Nothing filters on `data`.
+Reading only the render site, `data` looks irrelevant: `SessionSidebar.vue`'s
+`v-if` is `getPlugin(result.toolName)?.previewComponent`, and `sidebarResults`
+is `deduplicateResults(toolResults)`, which only collapses consecutive updating
+results. Neither mentions `data`. I concluded the card was already there and
+that adding `getReport` merely filled it — and an e2e injecting a data-less
+envelope "confirmed" it, because injection bypasses the layer that matters.
 
-So a `getReport` result renders a card today, showing the generic string. Adding
-it to `PREVIEW_ACTIONS` does not add a card; it gives an existing card something
-true to say. That also makes the comment at `router.ts:385-387` wrong — it
-describes a gate that does not exist:
+**The gate is one layer up.** `server/agent/mcp-server.ts` posts a result to the
+session only when the handler set `data`:
 
-> `data` is the host's preview-eligibility signal (see SessionSidebar.vue's v-if
-> gate) … leave it off for silent ones so the gate suppresses the preview.
+```ts
+if (result.data !== undefined) { … }
+```
 
-Dropping `data` suppresses nothing. The comment is corrected here rather than
-left to mislead the next reader into thinking they have an off switch.
+and its comment names `getReport` as a deliberate narrate-only action. Two more
+host sites say the same: `sessionHelpers.ts` ("every result that reaches this
+function is intended to surface a card") and `session-store/index.ts` ("Holds
+only results that carried `data` — the bridge pushes nothing else"). So a
+data-less action produces no card, no `toolResults` entry, and no JSONL line.
+
+Which means the issue's framing holds: **adding `getReport` here ADDS a card per
+report call.** That is the cost, and it is a product call, not a mechanical fix.
+The comment above `PREVIEW_ACTIONS` was correct about the effect and only
+imprecise about where the gate lives; it now names the bridge.
 
 ## Shape
 

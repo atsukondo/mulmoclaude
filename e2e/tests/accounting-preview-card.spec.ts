@@ -7,6 +7,11 @@
 // the unit tests exercised the summariser directly, never the wiring.
 //
 // These assert the rendered text, which is the only place the wiring shows.
+//
+// Every case here carries `data`, because that is the only way a result reaches
+// the sidebar: the MCP bridge posts to the session only when the handler set it
+// (`server/agent/mcp-server.ts`). Injecting a data-less envelope would render a
+// card, but no live path produces one.
 
 import { test, expect, type Page } from "@playwright/test";
 import { mockAllApis } from "../fixtures/api";
@@ -78,11 +83,13 @@ test.describe("accounting sidebar preview card", () => {
     await expect(page.getByTestId("accounting-preview")).toContainText("Posted entry on 2026-02-01");
   });
 
-  test("an action with no data still renders a card — the host gates on the plugin, not on data", async ({ page }) => {
-    // This is the half #2716 got wrong: leaving an action out of
-    // PREVIEW_ACTIONS does not suppress its card, it only empties it.
-    await openSessionWith(page, [{ type: "tool_result", source: "tool", result: { uuid: "acct-silent", toolName: "manageAccounting", message: "Deleted" } }]);
+  test("an unrecognised payload falls back to the generic line", async ({ page }) => {
+    // With `data` PRESENT — which is the only way a result reaches the sidebar.
+    // The MCP bridge posts to the session solely when the handler set `data`
+    // (`server/agent/mcp-server.ts`), so a card with no payload at all is not a
+    // state the live path can produce, and asserting one would be theatre.
+    await openSessionWith(page, [accountingResult("acct-unknown", { action: "somethingNew", bookId: BOOK_ID })]);
 
-    await expect(page.getByTestId("accounting-preview")).toContainText("Accounting result");
+    await expect(page.getByTestId("accounting-preview")).toContainText(`Accounting · ${BOOK_ID}`);
   });
 });

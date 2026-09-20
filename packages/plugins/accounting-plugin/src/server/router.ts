@@ -241,19 +241,21 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
   [ACCOUNTING_ACTIONS.rebuildSnapshots]: (rest, root) => rebuildSnapshots({ bookId: optionalString(rest.bookId) }, root),
 };
 
-// Actions whose tool-result envelope carries a `data` field, which is what
-// the sidebar's preview card summarises.
+// Actions whose tool-result envelope carries a `data` field. On the live path
+// that is what decides whether a card appears AT ALL: the MCP bridge posts a
+// result to the session only when `data` is set
+// (`server/agent/mcp-server.ts`), so an action left out of this set never
+// reaches `toolResults` and never renders. Adding one here makes a NEW card
+// appear; it does not fill an existing one.
 //
-// It does NOT control whether a card appears. The host renders one for every
-// result of a plugin that has a `previewComponent` at all
-// (`SessionSidebar.vue`: `v-if="getPlugin(result.toolName)?.previewComponent"`),
-// and nothing upstream filters on `data`. So an action left out of this set
-// still gets a card — just one with nothing to say. This comment used to claim
-// the opposite and it cost #2716 its second half.
+// The sidebar's own `v-if` reads `getPlugin(...)?.previewComponent` and never
+// looks at `data`, which is easy to mistake for "the host does not gate on
+// data" — it does, one layer up. A directly-injected envelope with no `data`
+// does render, but nothing on the live path produces one.
 //
-// View-driven maintenance ops stay out because they are invoked from inside the
-// canvas, where a sidebar card is noise about something the user is already
-// looking at.
+// Reads and View-driven maintenance ops stay out: the ops are invoked from
+// inside the canvas, where a card is noise about something the user is already
+// looking at, and a read the LLM will narrate in its reply does not need one.
 const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.openBook,
   ACCOUNTING_ACTIONS.createBook,
@@ -262,8 +264,10 @@ const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.addEntries,
   ACCOUNTING_ACTIONS.voidEntry,
   ACCOUNTING_ACTIONS.setOpeningBalances,
-  // A read, unlike the rest — included because its card exists either way and
-  // `summarisePl` / `summariseBs` can turn it into the period and the figure.
+  // A read, unlike the rest, and the only one here: this ADDS a sidebar card per
+  // report call, which is the cost. What it buys is that `summarisePl` /
+  // `summariseBs` — written with #2716's card in mind and never once reachable —
+  // turn it into the period and the figure instead of a line of JSON in chat.
   ACCOUNTING_ACTIONS.getReport,
 ]);
 
@@ -391,8 +395,9 @@ async function dispatch(body: AccountingActionBody, root: string | undefined): P
   // `{0: …, 1: …}`. Every service function returns a plain object, so
   // nothing changes today; an array would now arrive as `{ value: [...] }`.
   const handlerFields = isRecord(result) ? result : { value: result };
-  // Mirror the handler payload into `data` for the actions whose card should
-  // say something. Leaving it off does not hide the card — see PREVIEW_ACTIONS.
+  // Mirror the handler payload into `data` for the actions that should render a
+  // card. Leaving it off keeps the action silent: the bridge drops the result
+  // rather than posting it to the session (see PREVIEW_ACTIONS).
   const dataField = PREVIEW_ACTIONS.has(action) ? { data: { action, ...handlerFields } } : {};
   // The MCP bridge only forwards `message` / `instructions` to the
   // LLM (`data` / `jsonData` reach the view but not the model). So

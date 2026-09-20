@@ -137,11 +137,12 @@ describe("preview card summaries, over real dispatch output", () => {
     assert.match(summary, /Preview Co/);
   });
 
-  it("a silent action carries no data, so its card falls back", async () => {
-    // deleteBook is deliberately outside PREVIEW_ACTIONS. It still renders a
-    // card — the host gates on the plugin having a preview component, not on
-    // `data` — but it has nothing to say, which is the intended shape.
-    const summary = summarisePreview(undefined, translate);
+  it("the generic line is what an unrecognised payload falls back to", async () => {
+    // Reachable with `data` present: an action inside PREVIEW_ACTIONS whose
+    // payload matches no summariser branch. NOT reachable with `data` absent —
+    // the bridge never posts such a result, so a card with no payload at all
+    // cannot occur on the live path.
+    const summary = summarisePreview({ action: "somethingNew" }, translate);
     assert.equal(summary, "pluginAccounting.previewGeneric");
   });
 });
