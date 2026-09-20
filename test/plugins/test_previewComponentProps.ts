@@ -35,7 +35,7 @@ const PACKAGED_PLUGINS = ["accounting", "chart", "collection", "form", "html", "
 // (`App.vue`: `:selected-result`) — and reads `ok` / `error` off it, neither of
 // which is on `ToolResult`. So it is the same class as #2716 but not the same
 // one-line fix: someone has to establish where those fields actually arrive
-// before renaming anything. Tracked separately; this list is a ratchet and the
+// before renaming anything. Tracked as #3226; this list is a ratchet and the
 // entry comes back the moment that lands.
 const KNOWN_UNFIXED = ["spotify"] as const;
 
