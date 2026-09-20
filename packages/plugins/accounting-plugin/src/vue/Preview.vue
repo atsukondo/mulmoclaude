@@ -11,14 +11,17 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import type { ToolResultComplete } from "gui-chat-protocol/vue";
 import { useAccountingI18n } from "./lang";
 import { summarisePreview } from "./previewSummary";
 
 const { t } = useAccountingI18n();
 
-// Some renderers carry the payload on `data`, others on `jsonData`;
-// `summarisePreview` merges whichever arrived and picks the branch.
-const props = defineProps<{ data?: unknown; jsonData?: Record<string, unknown> }>();
+// `result` is what SessionSidebar hands every previewComponent, and the only
+// thing it hands them. This component declared `data` / `jsonData` instead and
+// so never received a payload at all (#2716) — the props of a dynamic
+// `<component :is>` are not typechecked, so nothing caught it.
+const props = defineProps<{ result: ToolResultComplete }>();
 
-const summary = computed<string>(() => summarisePreview(props.data, props.jsonData, t));
+const summary = computed<string>(() => summarisePreview(props.result.data, t));
 </script>

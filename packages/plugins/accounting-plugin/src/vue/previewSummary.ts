@@ -79,13 +79,17 @@ export function summariseFallback(json: Record<string, unknown>, translate: Tran
   return translate("pluginAccounting.previewGeneric");
 }
 
-/** Merge the two props a host might carry the payload on. `isRecord` rejects
- *  arrays, which the old `typeof value === "object"` check spread into the
- *  payload. */
+/** The payload as a record, or an empty one. `isRecord` rejects arrays, which
+ *  the old `typeof value === "object"` check spread into the payload. */
 export const asPayload = (value: unknown): Record<string, unknown> => (isRecord(value) ? value : {});
 
-export function summarisePreview(data: unknown, jsonData: unknown, translate: TranslateFn): string {
-  const json = { ...asPayload(data), ...asPayload(jsonData) };
+/** `data` is `ToolResult.data` — the only place the payload arrives. There used
+ *  to be a second `jsonData` parameter merged over it, for "hosts that carry it
+ *  there"; no host ever did and the router only ever writes `data`
+ *  (`router.ts`), so it was dead weight on a function whose whole job is to
+ *  pick a branch. */
+export function summarisePreview(data: unknown, translate: TranslateFn): string {
+  const json = asPayload(data);
   return (
     summariseError(json, translate) ??
     summariseEntry(json, translate) ??

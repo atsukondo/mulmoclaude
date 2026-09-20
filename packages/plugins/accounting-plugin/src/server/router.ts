@@ -241,12 +241,19 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
   [ACCOUNTING_ACTIONS.rebuildSnapshots]: (rest, root) => rebuildSnapshots({ bookId: optionalString(rest.bookId) }, root),
 };
 
-// Actions whose tool-result envelope should carry a `data` field so
-// the sidebar renders a preview card. Everything else returns
-// without `data` and the host gates the preview off (silent action).
-// Reads (lists / reports) and View-driven maintenance ops stay
-// silent — they're invoked from inside the canvas and the LLM will
-// summarise reads in its text reply anyway.
+// Actions whose tool-result envelope carries a `data` field, which is what
+// the sidebar's preview card summarises.
+//
+// It does NOT control whether a card appears. The host renders one for every
+// result of a plugin that has a `previewComponent` at all
+// (`SessionSidebar.vue`: `v-if="getPlugin(result.toolName)?.previewComponent"`),
+// and nothing upstream filters on `data`. So an action left out of this set
+// still gets a card — just one with nothing to say. This comment used to claim
+// the opposite and it cost #2716 its second half.
+//
+// View-driven maintenance ops stay out because they are invoked from inside the
+// canvas, where a sidebar card is noise about something the user is already
+// looking at.
 const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.openBook,
   ACCOUNTING_ACTIONS.createBook,
@@ -255,6 +262,9 @@ const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.addEntries,
   ACCOUNTING_ACTIONS.voidEntry,
   ACCOUNTING_ACTIONS.setOpeningBalances,
+  // A read, unlike the rest — included because its card exists either way and
+  // `summarisePl` / `summariseBs` can turn it into the period and the figure.
+  ACCOUNTING_ACTIONS.getReport,
 ]);
 
 // LLM-facing `message` tacked onto YES actions. The shared trailer
@@ -381,10 +391,8 @@ async function dispatch(body: AccountingActionBody, root: string | undefined): P
   // `{0: …, 1: …}`. Every service function returns a plain object, so
   // nothing changes today; an array would now arrive as `{ value: [...] }`.
   const handlerFields = isRecord(result) ? result : { value: result };
-  // `data` is the host's preview-eligibility signal (see
-  // SessionSidebar.vue's v-if gate). Mirror the handler payload
-  // into it for the actions that should render a card; leave it
-  // off for silent ones so the gate suppresses the preview.
+  // Mirror the handler payload into `data` for the actions whose card should
+  // say something. Leaving it off does not hide the card — see PREVIEW_ACTIONS.
   const dataField = PREVIEW_ACTIONS.has(action) ? { data: { action, ...handlerFields } } : {};
   // The MCP bridge only forwards `message` / `instructions` to the
   // LLM (`data` / `jsonData` reach the view but not the model). So

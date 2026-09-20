@@ -17,6 +17,10 @@ import type { Server } from "node:http";
 import { configureAccountingServer } from "../../src/server/context.js";
 import { createAccountingRouter } from "../../src/server/router.js";
 import { ACCOUNTING_ACTIONS, ACCOUNTING_API } from "../../src/shared/index.js";
+import { summarisePreview } from "../../src/vue/previewSummary.js";
+
+/** Keys through, so an assertion names the branch rather than a translation. */
+const translate = (key: string, named?: Record<string, unknown>) => (named ? `${key} ${JSON.stringify(named)}` : key);
 
 const OPENING_CASH = 500;
 
@@ -81,6 +85,65 @@ before(async () => {
 after(() => {
   server?.close();
   if (workspaceRoot) rmSync(workspaceRoot, { recursive: true, force: true });
+});
+
+// The sidebar card, end to end: what the router actually returns, fed to the
+// function the preview component actually calls. #2716's summarisers were
+// written for these payloads and had never once received one — `getReport` was
+// not in PREVIEW_ACTIONS, so its envelope carried no `data` at all, and the
+// component asked for props nothing passed.
+describe("preview card summaries, over real dispatch output", () => {
+  it("getReport pl: the envelope carries data and it summarises to the period and the figure", async () => {
+    const report = await dispatch({
+      action: ACCOUNTING_ACTIONS.getReport,
+      bookId,
+      kind: "pl",
+      period: { kind: "range", from: "2026-01-01", to: "2026-01-31" },
+    });
+    assert.equal(report.status, 200);
+
+    // The half that #2716 called dead: no `data`, no card content.
+    const { data } = report.body;
+    assert.ok(data !== undefined, "getReport must carry `data` or the card has nothing to summarise");
+
+    const summary = summarisePreview(data, translate);
+    assert.match(summary, /preview\.pl/, `expected the P&L branch, got ${summary}`);
+    assert.match(summary, /2026-01-01/, "the summary must name the period it covers");
+    assert.match(summary, /2026-01-31/);
+  });
+
+  it("getReport balance: summarises to the as-of date and the asset total", async () => {
+    const report = await dispatch({
+      action: ACCOUNTING_ACTIONS.getReport,
+      bookId,
+      kind: "balance",
+      period: { kind: "range", from: "2026-01-01", to: "2026-01-31" },
+    });
+    assert.equal(report.status, 200);
+
+    const summary = summarisePreview(report.body.data, translate);
+    assert.match(summary, /preview\.bs/, `expected the balance-sheet branch, got ${summary}`);
+    assert.match(summary, /2026-01-31/, "the summary must name the as-of date");
+    // OPENING_CASH is the only asset, so a correct summary carries it — an
+    // all-zero report was the silent-200 bug this file already guards.
+    assert.match(summary, new RegExp(String(OPENING_CASH)), "the asset total must be the real one");
+  });
+
+  it("createBook: names the book, rather than the generic line", async () => {
+    const created = await dispatch({ action: ACCOUNTING_ACTIONS.createBook, name: "Preview Co" });
+    assert.equal(created.status, 200);
+    const summary = summarisePreview(created.body.data, translate);
+    assert.match(summary, /preview\.bookCreated/);
+    assert.match(summary, /Preview Co/);
+  });
+
+  it("a silent action carries no data, so its card falls back", async () => {
+    // deleteBook is deliberately outside PREVIEW_ACTIONS. It still renders a
+    // card — the host gates on the plugin having a preview component, not on
+    // `data` — but it has nothing to say, which is the intended shape.
+    const summary = summarisePreview(undefined, translate);
+    assert.equal(summary, "pluginAccounting.previewGeneric");
+  });
 });
 
 describe("getReport period validation", () => {
