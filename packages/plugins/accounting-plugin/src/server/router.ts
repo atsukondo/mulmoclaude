@@ -256,6 +256,10 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
 // Reads and View-driven maintenance ops stay out: the ops are invoked from
 // inside the canvas, where a card is noise about something the user is already
 // looking at, and a read the LLM will narrate in its reply does not need one.
+//
+// `getReport` was weighed for inclusion under #2716 and deliberately left out
+// (2026-09-21) — a card per report call is noise the narration already covers.
+// The consequence is stated where it bites, on `summarisePl` / `summariseBs`.
 const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.openBook,
   ACCOUNTING_ACTIONS.createBook,
@@ -264,11 +268,6 @@ const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.addEntries,
   ACCOUNTING_ACTIONS.voidEntry,
   ACCOUNTING_ACTIONS.setOpeningBalances,
-  // A read, unlike the rest, and the only one here: this ADDS a sidebar card per
-  // report call, which is the cost. What it buys is that `summarisePl` /
-  // `summariseBs` — written with #2716's card in mind and never once reachable —
-  // turn it into the period and the figure instead of a line of JSON in chat.
-  ACCOUNTING_ACTIONS.getReport,
 ]);
 
 // LLM-facing `message` tacked onto YES actions. The shared trailer

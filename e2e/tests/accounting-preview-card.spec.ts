@@ -63,20 +63,6 @@ test.describe("accounting sidebar preview card", () => {
     await expect(card).not.toContainText("Accounting result");
   });
 
-  test("getReport pl summarises the period and the net figure", async ({ page }) => {
-    await openSessionWith(page, [
-      accountingResult("acct-pl", {
-        action: "getReport",
-        bookId: BOOK_ID,
-        profitLoss: { from: "2026-01-01", to: "2026-01-31", netIncome: 130, income: { rows: [], total: 130 }, expense: { rows: [], total: 0 } },
-      }),
-    ]);
-
-    const card = page.getByTestId("accounting-preview");
-    await expect(card).toContainText("P&L 2026-01-01 → 2026-01-31");
-    await expect(card).toContainText("130");
-  });
-
   test("addEntries names the date it posted", async ({ page }) => {
     await openSessionWith(page, [accountingResult("acct-entry", { action: "addEntries", bookId: BOOK_ID, entries: [{ id: "e1", date: "2026-02-01" }] })]);
 

@@ -39,6 +39,12 @@ export function summariseEntry(json: Record<string, unknown>, translate: Transla
   return translate("pluginAccounting.preview.entry", { date });
 }
 
+/** UNREACHABLE on the live path, deliberately. Only `getReport` produces a
+ *  `profitLoss` payload, and it is not in `PREVIEW_ACTIONS`, so the bridge never
+ *  posts its result and no card is rendered to summarise. Kept because the
+ *  decision is one line to reverse (#2716) and because the tests below pin the
+ *  formatting for whoever reverses it — but a passing test here is NOT evidence
+ *  that anything renders. */
 export function summarisePl(json: Record<string, unknown>, translate: TranslateFn): string | null {
   const { profitLoss } = json;
   if (!isRecord(profitLoss)) return null;
@@ -51,6 +57,7 @@ export function summarisePl(json: Record<string, unknown>, translate: TranslateF
   });
 }
 
+/** UNREACHABLE on the live path, for the same reason as `summarisePl` above. */
 export function summariseBs(json: Record<string, unknown>, translate: TranslateFn): string | null {
   const { balanceSheet } = json;
   if (!isRecord(balanceSheet)) return null;

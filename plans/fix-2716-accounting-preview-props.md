@@ -60,10 +60,21 @@ function is intended to surface a card") and `session-store/index.ts` ("Holds
 only results that carried `data` — the bridge pushes nothing else"). So a
 data-less action produces no card, no `toolResults` entry, and no JSONL line.
 
-Which means the issue's framing holds: **adding `getReport` here ADDS a card per
+Which means the issue's framing holds: **adding `getReport` would ADD a card per
 report call.** That is the cost, and it is a product call, not a mechanical fix.
 The comment above `PREVIEW_ACTIONS` was correct about the effect and only
 imprecise about where the gate lives; it now names the bridge.
+
+**The decision, 2026-09-21: `getReport` stays out.** A card per report read is
+noise the LLM's own narration already covers, and the figures reach the model
+either way through `message`. It was briefly included in this branch while the
+premise above was wrong; removing it is the one-line reversal.
+
+So `summarisePl` and `summariseBs` remain unreachable. They are kept — one line
+revives them and their tests pin the formatting for whoever does — but both now
+say so in the source, because a tested-but-unreachable branch reading as live is
+exactly how #2716 hid for a year. `test_router.ts` asserts the silence rather
+than trusting the comment.
 
 ## Shape
 
@@ -73,12 +84,11 @@ imprecise about where the gate lives; it now names the bridge.
    (`router.ts:388` is the only writer), so the second prop and the merge inside
    `summarisePreview` are dead. `summarisePreview(data, translate)` loses the
    parameter; `asPayload` stays, since it is what rejects a non-record payload.
-3. **`getReport` joins `PREVIEW_ACTIONS`**, which is what makes `summarisePl` /
-   `summariseBs` reachable for the first time. Verified the shapes line up:
-   `handleGetReport` returns `{ bookId, profitLoss }` / `{ bookId, balanceSheet }`,
-   and `ProfitLoss` carries `from` / `to` / `netIncome` while `BalanceSheet`
-   carries `asOf` / `sections[].type` / `sections[].total` — exactly the fields
-   the two summarisers read, so neither falls back to `?`.
+3. **`getReport` stays OUT of `PREVIEW_ACTIONS`** — see the decision above. The
+   shapes were checked anyway, because the question was live while the premise
+   was wrong: `handleGetReport` returns `{ bookId, profitLoss }` /
+   `{ bookId, balanceSheet }`, and those carry exactly the fields the two
+   summarisers read, so a future reversal produces real text rather than `?`.
 4. **The router comment is corrected** to say what the gate actually does.
 
 ## The guard — a census, not a spot check

@@ -93,7 +93,7 @@ after(() => {
 // not in PREVIEW_ACTIONS, so its envelope carried no `data` at all, and the
 // component asked for props nothing passed.
 describe("preview card summaries, over real dispatch output", () => {
-  it("getReport pl: the envelope carries data and it summarises to the period and the figure", async () => {
+  it("getReport stays silent: no data, so no card and nothing to summarise", async () => {
     const report = await dispatch({
       action: ACCOUNTING_ACTIONS.getReport,
       bookId,
@@ -102,31 +102,13 @@ describe("preview card summaries, over real dispatch output", () => {
     });
     assert.equal(report.status, 200);
 
-    // The half that #2716 called dead: no `data`, no card content.
-    const { data } = report.body;
-    assert.ok(data !== undefined, "getReport must carry `data` or the card has nothing to summarise");
-
-    const summary = summarisePreview(data, translate);
-    assert.match(summary, /preview\.pl/, `expected the P&L branch, got ${summary}`);
-    assert.match(summary, /2026-01-01/, "the summary must name the period it covers");
-    assert.match(summary, /2026-01-31/);
-  });
-
-  it("getReport balance: summarises to the as-of date and the asset total", async () => {
-    const report = await dispatch({
-      action: ACCOUNTING_ACTIONS.getReport,
-      bookId,
-      kind: "balance",
-      period: { kind: "range", from: "2026-01-01", to: "2026-01-31" },
-    });
-    assert.equal(report.status, 200);
-
-    const summary = summarisePreview(report.body.data, translate);
-    assert.match(summary, /preview\.bs/, `expected the balance-sheet branch, got ${summary}`);
-    assert.match(summary, /2026-01-31/, "the summary must name the as-of date");
-    // OPENING_CASH is the only asset, so a correct summary carries it — an
-    // all-zero report was the silent-200 bug this file already guards.
-    assert.match(summary, new RegExp(String(OPENING_CASH)), "the asset total must be the real one");
+    // Deliberate (#2716): a card per report call is noise the LLM's own reply
+    // already covers. Without `data` the bridge never posts the result, so the
+    // sidebar never sees it — this is the assertion that keeps that decision
+    // honest, because `summarisePl` exists and would otherwise look live.
+    assert.equal(report.body.data, undefined, "getReport must stay out of PREVIEW_ACTIONS");
+    // The figures still reach the LLM, which is the whole point of the trade.
+    assert.ok(report.body.profitLoss !== undefined, "the report itself must still be returned");
   });
 
   it("createBook: names the book, rather than the generic line", async () => {
