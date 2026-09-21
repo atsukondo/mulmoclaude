@@ -11,20 +11,22 @@ import assert from "node:assert/strict";
 import { deleteRefusalMessage, planDelete } from "@mulmoclaude/core/google";
 
 describe("planDelete", () => {
-  it("allows a solo event", () => {
-    assert.deepEqual(planDelete({ attendeeCount: 0 }), { ok: true });
+  // The approval carries the version it was made against, so the delete can be
+  // conditional on it — the two cannot be separated by a later caller.
+  it("allows a solo event, and hands back the version it approved", () => {
+    assert.deepEqual(planDelete({ attendeeCount: 0, etag: '"v1"' }), { ok: true, etag: '"v1"' });
   });
 
   it("refuses an event with anyone on it", () => {
-    assert.deepEqual(planDelete({ attendeeCount: 1 }), { ok: false, kind: "has-attendees" });
-    assert.deepEqual(planDelete({ attendeeCount: 12 }), { ok: false, kind: "has-attendees" });
+    assert.deepEqual(planDelete({ attendeeCount: 1, etag: '"v1"' }), { ok: false, kind: "has-attendees" });
+    assert.deepEqual(planDelete({ attendeeCount: 12, etag: '"v1"' }), { ok: false, kind: "has-attendees" });
   });
 
   // The organiser's own entry counts. Excluding it would mean deciding which
   // entry is the user from a payload that may not say, and being wrong there
   // withdraws a real invitation — so the rule stays blunt.
   it("refuses an event whose only attendee might be the user", () => {
-    assert.deepEqual(planDelete({ attendeeCount: 1 }), { ok: false, kind: "has-attendees" });
+    assert.deepEqual(planDelete({ attendeeCount: 1, etag: '"v1"' }), { ok: false, kind: "has-attendees" });
   });
 
   it("reports an event already gone apart from a refusal", () => {

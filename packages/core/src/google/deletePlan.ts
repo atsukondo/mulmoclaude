@@ -18,7 +18,10 @@
 /** Why an event was left in Google although its record is gone. */
 export type DeleteRefusal = { kind: "has-attendees" } | { kind: "already-gone" };
 
-export type DeleteDecision = { ok: true } | ({ ok: false } & DeleteRefusal);
+/** An approval carries the version it was made against, so the delete can be
+ *  conditional on it. Keeping the two together is what stops a caller deleting
+ *  against a version the guard never saw. */
+export type DeleteDecision = { ok: true; etag: string } | ({ ok: false } & DeleteRefusal);
 
 const ATTENDEES_REASON = "it has attendees — deleting it would withdraw the event from their calendars too";
 const ALREADY_GONE_REASON = "it is no longer in Google";
@@ -38,7 +41,7 @@ export const deleteRefusalMessage = (eventId: string, refusal: DeleteRefusal): s
  *  the user from a payload that may not say, and being wrong there withdraws a
  *  real invitation. Solo events — the ones this feature exists for — carry no
  *  attendees at all, so the blunt rule costs them nothing. */
-export function planDelete(fetched: { attendeeCount: number } | null): DeleteDecision {
+export function planDelete(fetched: { attendeeCount: number; etag: string } | null): DeleteDecision {
   if (fetched === null) return { ok: false, kind: "already-gone" };
-  return fetched.attendeeCount > 0 ? { ok: false, kind: "has-attendees" } : { ok: true };
+  return fetched.attendeeCount > 0 ? { ok: false, kind: "has-attendees" } : { ok: true, etag: fetched.etag };
 }

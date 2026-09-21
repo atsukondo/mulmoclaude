@@ -481,19 +481,18 @@ const staleDeleteMessage = (eventId: string): string =>
  *  existed — the same race `updateCalendarEvent` already guards, and it costs
  *  more here because a delete cannot be undone from this side. */
 async function propagateOneDelete(eventId: string, deps: DeleteSweepDeps): Promise<Partial<DeleteSweep>> {
-  const fetched = await deps.fetchEvent(eventId);
-  const decision = planDelete(fetched);
-  if (!decision.ok || fetched === null) {
+  const decision = planDelete(await deps.fetchEvent(eventId));
+  if (!decision.ok) {
     // An event already gone needs no report and no baseline: nothing is left to
     // diverge, so dropping the entry stops a permanent phantom deletion.
-    if (!decision.ok && decision.kind === "already-gone") {
+    if (decision.kind === "already-gone") {
       await deps.forget(eventId);
       return {};
     }
-    return { skipped: decision.ok ? [] : [deleteRefusalMessage(eventId, decision)] };
+    return { skipped: [deleteRefusalMessage(eventId, decision)] };
   }
   try {
-    await deps.deleteEvent(eventId, fetched.etag);
+    await deps.deleteEvent(eventId, decision.etag);
   } catch (error) {
     if (!isGoogleApiError(error)) throw error;
     // Gone between the read and the delete: the outcome asked for, reached by
