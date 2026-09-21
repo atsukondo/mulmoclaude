@@ -53,6 +53,17 @@ describe("collection schema — googleCalendar block (#2095)", () => {
     assert.equal(withSync({ map: { title: "location" } }).success, true);
   });
 
+  // Irreversible, so the default has to be the one that does nothing (#3234).
+  it("accepts propagateDeletes and leaves it undefined when unstated", () => {
+    assert.equal(withSync({ map: { title: "summary" }, propagateDeletes: true }).success, true);
+    const parsed = withSync({ map: { title: "summary" } });
+    assert.equal(parsed.success && parsed.data.googleCalendar?.propagateDeletes, undefined);
+  });
+
+  it("rejects a non-boolean propagateDeletes", () => {
+    assert.equal(withSync({ map: { title: "summary" }, propagateDeletes: "yes" }).success, false);
+  });
+
   // Opt-in, and absent by default: an automatic push writes to a calendar other
   // people may read, so it is the user's decision (#2620).
   it("accepts autoPush and leaves it undefined when unstated", () => {

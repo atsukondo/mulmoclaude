@@ -754,6 +754,7 @@ describe("pullProtectionFor / pushAndProtect (#2683 a collection that never push
     updated: 0,
     conflicts: unpushedIds.length,
     localDeletes: 0,
+    deletedInGoogle: 0,
     skipped: [],
     errors: [],
     unpushedIds,

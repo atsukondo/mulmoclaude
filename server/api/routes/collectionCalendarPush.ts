@@ -9,8 +9,11 @@ export interface CollectionPushBody {
   updated: number;
   /** Edited on both sides — skipped so neither version is lost. */
   conflicts: number;
-  /** Records deleted locally. Reported only: v1 never deletes in Google. */
+  /** Records deleted locally, whether or not the deletion carried. */
   localDeletes: number;
+  /** Of those, how many were deleted in Google too — `0` unless the collection
+   *  opted in with `propagateDeletes` (#3234). */
+  deletedInGoogle: number;
   /** Records that could not be pushed as they stand, each with its reason. */
   skipped: string[];
   errors: string[];
@@ -24,7 +27,16 @@ export const PUSH_NOT_DECLARED_ERROR = "this collection does not declare a `goog
 export const pushReadOnlyError = (accessRole: string): string =>
   `you only have ${accessRole || "read"} access to this calendar — pushing needs owner or writer access`;
 
-const empty = (errors: string[]): CollectionPushBody => ({ pushed: true, created: 0, updated: 0, conflicts: 0, localDeletes: 0, skipped: [], errors });
+const empty = (errors: string[]): CollectionPushBody => ({
+  pushed: true,
+  created: 0,
+  updated: 0,
+  conflicts: 0,
+  localDeletes: 0,
+  deletedInGoogle: 0,
+  skipped: [],
+  errors,
+});
 
 const fromResult = (result: CalendarCollectionPushResult): CollectionPushBody => ({
   pushed: true,
@@ -32,6 +44,7 @@ const fromResult = (result: CalendarCollectionPushResult): CollectionPushBody =>
   updated: result.updated,
   conflicts: result.conflicts,
   localDeletes: result.localDeletes,
+  deletedInGoogle: result.deletedInGoogle,
   skipped: result.skipped,
   errors: result.errors,
 });

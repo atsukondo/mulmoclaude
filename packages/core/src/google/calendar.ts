@@ -175,6 +175,11 @@ export interface CalendarColors {
   calendar: Record<string, CalendarColorEntry>;
 }
 
+/** People Google lists on the event, `0` when it carries none. Counts EVERY
+ *  entry, including the one Google adds for the organiser: see `deletePlan.ts`
+ *  for why the guard is not cleverer than that. */
+const attendeeCount = (record: Record<string, unknown>): number => (Array.isArray(record.attendees) ? record.attendees.length : 0);
+
 // All-day events carry `date`, timed events carry `dateTime`.
 const eventTime = (value: unknown): string => {
   if (!isRecord(value)) return "";
@@ -290,6 +295,11 @@ export interface FetchedCalendarEvent {
   /** Google's `etag` for this version, `""` when absent. Sent back as
    *  `If-Match` so a PATCH cannot overwrite a version we never read. */
   etag: string;
+  /** How many people the event lists, `0` for a solo one. Carried here rather
+   *  than on the summary because only the delete guard reads it, and it is the
+   *  one thing that guard cannot get from the record — by then the record is
+   *  gone (`deletePlan.ts`). */
+  attendeeCount: number;
 }
 
 /** Read ONE event, or null when it is gone (404 / 410).
@@ -301,7 +311,8 @@ export interface FetchedCalendarEvent {
 export async function getCalendarEvent(accessToken: string, input: DeleteCalendarEventInput): Promise<FetchedCalendarEvent | null> {
   try {
     const fetched = await googleRequest(CALENDAR_API_LABEL, accessToken, eventUrl(input.calendarId, input.eventId));
-    return { event: toEventSummary(fetched), etag: stringField(asRecord(fetched), "etag") };
+    const record = asRecord(fetched);
+    return { event: toEventSummary(fetched), etag: stringField(record, "etag"), attendeeCount: attendeeCount(record) };
   } catch (error) {
     if (isGoogleApiError(error) && EVENT_ABSENT_STATUSES.includes(error.status)) return null;
     throw error;

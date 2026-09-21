@@ -76,6 +76,10 @@ export interface CollectionPushResult {
   updated: number;
   conflicts: number;
   localDeletes: number;
+  /** Of those, how many were deleted in Google too. `0` unless the collection
+   *  opted in with `propagateDeletes`; optional so an older host, whose body
+   *  does not carry the key, still parses (#3234). */
+  deletedInGoogle?: number;
   /** Records that could not be pushed as they stand, each with its reason. */
   skipped: string[];
   errors: string[];

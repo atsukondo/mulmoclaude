@@ -6,6 +6,7 @@
 // link state.
 export { configureGoogleHost, type GoogleLogger } from "./host.js";
 export { isIsoDateTimeWithOffset } from "./datetime.js";
+export { deleteRefusalMessage, planDelete, type DeleteDecision, type DeleteRefusal } from "./deletePlan.js";
 export {
   isCalendarDateOnly,
   resolvePartialSpanInput,
@@ -109,7 +110,10 @@ export {
   pushCalendarForCollection,
   pushCollectionNow,
   reportedAccessRole,
+  sweepDeletes,
   unsentLocalEdits,
+  type DeleteSweep,
+  type DeleteSweepDeps,
   type PushOutcomeKind,
   type CalendarCollectionPushResult,
   type CalendarPushDeps,
