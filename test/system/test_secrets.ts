@@ -65,6 +65,10 @@ describe("validateSecretValue", () => {
     // where a second line is not cosmetic.
     assert.deepEqual(validateSecretValue("AIza\nPATH=/evil"), { ok: false, reason: "control-characters" });
     assert.deepEqual(validateSecretValue("AIza\tkey"), { ok: false, reason: "control-characters" });
+    // DEL and C1 as well as C0 — U+009B is CSI, and this value ends up in log
+    // lines and in every child process's environment.
+    assert.deepEqual(validateSecretValue("AIza\u007f"), { ok: false, reason: "control-characters" });
+    assert.deepEqual(validateSecretValue("AIza\u009b31m"), { ok: false, reason: "control-characters" });
   });
 
   it("refuses a value past the cap", () => {

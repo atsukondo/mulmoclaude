@@ -19,6 +19,7 @@ import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { writeFileAtomicSync } from "../utils/files/atomic.js";
+import { hasControlCharacter } from "../utils/text.js";
 
 /** Keys Settings may write. A fixed list, never a request field — the file
  *  path is built from it, so an open set would be a path-traversal hole. */
@@ -53,8 +54,6 @@ export type SecretRejection = "empty" | "too-long" | "control-characters";
 
 export type SecretValidation = { ok: true; value: string } | { ok: false; reason: SecretRejection };
 
-const CONTROL_CHAR_MAX_CODE = 0x1f;
-
 /** Trim and check. Pure.
  *
  *  Control characters are refused rather than stripped: this value goes
@@ -67,7 +66,7 @@ export function validateSecretValue(raw: string): SecretValidation {
   const value = raw.trim();
   if (value === "") return { ok: false, reason: "empty" };
   if (value.length > MAX_SECRET_LENGTH) return { ok: false, reason: "too-long" };
-  if ([...value].some((char) => char.charCodeAt(0) <= CONTROL_CHAR_MAX_CODE)) return { ok: false, reason: "control-characters" };
+  if (hasControlCharacter(value)) return { ok: false, reason: "control-characters" };
   return { ok: true, value };
 }
 
