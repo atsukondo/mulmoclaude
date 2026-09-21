@@ -400,11 +400,18 @@ quota / moderation rejection from that provider.
 
 The server appends the provider's own error to the message (e.g.
 `… — 401 Incorrect API key provided`) and logs it under the
-`mulmocast` prefix — read that detail first. Then either add the
-missing key to `.env` (restart the server) or rewrite the script's
-`imageParams` / `movieParams` / speaker providers to ones that have
-keys configured. Don't retry the render unchanged — the same provider
-will fail the same way.
+`mulmocast` prefix — read that detail first. Then either supply the
+missing key or rewrite the script's `imageParams` / `movieParams` /
+speaker providers to ones that have keys configured. Don't retry the
+render unchanged — the same provider will fail the same way.
+
+For `GEMINI_API_KEY`, tell the user to open **Settings → Gemini** and
+paste the key there: it takes effect immediately, with no restart and no
+file to locate, and it wins over a stale value in the shell or a `.env`
+(`config/helps/gemini.md`). The other providers' keys still come from a
+`.env` and need a restart. A render started BEFORE the key was saved
+keeps the environment it was spawned with, so re-run the render rather
+than resuming the old one.
 
 ## MulmoScript narration — wrong voice, ignored direction, or every beat re-recorded
 

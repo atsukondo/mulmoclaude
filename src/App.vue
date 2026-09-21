@@ -330,7 +330,7 @@
       :mcp-tools-error="mcpToolsError"
       @update:open="onSettingsOpenChange"
       @ask-gemini="handleAskGemini"
-      @saved="refreshGoogleMapsApiKey"
+      @saved="onSettingsSaved"
       @stopped="onServerStopped"
     />
 
@@ -878,6 +878,13 @@ async function refreshGoogleMapsApiKey(): Promise<void> {
     googleMapsApiKey.value = response.data.settings.googleMapsApiKey ?? null;
   }
 }
+// Any Settings save. The Map key and the Gemini key live in different
+// stores and the modal emits one event for both, so both are re-read: the
+// Gemini one through `/api/health`, which is what clears the gear badge.
+async function onSettingsSaved(): Promise<void> {
+  await Promise.all([refreshGoogleMapsApiKey(), fetchHealth()]);
+}
+
 void refreshGoogleMapsApiKey();
 void loadCspExtra();
 installCspViolationListener();

@@ -303,6 +303,21 @@ const jaMessages = {
       connectError: "Google 認可フローの開始に失敗しました。",
       unlinkError: "Google 連携の解除に失敗しました。",
     },
+    geminiTab: {
+      required: "画像生成には {envKey} が必要です。下の欄に貼り付けて保存してください。",
+      apiKeyLabel: "Gemini API キー",
+      apiKeyPlaceholder: "AIza…",
+      helperText: "{studioLink} でキーを作成するか、既存のキーをコピーしてください。",
+      storageNote: "このマシンにだけ、ワークスペースの外に保存します。読めるのは本人だけです。保存した時点で有効になり、再起動は要りません。",
+      storedHere: "このアプリに保存済み",
+      storedInEnvironment: "環境変数から読み込み中",
+      notConfigured: "未設定",
+      clear: "消去",
+      fromEnvironment: "いまのキーは、アプリを起動したシェルか {envFile} から来ています。ここで保存すると、そちらより優先されます。",
+      loadError: "キーの状態を読み込めませんでした",
+      saveError: "キーを保存できませんでした",
+      clearError: "キーを消去できませんでした",
+    },
     mapTab: {
       description: "地図プラグインで使う Google Maps API キーを設定します。キーはローカルに保存され、Google Maps への通信以外で送信されることはありません。",
       apiKeyLabel: "Google Maps API キー",
@@ -427,7 +442,6 @@ const jaMessages = {
     // `<i18n-t>` スロット — `envKey` / `envFile` は SettingsModal.vue で
     // インラインの `<code>` として描画されるため、変数名とファイル名は
     // 翻訳せずそのまま残します。
-    geminiRequired: "画像生成には {envKey} が必要です。{envFile} に追加してアプリを再起動してください。",
     geminiAskButton: "Claude に質問",
     geminiAskMessage: "このアプリにおける Gemini API キーの役割は何ですか?",
     toolNamesLabel: "ツール名",
