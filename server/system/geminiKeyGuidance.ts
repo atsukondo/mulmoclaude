@@ -14,6 +14,7 @@
 // the `/api/health` payload and the Settings tab all read one answer.
 
 import path from "node:path";
+import { hasControlCharacter } from "../utils/text.js";
 import { env } from "./env.js";
 
 export interface LaunchRouteFacts {
@@ -23,15 +24,12 @@ export interface LaunchRouteFacts {
   shellExportReaches: boolean;
 }
 
-const CONTROL_CHAR_MAX_CODE = 0x1f;
-
 /** A path we are willing to typeset into a log line and the UI. The value
  *  arrives through `process.env`, which anything on the box can set, so
  *  "absolute, single line" is enforced here rather than assumed of the
  *  producer — the same rule `shadowedEnv.ts` applies to key names. */
 function isRenderablePath(value: string): boolean {
-  const hasControlChar = [...value].some((char) => char.charCodeAt(0) <= CONTROL_CHAR_MAX_CODE);
-  return path.isAbsolute(value) && !hasControlChar;
+  return path.isAbsolute(value) && !hasControlCharacter(value);
 }
 
 /** The `.env` a key belongs in, and whether the shell is an option.
