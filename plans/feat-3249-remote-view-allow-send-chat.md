@@ -36,27 +36,41 @@
 案 B を採ると **#1253 の判断（Enter キーが無いから常に送る）を覆す**ことになるので、
 上記2箇所のコメントは同時に直さないと嘘になる。次に読む人が案 A を実装してしまう。
 
-## やること（この repo = ホスト側）
+## 追加調査で分かったこと — ホスト側の変更は不要だった
 
-1. `RemoteViewInfo` に `allowSendChat: boolean` を足す（optional ではなく必須）。
-   optional にすると「載っていない」と「false」が区別できず、スマホ側が
-   `=== true` で読む限り同じだが、**古いホストと新しいスマホの組み合わせ**で
-   「宣言したのに効かない」が静かに起きる。必須にすれば型で漏れが止まる
-2. `remoteView.ts` の組み立てで `allowSendChat: customViewSendsChat(view)` を載せる。
-   **判定の正はスキーマ側1箇所のまま**（default-deny を維持）
-3. `viewChatPolicy.ts` と `remote-view/index.ts` のコメントを、
-   「スマホも宣言に従う」に直す
-4. テスト: payload に載ること、宣言なし＝`false`、宣言あり＝`true`
+報告は「`getRemoteView` の payload が `allowSendChat` を落とす」で、**その payload については事実**。
+しかしスマホの `activeView` は payload から来ていない:
 
-## やらないこと（この repo の外）
+- `src/composables/useCollectionViews.ts` — `customViews = remoteViews(data.schema.value)`、
+  `activeView = customViews.find(...)`。つまり出どころは **コレクションの schema**
+- ホストの `getCollection` → `toDetail`（`packages/core/src/collection/server/discovery.ts:323`）は
+  `{ ...toSummary(collection), schema: collection.schema }` と **schema を丸ごと**返す
+- スマホ側に zod などの検証・剥がしは無い（`useCollection.ts` は型注釈だけ）
 
-スマホアプリ（`mulmoserver.web.app`）は**別リポジトリ**。
-`mc-start-chat` を受けたとき `view.allowSendChat === true` なら `openPromptChat` ではなく
-`startChat` をホストへ送る変更が要る。**ホスト側だけでは利用者から見て何も変わらない。**
+よって **`allowSendChat` は既にスマホの手元にある**。欠けているのは読んで従う処理だけ。
+
+一度ホスト側に `RemoteViewInfo.allowSendChat` を足したが、**誰も読まないフィールド**になるので
+revert した。payload 版と schema 版の二重の真実を作らない方がよい。
+
+## やること（この repo）
+
+コメントの修正のみ。`allowSendChat` を尊重するのはスマホも同じになるので、
+「スマホは常に送る」と書いた2ファイル3箇所が嘘になる:
+
+- `packages/core/src/collection/core/viewChatPolicy.ts`
+- `packages/core/src/remote-view/index.ts`（2箇所）
+
+コードは変わらないが、**残すと次に読む人が案 A を実装してしまう**ので直す。
+
+## やること（`mulmoserver` = スマホ側。修正の本体）
+
+1. `src/firestore/collectionSchema.ts` の `CollectionViewSpec` に `allowSendChat?: boolean`
+2. `src/views/Collection.vue` の `onRemoteStartChat` で、`activeView.allowSendChat === true` なら
+   下書きを開かず送信する
+3. 送る文面は下書き経路と**同一**にする（`/<slug> <prompt>`）。ずれると
+   「押すと送られる」と「開いて送る」で内容が変わる
 
 ## 互換性
 
-- ホストが新しくスマホが古い → スマホは知らないフィールドを無視するだけ。現状どおり下書き
-- ホストが古くスマホが新しい → `allowSendChat` が来ないので `=== true` が偽。下書き（default-deny）
-
-どちらも安全側に倒れる。
+宣言していないビューは従来どおり下書き（default-deny）。古いホストに繋いだ場合も
+`allowSendChat` が来ないので下書きに倒れる。
