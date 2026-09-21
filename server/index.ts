@@ -3,7 +3,7 @@
 // module below reads env at its own scope. A call in the body would run
 // after every import had already been evaluated — too late. See
 // server/system/loadEnv.ts.
-import { shadowedByServerLoad } from "./system/loadEnv.js";
+import { secretsAppliedAtBoot, shadowedByServerLoad } from "./system/loadEnv.js";
 // Wire @mulmoclaude/core/collection/server to this host's workspace + logger
 // before any module that touches collection storage loads.
 import "./workspace/collections/configure.js";
@@ -41,6 +41,7 @@ import marpThemesRoutes from "./api/routes/marp-themes.js";
 import filesRoutes from "./api/routes/files.js";
 import configRoutes from "./api/routes/config.js";
 import configRefreshRoutes from "./api/routes/config-refresh.js";
+import secretsRoutes from "./api/routes/secrets.js";
 import hookLogRoutes from "./api/routes/hookLog.js";
 import mcpBrokerReadyRoutes from "./api/routes/mcpBrokerReady.js";
 import skillsRoutes from "./api/routes/skills.js";
@@ -743,6 +744,7 @@ app.use(marpThemesRoutes);
 app.use(filesRoutes);
 app.use(configRoutes);
 app.use(configRefreshRoutes);
+app.use(secretsRoutes);
 app.use(hookLogRoutes);
 app.use(mcpBrokerReadyRoutes);
 app.use(skillsRoutes);
@@ -1056,6 +1058,15 @@ async function initBootDiagnostics(): Promise<void> {
   // missing one so a feature degrading is visible instead of a
   // later opaque crash. Never throws.
   await announceOptionalDeps(bootSettings);
+
+  // --- Secrets typed into Settings (#871) ---
+  // Names only. The store overriding a shell value is the documented
+  // precedence, not a fault, but it is worth a line: it is the one case where
+  // the environment a user set is deliberately not the one in effect.
+  const bootSecrets = secretsAppliedAtBoot();
+  if (bootSecrets.applied.length > 0) {
+    log.info("secrets", "applied from the Settings store", { keys: bootSecrets.applied, overrodeShellValue: bootSecrets.overrode });
+  }
 
   // --- Gemini key presence (#2081) ---
   announceGeminiKey();

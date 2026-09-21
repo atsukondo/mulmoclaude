@@ -36,29 +36,29 @@ The Gemini API has a **free tier that is sufficient for personal use**. Higher-v
 1. Open [Google AI Studio → API keys](https://aistudio.google.com/apikey) and sign in with a Google account.
 2. Click **Create API key**. If prompted, select or create a Google Cloud project (any project will do).
 3. Copy the key — it starts with `AIza…`.
-4. Create (or open) a `.env` file and add the line:
+4. Open **Settings → Gemini**, paste the key into the field, and click Save. That is the whole step — it takes effect immediately, with no restart and no file to find.
 
-   ```dotenv
-   GEMINI_API_KEY=AIza…your-key…
-   ```
+   The key is written to `~/.mulmoclaude/secrets/GEMINI_API_KEY`, readable only by your user account. It is deliberately outside the `~/mulmoclaude` workspace, which the assistant manages.
 
-   **Which `.env`, exactly, depends on how you start the app** — open Settings → Gemini, which names the full path this launch reads:
+### The `.env` route (still supported)
 
-   - **Started from the icon** (Finder / desktop shortcut): `~/.env`, in your home directory. An icon has no launch directory — macOS starts apps in `/` — so the app is started from home instead and reads the `.env` there. A shell `export` does **not** work on this route: the launcher takes PATH from your login shell and nothing else, so nothing you put in `~/.zshrc` reaches the app.
-   - **Started from a terminal** (`npx mulmoclaude`, or `yarn dev` in a clone): the directory you ran the command in. Here `export GEMINI_API_KEY=…` before launching works too, and an exported value takes precedence over the `.env` file.
+A key in a `.env` file keeps working, and is the right choice for a scripted or CI setup. Add `GEMINI_API_KEY=AIza…` to:
 
-   Either way the key stays outside the `~/mulmoclaude` workspace, which is managed by the assistant.
+- **Started from the icon** (Finder / desktop shortcut): `~/.env`, in your home directory. An icon has no launch directory — macOS starts apps in `/` — so the app is started from home instead. A shell `export` does **not** work on this route: the launcher takes PATH from your login shell and nothing else, so nothing in `~/.zshrc` reaches the app.
+- **Started from a terminal** (`npx mulmoclaude`, or `yarn dev` in a clone): the directory you ran the command in. Here `export GEMINI_API_KEY=…` before launching works too.
 
-5. Restart MulmoClaude so the new environment variable is picked up. Started from the icon, stop the running server first via Settings → SERVER → Quit, then click the icon again.
+Either file needs a restart to be picked up — from the icon, stop the server first via Settings → SERVER → Quit, then click the icon again.
+
+**A key saved in Settings wins** over both the file and the shell. Settings → Gemini says which of the two is in effect, so a value you cannot find is still accounted for.
 
 ## Verifying It's Active
 
-The quickest check: switch to the **Artist** role and ask for _"an image of a red panda"_. If a real image appears in the canvas (instead of an italic text marker or a disabled-role hint), the key is wired up correctly.
+Settings → Gemini states whether a key is configured and where it came from. For an end-to-end check, switch to the **Artist** role and ask for _"an image of a red panda"_: if a real image appears in the canvas (instead of an italic text marker or a disabled-role hint), the key is wired up correctly.
 
 You can also inspect the server log on startup: a `GEMINI_API_KEY not set — image / audio / video generation is unavailable` warning means the key was not found. The warning names the exact `.env` path this launch reads, so a key that is set but in the wrong file shows up as a path you did not expect.
 
 ## Security
 
-- The key lives in your local `.env` file. MulmoClaude never uploads it to its own servers or to Anthropic — requests go directly from your machine to Google.
+- The key stays on your machine — in `~/.mulmoclaude/secrets/` when saved from Settings, or in your own `.env` file. MulmoClaude never uploads it to its own servers or to Anthropic; requests go directly from your machine to Google.
 - Treat the key like a password. Anyone who sees it can make billable API calls against your Google account.
 - If you suspect a key has leaked, revoke it from [Google AI Studio → API keys](https://aistudio.google.com/apikey) and generate a new one.
