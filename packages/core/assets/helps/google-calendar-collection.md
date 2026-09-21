@@ -67,8 +67,26 @@ it isn't, sync silently does nothing until they link it in settings.
 - `autoPush` — push local edits on the sync schedule, just before each pull.
   Omit it (the default) and the push stays a button. See "Both directions".
 
-Mappable event fields: `summary`, `start`, `end`, `description`, `location`,
-`htmlLink`, `colorId`, `status`.
+Mappable event fields, two-way first: `summary`, `start`, `end`, `description`,
+`location`, `colorId`.
+
+Pull-only in this sync — the pull fills them, the push never sends them, so
+Google always wins. Some of these Google would accept a write for
+(`transparency`, and `eventType` at creation); this sync deliberately does not
+send any of them: `htmlLink`, `status`, `updated` (Google's own last-modified
+time),
+`transparency` (`"transparent"` when the event does not consume the attendee's
+time; `""` means opaque), `eventType` (all six Google returns: `default` / `birthday` / `focusTime` /
+`fromGmail` / `outOfOffice` / `workingLocation`), `hangoutLink` (the Meet URL),
+`recurringEventId` and `originalStartTime`.
+
+The last two are how a recurring series stays legible. The sync asks Google to
+expand recurrences, so a weekly meeting arrives as one event per occurrence;
+`recurringEventId` names the series each occurrence came from (`""` for a
+one-off), and `originalStartTime` is the slot the occurrence held before anyone
+dragged it — so a moved occurrence reads as a move rather than as a deletion
+plus a new event. Map them when the user asks why one calendar edit produced a
+large batch of record changes.
 
 `description` is the event body, and Google stores limited **HTML** in it. It is
 kept verbatim — mirroring it through a plain-text field and pushing it back would
@@ -149,8 +167,9 @@ What the button does and deliberately does not do:
   destroyed while it waits — the cost is that the record stays behind Google
   until someone resolves it, and the host logs which records those are.
 - Pushes `summary`, `start`, `end`, `description`, `location` and `colorId` —
-  everything the pull can read except `htmlLink` and `status`, which are
-  read-only in Google, so a column mapped to either is ignored.
+  the two-way half of the list above. A column mapped to one of the pull-only
+  fields is ignored by the push rather than rejected, so it keeps mirroring
+  Google in one direction.
 
 Reasons a record can be reported as skipped:
 
