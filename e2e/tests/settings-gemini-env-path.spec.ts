@@ -1,50 +1,55 @@
-// The Gemini tab has to name the `.env` file this launch actually reads.
+// When the key is NOT the one Settings stores, the tab has to name the file
+// it does come from.
 //
-// It used to say a bare `.env`, which reads as "the obvious one" and there is
+// The tab used to say a bare `.env`, which reads as "the obvious one" and has
 // no obvious one: a terminal launch reads the launch directory, an icon launch
-// reads `~/.env` because an icon has no launch directory at all (#2626).
-// The path comes from `/api/health`, so the mock supplies it here.
+// reads `~/.env` because an icon has no launch directory at all (#2626). Now
+// that the key can also be typed here (#871), this line is what distinguishes
+// "nothing to do, it is already set elsewhere" from a hunt through dotfiles.
+// The path comes from `/api/health`, so the mock supplies it.
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { mockAllApis } from "../fixtures/api";
 
 const ENV_FILE_PATH = "/Users/example/.env";
 
+/** `/api/health` says a key exists; `/api/secrets` says it is not the stored
+ *  one — i.e. the shell or a `.env` is supplying it. */
+async function mockEnvSourcedKey(page: Page, envFilePath?: string): Promise<void> {
+  await page.route(
+    (url) => url.pathname === "/api/health",
+    (route) =>
+      route.fulfill({ json: { status: "OK", geminiAvailable: true, sandboxEnabled: false, ...(envFilePath ? { geminiEnvFilePath: envFilePath } : {}) } }),
+  );
+  await page.route(
+    (url) => url.pathname === "/api/secrets",
+    (route) => route.fulfill({ json: { secrets: [{ key: "GEMINI_API_KEY", configured: true, source: "env" }] } }),
+  );
+}
+
+async function openGeminiTab(page: Page): Promise<void> {
+  await page.goto("/chat");
+  await expect(page.getByTestId("app-title")).toBeVisible();
+  await page.getByTestId("settings-btn").click();
+  await page.getByTestId("settings-tab-gemini").click();
+}
+
 test.describe("Settings → Gemini", () => {
   test.beforeEach(async ({ page }) => {
+    // Registered first, so the per-test routes below win — Playwright checks
+    // the last-registered route first.
     await mockAllApis(page);
   });
 
   test("names the .env path the server reported", async ({ page }) => {
-    // Registered AFTER mockAllApis: Playwright checks the last-registered
-    // route first, so this replaces the fixture's own /api/health.
-    await page.route(
-      (url) => url.pathname === "/api/health",
-      (route) => route.fulfill({ json: { status: "OK", geminiAvailable: false, geminiEnvFilePath: ENV_FILE_PATH, sandboxEnabled: false } }),
-    );
-
-    await page.goto("/chat");
-    await expect(page.getByTestId("app-title")).toBeVisible();
-
-    // The badge on the gear is the missing-key signal; the tab it leads to
-    // is where the guidance lives.
-    await expect(page.getByTestId("settings-gemini-badge")).toBeVisible();
-    await page.getByTestId("settings-btn").click();
-
-    const warning = page.getByTestId("settings-gemini-warning");
-    await expect(warning).toBeVisible();
-    await expect(warning).toContainText(ENV_FILE_PATH);
+    await mockEnvSourcedKey(page, ENV_FILE_PATH);
+    await openGeminiTab(page);
+    await expect(page.getByTestId("settings-gemini-env-source")).toContainText(ENV_FILE_PATH);
   });
 
   test("falls back to the bare filename when health carries no path", async ({ page }) => {
-    await page.route(
-      (url) => url.pathname === "/api/health",
-      (route) => route.fulfill({ json: { status: "OK", geminiAvailable: false, sandboxEnabled: false } }),
-    );
-
-    await page.goto("/chat");
-    await expect(page.getByTestId("app-title")).toBeVisible();
-    await page.getByTestId("settings-btn").click();
-    await expect(page.getByTestId("settings-gemini-warning")).toContainText(".env");
+    await mockEnvSourcedKey(page);
+    await openGeminiTab(page);
+    await expect(page.getByTestId("settings-gemini-env-source")).toContainText(".env");
   });
 });
