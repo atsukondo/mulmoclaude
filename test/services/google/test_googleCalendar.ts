@@ -13,7 +13,25 @@ import {
   type CalendarListPage,
 } from "@mulmoclaude/core/google";
 
-const emptyEvent = { id: "", summary: "", start: "", end: "", htmlLink: "", status: "", colorId: "", description: "", location: "" };
+// Pins the SHAPE, not just the values: a field added to CalendarEventSummary
+// without a projection makes the three deepEqual cases below go red.
+const emptyEvent = {
+  id: "",
+  summary: "",
+  start: "",
+  end: "",
+  htmlLink: "",
+  status: "",
+  colorId: "",
+  description: "",
+  location: "",
+  recurringEventId: "",
+  originalStartTime: "",
+  updated: "",
+  transparency: "",
+  eventType: "",
+  hangoutLink: "",
+};
 
 describe("toEventSummary", () => {
   it("maps a timed event (dateTime) with its colour", () => {
@@ -27,6 +45,7 @@ describe("toEventSummary", () => {
       end: { dateTime: "2026-07-17T09:15:00+09:00" },
     });
     assert.deepEqual(summary, {
+      ...emptyEvent,
       id: "ev1",
       summary: "Standup",
       start: "2026-07-17T09:00:00+09:00",
@@ -34,8 +53,6 @@ describe("toEventSummary", () => {
       htmlLink: "https://calendar.google.com/event?eid=ev1",
       status: "confirmed",
       colorId: "7",
-      description: "",
-      location: "",
     });
   });
 
@@ -74,6 +91,46 @@ describe("toEventSummary", () => {
   it("ignores non-string field values", () => {
     const summary = toEventSummary({ id: 42, summary: ["x"], start: "not-an-object", colorId: 7 });
     assert.deepEqual(summary, emptyEvent);
+  });
+
+  // An expanded instance of a recurring series: the parent key and the slot the
+  // occurrence originally held are what tell a series edit apart from a batch of
+  // unrelated changes, and a dragged occurrence apart from a delete plus insert.
+  it("maps an expanded instance back to its series", () => {
+    const summary = toEventSummary({
+      id: "ev4_20260717T000000Z",
+      recurringEventId: "ev4",
+      originalStartTime: { dateTime: "2026-07-17T09:00:00+09:00", timeZone: "Asia/Tokyo" },
+      start: { dateTime: "2026-07-17T11:00:00+09:00" },
+    });
+    assert.equal(summary.recurringEventId, "ev4");
+    assert.equal(summary.originalStartTime, "2026-07-17T09:00:00+09:00");
+    // The instance was moved, so the two disagree — which is the whole point.
+    assert.notEqual(summary.originalStartTime, summary.start);
+  });
+
+  it("flattens an all-day instance's originalStartTime to its date", () => {
+    const summary = toEventSummary({ recurringEventId: "ev5", originalStartTime: { date: "2026-07-17" } });
+    assert.equal(summary.originalStartTime, "2026-07-17");
+  });
+
+  it("maps the remaining read-only fields", () => {
+    const summary = toEventSummary({
+      updated: "2026-07-17T02:11:43.000Z",
+      transparency: "transparent",
+      eventType: "birthday",
+      hangoutLink: "https://meet.google.com/abc-defg-hij",
+    });
+    assert.equal(summary.updated, "2026-07-17T02:11:43.000Z");
+    assert.equal(summary.transparency, "transparent");
+    assert.equal(summary.eventType, "birthday");
+    assert.equal(summary.hangoutLink, "https://meet.google.com/abc-defg-hij");
+  });
+
+  // Google omits `transparency` on an ordinary event rather than sending
+  // "opaque", so a consumer must read "" as opaque.
+  it("leaves transparency empty when Google omits the default", () => {
+    assert.equal(toEventSummary({ id: "ev6", summary: "Busy" }).transparency, "");
   });
 });
 

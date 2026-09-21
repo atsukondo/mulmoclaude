@@ -123,6 +123,26 @@ export interface CalendarEventSummary {
    *  belongs to whatever displays it. */
   description: string;
   location: string;
+  /** The series an expanded instance belongs to, "" for a one-off. The sync
+   *  expands recurrences, so a weekly meeting arrives once per occurrence; with
+   *  no key pointing back, one edit to the series is indistinguishable from a
+   *  batch of unrelated changes. */
+  recurringEventId: string;
+  /** Where an expanded instance sat BEFORE anyone moved it, so a dragged
+   *  occurrence reads as a move rather than a delete plus an insert. Flattened
+   *  to the instant like `start`/`end`, so an all-day series yields the date. */
+  originalStartTime: string;
+  /** Google's last-modified time (RFC3339). Google sets it on every write, so
+   *  it is readable and never pushable. */
+  updated: string;
+  /** "transparent" when the event does not consume the attendee's time. Google
+   *  omits the default, so "" reads as opaque. */
+  transparency: string;
+  /** "default", "birthday", "workingLocation", "fromGmail" — which is how the
+   *  entries Google generates get kept out of a mirror. */
+  eventType: string;
+  /** Google Meet URL, "" when nothing is attached. */
+  hangoutLink: string;
 }
 
 export interface CalendarSummary {
@@ -174,6 +194,12 @@ export const toEventSummary = (value: unknown): CalendarEventSummary => {
     colorId: stringField(record, "colorId"),
     description: stringField(record, "description"),
     location: stringField(record, "location"),
+    recurringEventId: stringField(record, "recurringEventId"),
+    originalStartTime: eventTime(record.originalStartTime),
+    updated: stringField(record, "updated"),
+    transparency: stringField(record, "transparency"),
+    eventType: stringField(record, "eventType"),
+    hangoutLink: stringField(record, "hangoutLink"),
   };
 };
 
