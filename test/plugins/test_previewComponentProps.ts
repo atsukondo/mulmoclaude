@@ -23,7 +23,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -66,7 +66,12 @@ describe("every packaged plugin preview declares the prop the sidebar passes", (
       const entry = path.join(repoRoot, "packages/plugins", `${plugin}-plugin`, "dist/vue.js");
       assert.ok(existsSync(entry), `${entry} is missing — run \`yarn build:packages\` before this suite`);
 
-      const moduleNamespace: Record<string, unknown> = await import(entry);
+      // A file URL, not a path: `import()` takes a specifier, and on Windows an
+      // absolute path is not one — the loader reads `D:\…` as an unknown `d:`
+      // scheme and throws ERR_UNSUPPORTED_ESM_URL_SCHEME. On POSIX the path
+      // happens to coincide with the URL's path, which is why this passes
+      // locally and fails only on the Windows runner (#3236).
+      const moduleNamespace: Record<string, unknown> = await import(pathToFileURL(entry).href);
       const previews = previewExportsOf(moduleNamespace);
       assert.ok(previews.length > 0, `${plugin} exports no *Preview from dist/vue.js`);
 
