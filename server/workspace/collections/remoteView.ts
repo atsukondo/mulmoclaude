@@ -21,6 +21,7 @@ import {
   type RemoteViewPage,
   type RemoteViewPageRequest,
 } from "@mulmoclaude/core/remote-view";
+import { customViewSendsChat } from "@mulmoclaude/core/collection";
 import { enrichItems } from "@mulmoclaude/core/collection/server";
 import {
   readCustomViewHtml,
@@ -57,6 +58,11 @@ export interface RemoteViewInfo {
   label: string;
   icon?: string;
   target: "mobile";
+  /** Whether this view's `startChat` should RUN the prompt rather than leave it
+   *  as a draft. Required, not optional: an absent field and `false` would look
+   *  identical to the phone, so a host too old to send it would silently ignore
+   *  a view that declares `allowSendChat` instead of failing visibly. */
+  allowSendChat: boolean;
 }
 
 export type RemoteViewBuildResult =
@@ -86,7 +92,12 @@ export const createBuildRemoteView =
     const srcdoc = buildRemoteViewSrcdoc(html, { slug: collection.slug, locale: i18n.locale, dict: i18n.dict, writable });
     const bytes = Buffer.byteLength(srcdoc, "utf8");
     if (bytes > REMOTE_VIEW_MAX_BYTES) return { kind: "too-large", bytes };
-    return { kind: "ok", view: { id: view.id, label: view.label, ...(view.icon ? { icon: view.icon } : {}), target: "mobile" }, srcdoc, bytes };
+    return {
+      kind: "ok",
+      view: { id: view.id, label: view.label, ...(view.icon ? { icon: view.icon } : {}), target: "mobile", allowSendChat: customViewSendsChat(view) },
+      srcdoc,
+      bytes,
+    };
   };
 
 export const buildRemoteView = createBuildRemoteView({ readCustomViewHtml, readCustomViewI18n });

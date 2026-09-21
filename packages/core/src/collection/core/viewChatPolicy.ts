@@ -13,9 +13,12 @@ import type { CollectionCustomView } from "./schema";
  *  code composes the prompt text; letting it also decide whether that text runs
  *  would put both halves of the decision inside the sandbox.
  *
- *  The phone runtime does not consult this: it always sends, because a phone has
- *  no Enter key for the user to press (receptron/mulmoterminal#1253). The flag
- *  governs the desktop custom view and the desktop phone-frame preview. */
+ *  EVERY surface consults this, the phone included. The phone once always sent,
+ *  on the grounds that it has no Enter key to press — but that made the same
+ *  view behave differently depending on where it was opened, and it silently
+ *  overrode default-deny on a device the author never tested. The phone is
+ *  served the resolved flag in its view payload rather than re-reading the
+ *  schema, because it never sees the schema. */
 export function customViewSendsChat(view: Pick<CollectionCustomView, "allowSendChat">): boolean {
   return view.allowSendChat === true;
 }

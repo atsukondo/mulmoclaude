@@ -35,10 +35,43 @@ describe("createBuildRemoteView", () => {
     const result = await build(collection([{ ...mobileView, file: "views/phone.html" }]), "phone", "en");
     assert.equal(result.kind, "ok");
     if (result.kind !== "ok") return;
-    assert.deepEqual(result.view, { id: "phone", label: "Phone", icon: "smartphone", target: "mobile" });
+    assert.deepEqual(result.view, { id: "phone", label: "Phone", icon: "smartphone", target: "mobile", allowSendChat: false });
     assert.match(result.srcdoc, /Content-Security-Policy/);
     assert.match(result.srcdoc, /phone view/);
     assert.equal(result.bytes, Buffer.byteLength(result.srcdoc, "utf8"));
+  });
+
+  // The phone cannot read the schema, so the resolved flag has to travel in the
+  // payload — and it has to be the SAME reading the desktop uses, or one view
+  // behaves differently depending on where it was opened (#3249).
+  it("carries allowSendChat: true when the view declares it", async () => {
+    const build = createBuildRemoteView(buildDeps());
+    const declared = { ...mobileView, file: "views/phone.html", allowSendChat: true };
+    const result = await build(collection([declared]), "phone", "en");
+    assert.equal(result.kind, "ok");
+    if (result.kind !== "ok") return;
+    assert.equal(result.view.allowSendChat, true);
+  });
+
+  // Default-deny: the flag is absent on every view shipped before #3062, and
+  // upgrading the host must not turn their buttons into unreviewed agent turns.
+  it("carries allowSendChat: false when the view does not declare it", async () => {
+    const build = createBuildRemoteView(buildDeps());
+    const result = await build(collection([{ ...mobileView, file: "views/phone.html" }]), "phone", "en");
+    assert.equal(result.kind, "ok");
+    if (result.kind !== "ok") return;
+    assert.equal(result.view.allowSendChat, false);
+  });
+
+  // A non-boolean declaration must not leak through as truthy — the schema
+  // reading is `=== true`, and the payload must not widen it.
+  it("carries allowSendChat: false for a non-true declaration", async () => {
+    const build = createBuildRemoteView(buildDeps());
+    const odd = { ...mobileView, file: "views/phone.html", allowSendChat: "yes" } as unknown as typeof mobileView & { file: string };
+    const result = await build(collection([odd]), "phone", "en");
+    assert.equal(result.kind, "ok");
+    if (result.kind !== "ok") return;
+    assert.equal(result.view.allowSendChat, false);
   });
 
   it("injects the locale-picked dict when the view declares i18n", async () => {
