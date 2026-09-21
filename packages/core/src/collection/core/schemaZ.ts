@@ -622,8 +622,10 @@ export const AgentIngestZ = z.object({
  *  is what makes the sync idempotent.
  *
  *  A superset of `PUSHABLE_SOURCE_FIELDS` (`google/pushPlan.ts`), listed with
- *  the pushable ones first. The rest are read-only in Google, so mapping one
- *  gives a pull-only column that the push filters out — which is also why
+ *  the pushable ones first. Mapping one of the rest gives a PULL-ONLY column
+ *  that the push filters out — a choice of this sync, not only a Google
+ *  limitation: `transparency` is writable and `eventType` is writable at
+ *  creation, yet neither is sent. That is also why
  *  widening this enum needs no `.push-state.json` migration: the push baseline
  *  (`ShadowEvent`) is keyed off the pushable list, not off this one. */
 export const GOOGLE_CALENDAR_SOURCE_FIELDS = [

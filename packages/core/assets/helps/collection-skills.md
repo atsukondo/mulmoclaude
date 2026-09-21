@@ -785,7 +785,7 @@ produce what the host produces for free. `map` reads _your_ field name → the
 Google event field — `summary`, `start`, `end`, `description`, `location` and
 `colorId` sync BOTH ways; `htmlLink`, `status`, `updated`, `transparency`,
 `eventType`, `hangoutLink`, `recurringEventId` and `originalStartTime` are
-read-only, so the pull fills them and the push leaves them alone. At least one
+pull-only, so the pull fills them and the push leaves them alone. At least one
 entry is required. Never map the `primaryKey` — it always holds the
 Google event id, which is what makes a re-sync update a record instead of
 duplicating it.

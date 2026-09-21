@@ -10,7 +10,7 @@ import { toCollectionRecord, type GoogleCalendarSourceField } from "./collection
 
 /** The event fields Google lets a caller write — a SUBSET of what the pull can
  *  read (`GOOGLE_CALENDAR_SOURCE_FIELDS`). A column mapped to one of the
- *  read-only fields is ignored here rather than rejected: the mapping was
+ *  pull-only fields is ignored here rather than rejected: the mapping was
  *  authored for the pull, and a push has no business invalidating it.
  *
  *  `satisfies` is what keeps the two lists honest. A field pushable but not
@@ -81,7 +81,7 @@ const comparableText = (value: unknown): string => {
 
 /** The event fields a baseline does NOT carry, because none of them is pushable
  *  — the baseline exists to answer "did the local side change a field we could
- *  send?", and a read-only field can never be one.
+ *  send?", and a pull-only field is by definition not one.
  *
  *  Typed as the exact complement of `ShadowEvent` + `id`, so a field added to
  *  `CalendarEventSummary` without being made pushable must be zeroed here or
