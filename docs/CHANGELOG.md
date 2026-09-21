@@ -8,7 +8,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
-### Added
+## [1.20.0] - 2026-09-21
+
+**Google Calendar gains the fields and the all-day handling a real two-way mirror needs, the Gemini key moves into Settings, and no workspace file is stranded behind a preview the server cannot open.**
+
+### Highlights
+
+#### The Gemini key is entered in the app, not hunted for on disk (#871, #2626 — PRs #3238, #3231)
+
+Paste the key into **Settings → Gemini**. It takes effect immediately, with no restart and no file to locate, and it wins over a stale value in the shell or a `.env`. The old routes still work, but which `.env` is read depends on how the app was started — from the icon there is no launch directory, so macOS starts the app in `/` and it reads `~/.env`, and a shell `export` never reaches it at all. The Settings tab now names the exact path this launch reads, and the agent's own help files lead with the Settings route.
+
+#### Any workspace file can be downloaded (#3213)
+
+The Files view previews text and renders known media; everything else — binaries, and anything too large to preview — now offers a direct download of the bytes. Previously the only escape was "Open in OS", which spawns a handler on the **server's** desktop: under Docker, WSL2 or a remote host there is none, so those files were unreachable from the UI. The download goes through `fetch` + blob rather than an `<a download>` so a refusal arrives as an error instead of being saved to disk under the file's own name.
+
+#### Google Calendar: all-day events, and the fields a mirror needs (#2620, #3240 — PRs #3242, #3229)
+
+An all-day event can now be created and edited through every write surface, with one shared implementation of the span rules (`@mulmoclaude/core/google`'s `eventSpanInput`) so the hosts and the google plugin agree on what all-day means. Separately, a `googleCalendar` collection can map eight more event fields — `recurringEventId` and `originalStartTime` (which make an expanded recurring series legible, and a dragged occurrence read as a move rather than a delete plus an insert), plus `updated`, `transparency`, `eventType` and `hangoutLink`. The six are pull-only in this sync, and nothing changes for an existing collection until a field is added to its `map`.
+
+#### Discord threads (#3217)
+
+A thread is admitted by its **parent** channel, so `DISCORD_ALLOWED_CHANNELS` and threads finally work together, and `DISCORD_SESSION_GRANULARITY` chooses whether a thread is its own conversation or folds into its parent's. Check the bot has `Send Messages in Threads` — Discord treats it as separate from `Send Messages`.
+
+#### Fixes
+
+- **Windows**: an ESM import that resolved on macOS but not on Windows (#3236, PR #3237), and the docker-mount tests now run under the host's own platform (#3218).
+- Record chat no longer closes the detail view (#3220, PR #3225).
+- Preview props corrected for the accounting (#2716) and spotify (#3226) plugins.
+
+### Package detail
 
 - **The agent's Gemini help stops sending people to hunt for a `.env`** (`@mulmoclaude/core`, #3231 then #3238) — two rounds landed on the same two help files. #3231 (closes #2626) first made the instructions honest: the `.env` they described only exists when the app is started from a terminal, because an icon launch has no launch directory — macOS starts apps in `/`, so the app starts from home and reads `~/.env`, and a shell `export` never reaches it since the launcher takes PATH from the login shell and nothing else. #3238 then made the question moot by letting the key be entered in **Settings → Gemini**, and both `gemini.md` and `error-recovery.md` now lead with that: it applies immediately, needs no restart and no file to locate, and wins over a stale value in the shell or a `.env`. `error-recovery.md` also spells out what the agent should do when a render fails for a missing key — including that a render started before the key was saved keeps the environment it was spawned with, so it must be re-run rather than resumed.
 
@@ -22,7 +50,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 - **Discord threads work with the allowlist, and can hold their own session** (`@mulmobridge/discord`, #3217) — a thread is a channel of its own on Discord, with an id minted the moment someone opens it, so `DISCORD_ALLOWED_CHANNELS` and threads could not be used together: you pasted each new thread id into `.env` and restarted, or left the list empty and answered everywhere. A thread is now admitted by its **parent** channel, and listing a thread's own id still works. The new `DISCORD_SESSION_GRANULARITY` chooses what a thread maps to — `thread` (default, and what the bridge already did for any thread that reached it) gives each thread its own conversation; `channel` folds every thread into its parent channel's. It defaults differently from `SLACK_SESSION_GRANULARITY` on purpose, because a Slack thread is a facet of a channel while a Discord thread is a channel. Folding is refused in two cases, both the same invariant — a session is only ever keyed to a channel the bot may actually talk in. A post in a **forum** channel never folds, because Discord does not allow posting into a forum channel itself, so a session keyed by the forum id would have nowhere to deliver a server-initiated reply. And a thread never folds onto a parent the allowlist does not cover, so allowing a thread by its own id cannot aim replies at a channel that was deliberately left out. **Operators should check the bot has `Send Messages in Threads`** — Discord treats it as separate from `Send Messages`, and now that threads reach the bridge by default, a bot missing it receives thread messages and silently fails to reply.
 
-Ships `@mulmoclaude/accounting-plugin@4.0.0`, `@mulmoclaude/chart-plugin@4.0.0`, `@mulmoclaude/collection-plugin@5.0.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.2.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.0.0`, `@mulmoclaude/html-plugin@5.0.0`, `@mulmoclaude/markdown-plugin@5.0.0`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.0`, `@mulmoclaude/shapescript-plugin@7.0.0`, `@mulmoclaude/spotify-plugin@2.0.1`, `@mulmoclaude/x-plugin@1.0.4`.
+### Fixed
+
+- **The Spotify sidebar card showed an error panel instead of a summary** (`@mulmoclaude/spotify-plugin`, #3230, closes #3226) — the preview declared `selectedResult`, the prop name the **view** slot takes (`App.vue`: `:selected-result`), while the sidebar passes `result`. So it arrived `undefined` and the computed read `result.ok` off it with no guard. Rendering the built component the way the host renders it throws `TypeError: Cannot read properties of undefined (reading 'ok')`; the runtime loader wraps plugin components in `PluginScopedRoot`, whose `onErrorCaptured` caught it, so every `manageSpotify` call that rendered at all showed the red plugin-error panel. The same class as #2716, which is why the census added there held spotify out by name until the question it raised was answered. That question was **where `ok` / `error` actually arrive**: they do arrive, because the MCP bridge spreads the plugin's whole return value into the posted tool result and the session store keeps it verbatim — they are missing from the `ToolResult` *type*, not from the object. But `ok: false` can never reach this card, since the bridge posts only when `data` is present and every failure return in the plugin's dispatch omits `data`; that branch is therefore gone, and a failed call renders no card rather than an error one. The summary logic moved to a pure module the test runner can reach, which is the part that had been impossible: `tsx --test` cannot load an SFC, so the card's decisions had never been under test. Driving them found two defects in the code being replaced — a now-playing track matched the search-result guard, because `NormalisedTrack` carries an `artists` array of its own and the guard tested key presence, and a category that is not an array was counted by its string length. `getDevices` also read as a track count; it has its own branch now, reusing the existing `devices` label. The census was strengthened in the same change: it read named `*Preview` exports, but the host's runtime loader reads `plugin.previewComponent` — a different property, and the one spotify actually ships, since it exports no `Preview` at all. It now checks both for every packaged plugin, and its held-out list is empty.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.0`, `@mulmoclaude/chart-plugin@4.0.0`, `@mulmoclaude/collection-plugin@5.0.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.2.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.0.0`, `@mulmoclaude/html-plugin@5.0.0`, `@mulmoclaude/markdown-plugin@5.0.0`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.0`, `@mulmoclaude/shapescript-plugin@7.0.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.19.0] - 2026-09-18
 
