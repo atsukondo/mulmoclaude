@@ -70,8 +70,11 @@ it isn't, sync silently does nothing until they link it in settings.
 Mappable event fields, two-way first: `summary`, `start`, `end`, `description`,
 `location`, `colorId`.
 
-Read-only — the pull fills them, the push never sends them, so Google always
-wins: `htmlLink`, `status`, `updated` (Google's own last-modified time),
+Pull-only in this sync — the pull fills them, the push never sends them, so
+Google always wins. Some of these Google would accept a write for
+(`transparency`, and `eventType` at creation); this sync deliberately does not
+send any of them: `htmlLink`, `status`, `updated` (Google's own last-modified
+time),
 `transparency` (`"transparent"` when the event does not consume the attendee's
 time; `""` means opaque), `eventType` (all six Google returns: `default` / `birthday` / `focusTime` /
 `fromGmail` / `outOfOffice` / `workingLocation`), `hangoutLink` (the Meet URL),
@@ -164,7 +167,7 @@ What the button does and deliberately does not do:
   destroyed while it waits — the cost is that the record stays behind Google
   until someone resolves it, and the host logs which records those are.
 - Pushes `summary`, `start`, `end`, `description`, `location` and `colorId` —
-  the writable half of the list above. A column mapped to one of the read-only
+  the two-way half of the list above. A column mapped to one of the pull-only
   fields is ignored by the push rather than rejected, so it keeps mirroring
   Google in one direction.
 
