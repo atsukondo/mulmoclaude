@@ -147,6 +147,39 @@ Declaring it in `map` is a schema error.
 Use `datetime` (not `date`) for start/end when events have real clock times —
 the calendar day view then draws each record as a proportional time block.
 
+## All-day events
+
+A `datetime` column stores an all-day event as `2026-07-17T00:00`, because that
+is where the day view places it. That is fine for mirroring, but it is also
+exactly how a real midnight appointment is stored — so a record CREATED locally
+in a `datetime` column is pushed as a midnight event, never as an all-day one.
+
+For a calendar whose events are all-day, give start/end a **`date`** column
+instead. Google's bare date is then kept verbatim, and a record the user creates
+by typing two dates is pushed as a real all-day event.
+
+```jsonc
+"fields": {
+  "on":    { "type": "date", "label": "From" },
+  "until": { "type": "date", "label": "To" }
+},
+"googleCalendar": { "map": { "on": "start", "until": "end" } }
+```
+
+Google's all-day `end` is **exclusive** — it is the day AFTER the last day, so a
+single day on the 17th is `on: 2026-07-17`, `until: 2026-07-18`. Records
+mirrored from Google already carry it that way. Say so when the user asks why
+the end date "looks a day late"; do not offset it, because the push sends the
+stored value straight back.
+
+An existing all-day event stays all-day when its dates are edited, whatever the
+column type: the push reads what Google last reported for that event and keeps
+its kind. Only a record with no such history — one created locally — depends on
+the column type.
+
+To create a one-off all-day event without a collection, use the `google` tool's
+`calendarCreateEvent` with a bare date on both ends.
+
 ## When sync runs
 
 - **On creation** — the first sync starts as soon as the schema lands, so the
@@ -215,9 +248,11 @@ What the button does and deliberately does not do:
 Reasons a record can be reported as skipped:
 
 - **Its record id cannot be a Google event id.** Google requires 5-1024
-  characters from `0-9a-v`. Records created through the UI get a valid
-  generated id; a semantic id you authored (`team-standup`) cannot be used. Fix
-  by recreating the record without setting the primary field.
+  characters from `0-9a-v` (lower-case base32hex: digits plus `a`-`v`, so no
+  `w`-`z`, no upper case, no hyphen). Records created through the UI get a
+  valid generated id; a semantic id you authored (`team-standup`) cannot be
+  used. Fix by recreating the record without setting the primary field, or by
+  choosing an id that satisfies the rule.
 - **No `start` / `end` is mapped, on a record being CREATED.** An event cannot
   be created without a span. Editing an existing event is unaffected — a changed
   title or colour is patched on its own.
