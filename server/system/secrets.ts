@@ -1,6 +1,6 @@
 // Secrets the user types into Settings, kept outside the workspace.
 //
-// `~/.mulmoclaude/secrets/<KEY>`, one file per key, 0600 (#871). NOT under
+// `~/.mulmoclaude/secrets/<KEY>`, one file per key, 0600 on POSIX (#871). NOT under
 // `~/mulmoclaude`: that workspace is the agent's data space — "the workspace
 // is the database" — and a credential there is readable by everything the
 // agent does. Not `.env` in a launch directory either, which is the thing
@@ -30,7 +30,13 @@ export function isSecretKey(value: unknown): value is SecretKey {
   return typeof value === "string" && SECRET_KEYS.some((key) => key === value);
 }
 
-/** Owner-only, on the file and the directory holding it. */
+/** Owner-only, on the file and the directory holding it.
+ *
+ *  A POSIX guarantee, not a universal one: Windows carries no POSIX mode, so
+ *  Node applies only the read-only bit and these are ignored there. What
+ *  protects the file on Windows is where it sits — under the user's own
+ *  profile, whose ACL it inherits — which is why `secretsDir` is anchored to
+ *  the home directory rather than to a mode (#3251). */
 const SECRET_FILE_MODE = 0o600;
 const SECRET_DIR_MODE = 0o700;
 
