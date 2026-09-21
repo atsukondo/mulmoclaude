@@ -79,7 +79,7 @@ describe("sweepDeletes — an event with attendees", () => {
     const sweep = await sweepDeletes(["ev1"], true, deps);
     assert.deepEqual(sweep.deleted, []);
     assert.equal(sweep.skipped.length, 1);
-    assert.match(sweep.skipped[0] ?? "", /ev1: left in Google because it has attendees/);
+    assert.match(sweep.skipped[0] ?? "", /ev1: left in Google because it carries attendees/);
     assert.deepEqual(calls.deleted, []);
   });
 

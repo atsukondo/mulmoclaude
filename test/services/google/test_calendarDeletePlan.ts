@@ -36,7 +36,7 @@ describe("planDelete", () => {
 
 describe("deleteRefusalMessage", () => {
   it("names the event and says which reason applies", () => {
-    assert.match(deleteRefusalMessage("ev1", { kind: "has-attendees" }), /^ev1: left in Google because it has attendees/);
+    assert.match(deleteRefusalMessage("ev1", { kind: "has-attendees" }), /^ev1: left in Google because it carries attendees/);
     assert.match(deleteRefusalMessage("ev1", { kind: "already-gone" }), /^ev1: left in Google because it is no longer in Google/);
   });
 

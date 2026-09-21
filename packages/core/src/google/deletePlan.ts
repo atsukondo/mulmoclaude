@@ -7,11 +7,12 @@
 // and the user deletes it again, forever.
 //
 // So propagation is opt-in per collection, and even then it stops at an event
-// with attendees: deleting one of those withdraws it from other people's
-// calendars, which is a different act from tidying your own. That guard is
-// here, pure, because it is the whole safety of the feature — and it answers
-// from what Google currently holds, never from the record, which by then is
-// gone.
+// that carries attendees: deleting an invited event withdraws it from the
+// guests' calendars, which is a different act from tidying your own. The rule
+// is blunter than that reason — see `planDelete` for why an event only the
+// user was ever on is refused too. That guard is here, pure, because it is the
+// whole safety of the feature — and it answers from what Google currently
+// holds, never from the record, which by then is gone.
 //
 // Pure: no I/O, no clock, no locale.
 
@@ -23,7 +24,7 @@ export type DeleteRefusal = { kind: "has-attendees" } | { kind: "already-gone" }
  *  against a version the guard never saw. */
 export type DeleteDecision = { ok: true; etag: string } | ({ ok: false } & DeleteRefusal);
 
-const ATTENDEES_REASON = "it has attendees — deleting it would withdraw the event from their calendars too";
+const ATTENDEES_REASON = "it carries attendees — deleting an invited event withdraws it from their calendars too";
 const ALREADY_GONE_REASON = "it is no longer in Google";
 
 /** The message the push reports for a refusal, with the event named. */
