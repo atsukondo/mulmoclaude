@@ -41,6 +41,8 @@ const sampleEvent: CalendarEventSummary = {
   transparency: "",
   eventType: "",
   hangoutLink: "",
+  selfResponseStatus: "",
+  conferenceVideoUri: "",
 };
 
 const sampleCalendar: CalendarSummary = {

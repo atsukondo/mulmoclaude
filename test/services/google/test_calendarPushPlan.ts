@@ -81,6 +81,8 @@ describe("pushableMap", () => {
       busy: "transparency",
       kind: "eventType",
       meet: "hangoutLink",
+      rsvp: "selfResponseStatus",
+      join: "conferenceVideoUri",
       link: "htmlLink",
       state: "status",
     } as const;

@@ -60,6 +60,8 @@ const event = (overrides: Partial<CalendarEventSummary> = {}): CalendarEventSumm
   transparency: "",
   eventType: "",
   hangoutLink: "",
+  selfResponseStatus: "",
+  conferenceVideoUri: "",
   ...overrides,
 });
 

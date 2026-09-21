@@ -31,6 +31,8 @@ const emptyEvent = {
   transparency: "",
   eventType: "",
   hangoutLink: "",
+  selfResponseStatus: "",
+  conferenceVideoUri: "",
 };
 
 describe("toEventSummary", () => {
