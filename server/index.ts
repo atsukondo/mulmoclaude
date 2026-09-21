@@ -80,6 +80,7 @@ import { announcePluginMetaDiagnostics } from "./plugins/diagnostics.js";
 import { announceShadowedEnv, SHADOWED_ENV_KEYS_VAR } from "./system/shadowedEnv.js";
 import { announceOptionalDeps } from "./system/announceOptionalDeps.js";
 import { announceGeminiKey } from "./system/announceGeminiKey.js";
+import { currentLaunchRouteFacts } from "./system/geminiKeyGuidance.js";
 import { migrateLegacyBillingPresets } from "./workspace/billing-migration.js";
 import { APP_VERSION } from "./system/appVersion.js";
 import { createChatService } from "@mulmobridge/chat-service";
@@ -646,6 +647,9 @@ app.get(API_ROUTES.health, (_req: Request, res: Response) => {
     status: "OK",
     version: APP_VERSION,
     geminiAvailable: isGeminiAvailable(),
+    // Where a key goes on THIS launch, so Settings can name the file
+    // instead of saying `.env` and leaving an icon user to guess (#2626).
+    geminiEnvFilePath: currentLaunchRouteFacts().envFilePath,
     sandboxEnabled,
     // Local voice input: `capable` (platform + whisper binary) is
     // distinct from `enabled` (user opt-in) and `model.state` (download
