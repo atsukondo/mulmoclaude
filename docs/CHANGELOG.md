@@ -24,7 +24,7 @@ The Files view previews text and renders known media; everything else — binari
 
 #### Google Calendar: all-day events, and the fields a mirror needs (#2620, #3240 — PRs #3242, #3229)
 
-An all-day event can now be created and edited through every write surface, with one shared implementation of the span rules (`@mulmoclaude/core/google`'s `eventSpanInput`) so the hosts and the google plugin agree on what all-day means. Separately, a `googleCalendar` collection can map eight more event fields — `recurringEventId` and `originalStartTime` (which make an expanded recurring series legible, and a dragged occurrence read as a move rather than a delete plus an insert), plus `updated`, `transparency`, `eventType` and `hangoutLink`. The six are pull-only in this sync, and nothing changes for an existing collection until a field is added to its `map`.
+An all-day event can now be created and edited through every write surface, with one shared implementation of the span rules (`@mulmoclaude/core/google`'s `eventSpanInput`) so the hosts and the Google plugin agree on what all-day means. Separately, a `googleCalendar` collection can map more event fields — `recurringEventId` and `originalStartTime` (which make an expanded recurring series legible, and a dragged occurrence read as a move rather than a delete plus an insert), plus `updated`, `transparency`, `eventType` and `hangoutLink`. The six are pull-only in this sync, and nothing changes for an existing collection until a field is added to its `map`.
 
 #### Discord threads (#3217)
 
