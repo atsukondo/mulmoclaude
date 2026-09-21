@@ -83,10 +83,30 @@ describe("writeStoredSecret / readStoredSecret", () => {
     assert.equal(readStoredSecret(KEY, home), "AIzaExample");
   });
 
-  it("writes owner-only, in a directory nobody else can list", () => {
+  // Windows does not carry POSIX modes: Node maps only the read-only bit, so a
+  // writable file reads back as 0o666 whatever mode it was created with. The
+  // requested 0o600 is therefore a POSIX guarantee, and asserting it everywhere
+  // fails on a platform where it cannot be true (#3251).
+  it("writes owner-only, in a directory nobody else can list", (testCtx) => {
+    if (process.platform === "win32") {
+      testCtx.skip("requires POSIX permissions — Windows ignores the mode; see the location test below");
+      return;
+    }
     writeStoredSecret(KEY, "AIzaExample", home);
     assert.equal(statSync(secretFilePath(KEY, home)).mode & 0o777, 0o600);
     assert.equal(statSync(secretsDir(home)).mode & 0o777, 0o700);
+  });
+
+  // What holds on EVERY platform, and the only protection Windows has here: the
+  // secret lives under the user's own profile directory, whose ACL it inherits.
+  // Pinned separately so the Windows skip above does not leave the store with
+  // nothing asserting where it writes.
+  it("writes inside the given home, never beside the workspace", () => {
+    writeStoredSecret(KEY, "AIzaExample", home);
+    const written = secretFilePath(KEY, home);
+    assert.equal(path.relative(home, written).startsWith(".."), false, "the secret must stay under the home it was given");
+    assert.equal(path.dirname(written), secretsDir(home));
+    assert.equal(statSync(written).isFile(), true);
   });
 
   it("reads as absent when there is no file", () => {
