@@ -17,8 +17,12 @@ export function pushProblems(result: CollectionPushResult): string[] {
   return [...result.errors, ...result.skipped];
 }
 
-/** Whether anything reached Google. Conflicts and local deletions are reported
- *  but deliberately not acted on, so they do not count as work done. */
+/** Whether anything reached Google.
+ *
+ *  A conflict is reported but deliberately not acted on, so it is not work
+ *  done. A local deletion only counts once it CARRIED: with `propagateDeletes`
+ *  off, `localDeletes` is a report about this side and Google is untouched
+ *  (#3234). */
 export function pushWroteSomething(result: CollectionPushResult): boolean {
-  return result.created > 0 || result.updated > 0;
+  return result.created > 0 || result.updated > 0 || (result.deletedInGoogle ?? 0) > 0;
 }

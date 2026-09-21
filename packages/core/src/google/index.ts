@@ -6,6 +6,7 @@
 // link state.
 export { configureGoogleHost, type GoogleLogger } from "./host.js";
 export { isIsoDateTimeWithOffset } from "./datetime.js";
+export { deleteRefusalMessage, planDelete, type DeleteDecision, type DeleteRefusal } from "./deletePlan.js";
 export { conferenceVideoUri, selfResponseStatus } from "./eventDerived.js";
 export {
   isCalendarDateOnly,
@@ -62,6 +63,7 @@ export {
   getCalendarMeta,
   resolveEventSpan,
   CANCELLED_EVENT_STATUS,
+  EVENT_ABSENT_STATUSES,
   HTTP_CONFLICT,
   HTTP_PRECONDITION_FAILED,
   type CalendarColorEntry,
@@ -110,7 +112,10 @@ export {
   pushCalendarForCollection,
   pushCollectionNow,
   reportedAccessRole,
+  sweepDeletes,
   unsentLocalEdits,
+  type DeleteSweep,
+  type DeleteSweepDeps,
   type PushOutcomeKind,
   type CalendarCollectionPushResult,
   type CalendarPushDeps,

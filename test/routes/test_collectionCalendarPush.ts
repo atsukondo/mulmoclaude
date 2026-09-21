@@ -16,6 +16,7 @@ const result = (overrides: Partial<CalendarCollectionPushResult> = {}): Calendar
   updated: 0,
   conflicts: 0,
   localDeletes: 0,
+  deletedInGoogle: 0,
   skipped: [],
   errors: [],
   unpushedIds: [],
@@ -109,8 +110,17 @@ describe("reportedAccessRole — what an unlisted calendar says about itself", (
 
 describe("calendarPushBody — a real push", () => {
   it("passes the counts through", () => {
-    const body = calendarPushBody({ kind: "pushed", result: result({ created: 2, updated: 3, conflicts: 1, localDeletes: 4 }) });
-    assert.deepEqual(body, { pushed: true, created: 2, updated: 3, conflicts: 1, localDeletes: 4, skipped: [], errors: [] });
+    const body = calendarPushBody({ kind: "pushed", result: result({ created: 2, updated: 3, conflicts: 1, localDeletes: 4, deletedInGoogle: 1 }) });
+    assert.deepEqual(body, { pushed: true, created: 2, updated: 3, conflicts: 1, localDeletes: 4, deletedInGoogle: 1, skipped: [], errors: [] });
+  });
+
+  // `localDeletes` counts what went away HERE and `deletedInGoogle` what the
+  // push then removed there. Reporting the first as if it were the second is
+  // how a click would claim to have deleted events it deliberately left alone.
+  it("keeps the two delete counts apart — reported here is not deleted there", () => {
+    const body = calendarPushBody({ kind: "pushed", result: result({ localDeletes: 4, deletedInGoogle: 0 }) });
+    assert.equal(body.localDeletes, 4);
+    assert.equal(body.deletedInGoogle, 0);
   });
 
   it("keeps skipped reasons separate from errors — they need different wording", () => {

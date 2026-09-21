@@ -669,6 +669,15 @@ export const GoogleCalendarSyncZ = z.object({
    *  Opt-in and absent by default: a push writes to a calendar other people may
    *  read, so turning it on is the user's decision, not a default. */
   autoPush: z.boolean().optional(),
+  /** Delete the Google event when its record is deleted in the collection
+   *  (#3234). Absent by default, and absent means what it has always meant:
+   *  the deletion is reported and Google is left alone.
+   *
+   *  Separate from `autoPush` rather than folded into it, because the two are
+   *  different sizes of decision — `autoPush` changes WHEN a write happens,
+   *  this one makes a write irreversible. Even on, the push refuses an event
+   *  with attendees (`google/deletePlan.ts`). */
+  propagateDeletes: z.boolean().optional(),
 });
 
 /** `ingest` is a discriminated union on `kind`: the three declarative

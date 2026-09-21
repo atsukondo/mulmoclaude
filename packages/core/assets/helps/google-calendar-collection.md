@@ -17,6 +17,7 @@ author the schema when the user asks for one.
 | Google → collection | the `googleCalendar` block | hourly, on creation, and on the **Sync** button |
 | collection → Google | the **Push to Google** button | whenever the user clicks it |
 | collection → Google | `"autoPush": true` in the block | hourly, immediately before each pull |
+| collection → Google, deletions | `"propagateDeletes": true` in the block | with every push. Off by default; see "Deleting" |
 
 When a user asks for "two-way sync", `autoPush` is the answer: set it and each
 scheduled run pushes local edits up and then pulls Google's changes down, as one
@@ -66,6 +67,9 @@ it isn't, sync silently does nothing until they link it in settings.
   would see rows with no content.
 - `autoPush` — push local edits on the sync schedule, just before each pull.
   Omit it (the default) and the push stays a button. See "Both directions".
+- `propagateDeletes` — delete the Google event when its record is deleted here.
+  Omit it (the default) and a local deletion is reported and nothing else. See
+  "Deleting".
 
 Mappable event fields, two-way first: `summary`, `start`, `end`, `description`,
 `location`, `colorId`.
@@ -231,10 +235,9 @@ What the button does and deliberately does not do:
 - **Creates** an event for a record that never came from a sync.
 - **Updates** only the fields the user actually changed, so attendees,
   reminders and recurrence rules stay untouched.
-- **Never deletes.** A record deleted locally leaves its Google event alone —
-  a Google delete removes the event for every attendee and cannot be undone.
-  The count is reported so the user knows it was skipped; deleting for real is
-  the `google` tool's `calendarDeleteEvent`, after confirming with them.
+- **Never deletes, unless the collection asked it to.** See "Deleting" below;
+  without `propagateDeletes` a record deleted locally leaves its Google event
+  alone and the count is reported so the user knows.
 - **Skips a record edited on both sides** and reports it, rather than picking a
   winner. The user resolves it by editing one side to match. Under `autoPush`
   the pull that follows leaves that record alone too, so the local edit is not
@@ -265,6 +268,42 @@ with that reason rather than failing event by event. A calendar the user can
 reach by id but has not added to their calendar list has no role to check, so
 the push goes ahead and reports Google's own refusal if the write turns out not
 to be allowed — being unlisted is not treated as being read-only.
+
+## Deleting
+
+By default, a record deleted in the collection leaves its Google event alone.
+The push reports the count and does nothing else, and the next sync brings the
+record back — which is correct for a calendar Google owns, and wrong for one
+where the collection is the primary copy.
+
+`"propagateDeletes": true` in the `googleCalendar` block makes the push delete
+those events too. **Ask the user before adding it**, the same as `autoPush` and
+for a stronger reason: `autoPush` changes WHEN a write happens, this makes a
+write irreversible.
+
+Even on, the push **refuses an event that carries attendees** and reports it
+instead. Deleting an invited event withdraws it from the guests' calendars,
+which is a different act from tidying your own. **Any** attendee entry refuses,
+including the one Google adds for the organiser — so an event only the user was
+ever on is refused too, deliberately: telling the two apart means deciding which
+entry is the user from a payload that may not say, and being wrong there
+withdraws a real invitation. Either way, an event the user actually wants gone
+is deleted with the `google` tool's `calendarDeleteEvent`, after confirming with
+them.
+
+The delete also carries the version the check was made against, so an attendee
+added while the push was running makes Google refuse it rather than letting a
+decision taken a moment earlier stand. That is reported like any other refusal;
+pressing Push again re-checks.
+
+There is no undo here and this app keeps no copy of what it deleted. Google
+Calendar's own Trash holds a deleted event for a while, and that is where a
+mistake is recovered from.
+
+A deletion that carried stops being reported, because its baseline entry goes
+with it. A deletion that was REFUSED keeps being reported on every push — the
+event is still standing in Google, and the report is the only thing that says
+so.
 
 ## Not for this
 
