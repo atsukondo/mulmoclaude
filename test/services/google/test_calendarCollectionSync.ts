@@ -54,6 +54,12 @@ const event = (overrides: Partial<CalendarEventSummary> = {}): CalendarEventSumm
   colorId: "7",
   description: "",
   location: "",
+  recurringEventId: "",
+  originalStartTime: "",
+  updated: "",
+  transparency: "",
+  eventType: "",
+  hangoutLink: "",
   ...overrides,
 });
 

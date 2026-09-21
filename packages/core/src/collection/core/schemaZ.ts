@@ -619,8 +619,29 @@ export const AgentIngestZ = z.object({
 
 /** The Google event fields a collection may pull from. `id` is absent on
  *  purpose — it always lands in the primary field, since upsert-by-event-id
- *  is what makes the sync idempotent. */
-export const GOOGLE_CALENDAR_SOURCE_FIELDS = ["summary", "start", "end", "htmlLink", "colorId", "status", "description", "location"] as const;
+ *  is what makes the sync idempotent.
+ *
+ *  A superset of `PUSHABLE_SOURCE_FIELDS` (`google/pushPlan.ts`), listed with
+ *  the pushable ones first. The rest are read-only in Google, so mapping one
+ *  gives a pull-only column that the push filters out — which is also why
+ *  widening this enum needs no `.push-state.json` migration: the push baseline
+ *  (`ShadowEvent`) is keyed off the pushable list, not off this one. */
+export const GOOGLE_CALENDAR_SOURCE_FIELDS = [
+  "summary",
+  "start",
+  "end",
+  "description",
+  "location",
+  "colorId",
+  "htmlLink",
+  "status",
+  "recurringEventId",
+  "originalStartTime",
+  "updated",
+  "transparency",
+  "eventType",
+  "hangoutLink",
+] as const;
 
 /** Marks a collection as the destination of the LLM-free Google Calendar
  *  sync (#2095). `map` is collectionField → Google event field, so the user's

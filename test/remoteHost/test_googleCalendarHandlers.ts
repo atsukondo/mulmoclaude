@@ -35,6 +35,12 @@ const sampleEvent: CalendarEventSummary = {
   colorId: "7",
   description: "",
   location: "",
+  recurringEventId: "",
+  originalStartTime: "",
+  updated: "",
+  transparency: "",
+  eventType: "",
+  hangoutLink: "",
 };
 
 const sampleCalendar: CalendarSummary = {
