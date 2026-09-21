@@ -138,8 +138,9 @@ export interface CalendarEventSummary {
   /** "transparent" when the event does not consume the attendee's time. Google
    *  omits the default, so "" reads as opaque. */
   transparency: string;
-  /** "default", "birthday", "workingLocation", "fromGmail" — which is how the
-   *  entries Google generates get kept out of a mirror. */
+  /** Which KIND of entry this is, and how the ones Google generates get kept out
+   *  of a mirror. Google's whole set: "default", "birthday", "focusTime",
+   *  "fromGmail", "outOfOffice", "workingLocation". */
   eventType: string;
   /** Google Meet URL, "" when nothing is attached. */
   hangoutLink: string;

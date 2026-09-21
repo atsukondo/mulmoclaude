@@ -73,8 +73,8 @@ Mappable event fields, two-way first: `summary`, `start`, `end`, `description`,
 Read-only — the pull fills them, the push never sends them, so Google always
 wins: `htmlLink`, `status`, `updated` (Google's own last-modified time),
 `transparency` (`"transparent"` when the event does not consume the attendee's
-time; `""` means opaque), `eventType` (`default` / `birthday` /
-`workingLocation` / `fromGmail`), `hangoutLink` (the Meet URL),
+time; `""` means opaque), `eventType` (all six Google returns: `default` / `birthday` / `focusTime` /
+`fromGmail` / `outOfOffice` / `workingLocation`), `hangoutLink` (the Meet URL),
 `recurringEventId` and `originalStartTime`.
 
 The last two are how a recurring series stays legible. The sync asks Google to
