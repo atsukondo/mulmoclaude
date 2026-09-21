@@ -137,7 +137,10 @@ drifts.
   checksums.
 - **Three cards say only "book `<id>`"** — `upsertAccount`, `voidEntry`,
   `setOpeningBalances` reach `summariseFallback`'s bare-book branch. Not a
-  regression (before this change they rendered nothing at all) and not fixed
+  regression — before this change the component received no props, so these
+  rendered the generic "Accounting result" line, which says strictly less than
+  the book id does. Verified by running the base `summarisePreview` with the two
+  `undefined`s it actually got: it returns `previewGeneric`. Not fixed
   here, because each needs an i18n key in all 8 locales. Pinned as an exact set
   the walk compares against, so it cannot drift in either direction, and tracked
   in #3228.

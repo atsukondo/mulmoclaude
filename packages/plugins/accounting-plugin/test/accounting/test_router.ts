@@ -221,7 +221,8 @@ describe("preview card summaries, over real dispatch output", () => {
     // Exact, so it fails in BOTH directions: a new member that only manages
     // "book <id>" is caught, and so is writing a branch for one of these three
     // without shrinking the list. Waved through here because #2716 is about the
-    // card rendering at all — before it, every one of these rendered nothing.
+    // card saying anything at all — before it the component received no props,
+    // so every one of these rendered the generic "Accounting result" line.
     assert.deepEqual(
       bareBookOnly.sort(),
       [...BARE_BOOK_ONLY_ACTIONS].sort(),
