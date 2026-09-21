@@ -25,6 +25,12 @@ const EVENT: CalendarEventSummary = {
   colorId: "",
   description: "",
   location: "",
+  recurringEventId: "",
+  originalStartTime: "",
+  updated: "",
+  transparency: "",
+  eventType: "",
+  hangoutLink: "",
 };
 const CANCELLED_EVENT: CalendarEventSummary = { ...EVENT, id: "evt-cancelled", status: "cancelled" };
 const TASK = { id: "task-1", title: "Buy milk", status: "needsAction", due: "", notes: "" };
