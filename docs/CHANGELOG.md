@@ -8,7 +8,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
-### Added
+## [1.20.0] - 2026-09-21
+
+**Google Calendar gains the fields and the all-day handling a real two-way mirror needs, the Gemini key moves into Settings, and no workspace file is stranded behind a preview the server cannot open.**
+
+### Highlights
+
+#### The Gemini key is entered in the app, not hunted for on disk (#871, #2626 — PRs #3238, #3231)
+
+Paste the key into **Settings → Gemini**. It takes effect immediately, with no restart and no file to locate, and it wins over a stale value in the shell or a `.env`. The old routes still work, but which `.env` is read depends on how the app was started — from the icon there is no launch directory, so macOS starts the app in `/` and it reads `~/.env`, and a shell `export` never reaches it at all. The Settings tab now names the exact path this launch reads, and the agent's own help files lead with the Settings route.
+
+#### Any workspace file can be downloaded (#3213)
+
+The Files view previews text and renders known media; everything else — binaries, and anything too large to preview — now offers a direct download of the bytes. Previously the only escape was "Open in OS", which spawns a handler on the **server's** desktop: under Docker, WSL2 or a remote host there is none, so those files were unreachable from the UI. The download goes through `fetch` + blob rather than an `<a download>` so a refusal arrives as an error instead of being saved to disk under the file's own name.
+
+#### Google Calendar: all-day events, and the fields a mirror needs (#2620, #3240 — PRs #3242, #3229)
+
+An all-day event can now be created and edited through every write surface, with one shared implementation of the span rules (`@mulmoclaude/core/google`'s `eventSpanInput`) so the hosts and the google plugin agree on what all-day means. Separately, a `googleCalendar` collection can map eight more event fields — `recurringEventId` and `originalStartTime` (which make an expanded recurring series legible, and a dragged occurrence read as a move rather than a delete plus an insert), plus `updated`, `transparency`, `eventType` and `hangoutLink`. The six are pull-only in this sync, and nothing changes for an existing collection until a field is added to its `map`.
+
+#### Discord threads (#3217)
+
+A thread is admitted by its **parent** channel, so `DISCORD_ALLOWED_CHANNELS` and threads finally work together, and `DISCORD_SESSION_GRANULARITY` chooses whether a thread is its own conversation or folds into its parent's. Check the bot has `Send Messages in Threads` — Discord treats it as separate from `Send Messages`.
+
+#### Fixes
+
+- **Windows**: an ESM import that resolved on macOS but not on Windows (#3236, PR #3237), and the docker-mount tests now run under the host's own platform (#3218).
+- Record chat no longer closes the detail view (#3220, PR #3225).
+- Preview props corrected for the accounting (#2716) and spotify (#3226) plugins.
+
+### Package detail
 
 - **The agent's Gemini help stops sending people to hunt for a `.env`** (`@mulmoclaude/core`, #3231 then #3238) — two rounds landed on the same two help files. #3231 (closes #2626) first made the instructions honest: the `.env` they described only exists when the app is started from a terminal, because an icon launch has no launch directory — macOS starts apps in `/`, so the app starts from home and reads `~/.env`, and a shell `export` never reaches it since the launcher takes PATH from the login shell and nothing else. #3238 then made the question moot by letting the key be entered in **Settings → Gemini**, and both `gemini.md` and `error-recovery.md` now lead with that: it applies immediately, needs no restart and no file to locate, and wins over a stale value in the shell or a `.env`. `error-recovery.md` also spells out what the agent should do when a render fails for a missing key — including that a render started before the key was saved keeps the environment it was spawned with, so it must be re-run rather than resumed.
 

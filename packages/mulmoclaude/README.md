@@ -150,7 +150,8 @@ Recommended: ≥ 32 characters of random data (shorter values trigger a startup 
 
 ## Optional features
 
-- **Gemini API key** (`GEMINI_API_KEY` in environment or `.env`) — enables AI image generation (`generateImage`), audio / video. Free tier suffices for everyday use; get one from [Google AI Studio](https://aistudio.google.com/). Set it in both places and the exported shell value wins, `.env` is ignored — the app now says so in the notification bell instead of leaving you editing a file that has no effect.
+- **Gemini API key** — enables AI image generation (`generateImage`), audio / video. Free tier suffices for everyday use; get one from [Google AI Studio](https://aistudio.google.com/). Paste it into **Settings → Gemini**: it takes effect immediately, with no restart and no file to find, and it wins over anything in the shell or a `.env`. The older routes still work — `GEMINI_API_KEY` exported in the shell, or in a `.env` — but which `.env` gets read depends on how you started the app (from the icon there is no launch directory, so it reads `~/.env`), which is why the Settings tab names the exact path this launch is reading.
+- **Download any workspace file** — the Files view previews text and renders known media; anything else (and any file too large to preview) offers a direct download of the bytes. This replaces relying on "Open in OS", which spawns a handler on the *server's* desktop — under Docker, WSL2 or a remote host there is none, so those files used to be unreachable from the UI.
 - **Local voice input** (macOS only, opt-in) — `whisper.cpp` for dictating chat messages without sending audio to a cloud API.
 - **Marp slides** — `marp: true` frontmatter on any markdown file renders a slide deck in the canvas with PDF export. Custom themes via `config/marp-themes/<name>.css`.
 - **Auto memory** — the agent maintains a typed memory layout (`conversations/memory/<type>/<topic>.md`) and reads it ambient-style.
