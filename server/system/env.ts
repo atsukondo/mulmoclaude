@@ -16,6 +16,7 @@
 // module is the runtime side of that table.
 
 import { CLI_FLAGS } from "../utils/cli-flags.mjs";
+import { LAUNCH_ENV_PATH_VAR, LAUNCHED_FROM_ICON, LAUNCHED_FROM_VAR } from "../utils/launch-vars.mjs";
 
 // ── Type coercion helpers ───────────────────────────────────────────
 
@@ -160,6 +161,15 @@ export const env = Object.freeze({
   // data: pages, none of which are trustworthy origins. See
   // `NULL_ORIGIN_LITERAL` in server/api/csrfGuard.ts.
   trustedOrigins: asCsv(process.env.MULMOCLAUDE_TRUSTED_ORIGINS),
+
+  // How this process was started, handed over by the launcher chain
+  // (#2626). `launchEnvPath` is the `.env` the CLI consulted — the server
+  // cannot recompute it, since its own cwd is the package directory.
+  // `launchedFromIcon` says a shell `export` cannot reach here, which
+  // decides whether offering one is advice or a dead end. Both feed
+  // `geminiKeyGuidance.ts` only; nothing branches on them.
+  launchEnvPath: process.env[LAUNCH_ENV_PATH_VAR],
+  launchedFromIcon: process.env[LAUNCHED_FROM_VAR] === LAUNCHED_FROM_ICON,
 
   // MCP subprocess: set by the parent server when spawning
   // mcp-server.ts. The MCP process reads them via this same module —

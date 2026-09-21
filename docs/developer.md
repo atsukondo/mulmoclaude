@@ -62,7 +62,7 @@ All env vars are **optional unless flagged "required"**. The server reads them a
 
 | Variable                    | Used by                       | Notes                                                                                                                                                    |
 | --------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`            | `server/utils/gemini.ts`      | Enables Gemini image generation / editing. Without it, image plugins surface a UI warning. The `geminiAvailable` flag in `GET /api/health` mirrors this. |
+| `GEMINI_API_KEY`            | `server/utils/gemini.ts`      | Enables Gemini image generation / editing. Without it, image plugins surface a UI warning. The `geminiAvailable` flag in `GET /api/health` mirrors this, and `geminiEnvFilePath` beside it names the `.env` this launch would read it from. |
 | `X_BEARER_TOKEN`            | `server/agent/mcp-tools/x.ts` | **Required** to enable `readXPost` / `searchX` MCP tools. Tools are silently disabled if absent.                                                         |
 | `TELEGRAM_BOT_TOKEN`        | `@mulmobridge/telegram`       | **Required** for the Telegram bridge. BotFather token. Treat like a password. See [`message_apps/telegram/`](message_apps/telegram/).                    |
 | `TELEGRAM_ALLOWED_CHAT_IDS` | `@mulmobridge/telegram`       | CSV of integer Telegram chat IDs allowed to message the bot. Empty / unset → deny everyone. A non-integer entry halts startup.                           |
@@ -135,6 +135,8 @@ Set by `npx mulmoclaude` on the server it spawns. Auto-computed like the contain
 
 | Variable | Set by | Purpose |
 | -------- | ------ | ------- |
+| `MULMOCLAUDE_LAUNCH_ENV_PATH` | launcher | Absolute path of the `.env` the CLI consulted, set whether or not that file exists. The server cannot recompute it — its own cwd is the package directory — and it is what `server/system/geminiKeyGuidance.ts` names when a key is missing, instead of describing a launch directory an icon launch does not have (#2626). Absent under a direct `tsx server/index.ts` / `yarn dev`, where `<cwd>/.env` is the honest answer. |
+| `MULMOCLAUDE_LAUNCHED_FROM` | icon launcher | `icon` when the desktop launcher started the chain (`server/utils/launcher/start.mjs`). Only effect: guidance stops offering a shell `export`, which cannot reach this route — `resolve-path.sh` harvests PATH from the login shell and nothing else (#2626). Absent for a terminal launch. |
 | `MULMOCLAUDE_SHADOWED_ENV_KEYS` | launcher | CSV of launch-dir `.env` key NAMES the shell had already defined, so the file's values lost (#2604). Read once at boot by `server/system/shadowedEnv.ts`, which raises a bell notification — otherwise a user editing `.env` against a stale `export` gets no hint why nothing changes. Names only, never values; the server drops any token that isn't an env var name. Absent when there is no conflict. Outside `npx mulmoclaude` the same notification still fires, from the server's own `.env` load instead (`server/system/loadEnv.ts`, #2610) — that path is where `yarn dev` lands. |
 
 ### Container-only env (auto-set)

@@ -326,6 +326,7 @@
       :open="showSettings"
       :docker-mode="sandboxEnabled"
       :gemini-available="geminiAvailable"
+      :gemini-env-file-path="geminiEnvFilePath"
       :mcp-tools-error="mcpToolsError"
       @update:open="onSettingsOpenChange"
       @ask-gemini="handleAskGemini"
@@ -512,7 +513,7 @@ const currentBufferedMessages = computed<string[]>({
 const activePane = ref<"sidebar" | "main">("sidebar");
 
 const { sessions, historyError, fetchSessions, setBookmark, deleteSession: deleteSessionFromHistory } = useSessionHistory();
-const { geminiAvailable, sandboxEnabled, cpuLoadRatio, fetchHealth } = useHealth();
+const { geminiAvailable, geminiEnvFilePath, sandboxEnabled, cpuLoadRatio, fetchHealth } = useHealth();
 
 const { activeSession, toolResults, sidebarResults, isRunning, activeSessionRunning, statusMessage, toolCallHistory, activeSessionCount, unreadCount } =
   useSessionDerived({ sessionMap, currentSessionId, sessions });

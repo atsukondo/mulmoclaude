@@ -66,7 +66,9 @@
                 <span class="material-icons text-sm align-middle mr-1">warning</span>
                 <i18n-t keypath="settingsModal.geminiRequired" tag="span">
                   <template #envKey><code class="font-mono">GEMINI_API_KEY</code></template>
-                  <template #envFile><code class="font-mono">.env</code></template>
+                  <template #envFile
+                    ><code class="font-mono">{{ envFileLabel }}</code></template
+                  >
                 </i18n-t>
               </div>
               <button
@@ -243,6 +245,12 @@ interface Props {
   open: boolean;
   dockerMode?: boolean;
   geminiAvailable?: boolean;
+  // Absolute path of the `.env` this launch reads, from `/api/health`.
+  // Named rather than described because the two launch routes do not read
+  // the same file and an icon launch has no launch directory to point at
+  // (#2626). Empty before the first health response — the text then falls
+  // back to the bare filename it always showed.
+  geminiEnvFilePath?: string;
   // Forwarded from useMcpTools — if non-null, the MCP tab shows a
   // small warning strip so the user knows "all tools visible" is a
   // fallback rather than an accurate listing.
@@ -252,6 +260,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   dockerMode: false,
   geminiAvailable: true,
+  geminiEnvFilePath: "",
   mcpToolsError: null,
 });
 const emit = defineEmits<{
@@ -311,6 +320,12 @@ const GROUPS: readonly { key: string; items: readonly TabId[] }[] = [
   // something to sit a mis-click away from the controls above (#2616).
   { key: "server", items: ["quit"] },
 ];
+
+// The file to name in the Gemini tab. The bare filename is the fallback
+// for the window before the first health response, not a second option:
+// which directory it sits in is the whole question on an icon launch.
+const ENV_FILE_NAME = ".env";
+const envFileLabel = computed(() => props.geminiEnvFilePath || ENV_FILE_NAME);
 
 const visibleGroups = computed(() =>
   GROUPS.map((group) => ({

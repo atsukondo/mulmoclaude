@@ -36,21 +36,26 @@ The Gemini API has a **free tier that is sufficient for personal use**. Higher-v
 1. Open [Google AI Studio → API keys](https://aistudio.google.com/apikey) and sign in with a Google account.
 2. Click **Create API key**. If prompted, select or create a Google Cloud project (any project will do).
 3. Copy the key — it starts with `AIza…`.
-4. Create (or open) a `.env` file **in the directory you launch MulmoClaude from** — i.e. the directory where you run `npx mulmoclaude` (in a cloned repo, that's the repo root). Add the line:
+4. Create (or open) a `.env` file and add the line:
 
    ```dotenv
    GEMINI_API_KEY=AIza…your-key…
    ```
 
-   The key stays in your launch directory, not in the `~/mulmoclaude` workspace (which is managed by the assistant). You can also just `export GEMINI_API_KEY=…` in your shell before launching — an exported value takes precedence over the `.env` file.
+   **Which `.env`, exactly, depends on how you start the app** — open Settings → Gemini, which names the full path this launch reads:
 
-5. Restart MulmoClaude so the new environment variable is picked up.
+   - **Started from the icon** (Finder / desktop shortcut): `~/.env`, in your home directory. An icon has no launch directory — macOS starts apps in `/` — so the app is started from home instead and reads the `.env` there. A shell `export` does **not** work on this route: the launcher takes PATH from your login shell and nothing else, so nothing you put in `~/.zshrc` reaches the app.
+   - **Started from a terminal** (`npx mulmoclaude`, or `yarn dev` in a clone): the directory you ran the command in. Here `export GEMINI_API_KEY=…` before launching works too, and an exported value takes precedence over the `.env` file.
+
+   Either way the key stays outside the `~/mulmoclaude` workspace, which is managed by the assistant.
+
+5. Restart MulmoClaude so the new environment variable is picked up. Started from the icon, stop the running server first via Settings → SERVER → Quit, then click the icon again.
 
 ## Verifying It's Active
 
 The quickest check: switch to the **Artist** role and ask for _"an image of a red panda"_. If a real image appears in the canvas (instead of an italic text marker or a disabled-role hint), the key is wired up correctly.
 
-You can also inspect the server log on startup: a `GEMINI_API_KEY not set — image / audio / video generation is unavailable` warning means the key was not found (missing, misread, or placed outside your launch directory).
+You can also inspect the server log on startup: a `GEMINI_API_KEY not set — image / audio / video generation is unavailable` warning means the key was not found. The warning names the exact `.env` path this launch reads, so a key that is set but in the wrong file shows up as a path you did not expect.
 
 ## Security
 
