@@ -43,8 +43,8 @@ export const REMOTE_VIEW_MESSAGES = {
   mutateResult: "mc-remote-mutate-result",
   /** view → parent: open a new chat seeded with the prompt. Whether the parent
    *  SENDS it or leaves it as an editable draft follows the view's
-   *  `allowSendChat` declaration, on every surface — the phone reads the
-   *  resolved flag off its view payload, the desktop reads the schema. */
+   *  `allowSendChat` declaration, on every surface. Both read it from the
+   *  collection SCHEMA — never from this message, which the sandbox composes. */
   startChat: "mc-start-chat",
 } as const;
 
@@ -213,9 +213,11 @@ export function buildRemoteViewCsp(cdns: readonly string[] = SANDBOXED_VIEW_CDN_
  *    enforces the write policy — `writable` only gates the client surface.
  *  - `startChat(prompt, role)`: same message type as the desktop bridge — the
  *    parent opens a new chat seeded with `prompt`. Whether it runs follows the
- *    view's `allowSendChat` declaration on every surface — the phone gets the
- *    resolved flag in its view payload, the desktop phone-frame preview and the
- *    desktop custom view read the schema.
+ *    view's `allowSendChat` declaration on every surface, read from the
+ *    collection schema — the phone out of the schema it already holds, the
+ *    desktop surfaces through `customViewSendsChat`. Never from this message:
+ *    the sandbox composes the prompt, so letting it also decide whether the
+ *    prompt runs would hand it both halves.
  *  - `t(key, named)`: the same vue-i18n-compatible dict helper as the desktop
  *    bootstrap (named interpolation only), over the host-picked `dict`.
  *
