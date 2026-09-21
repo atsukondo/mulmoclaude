@@ -20,8 +20,10 @@ import type { CollectionCustomView } from "./schema";
  *
  *  The phone does not call THIS function: it reads `allowSendChat` out of the
  *  collection schema it already receives (`toDetail` sends the schema whole) and
- *  applies the same `=== true` rule in its own copy, because it cannot import
- *  this package's collection subpath yet. Keep the two in step.
+ *  applies the same `=== true` rule in its own copy. Two reasons for that copy
+ *  have been written down and both were wrong, so this states none — if you are
+ *  touching it, check whether the phone can import this subpath and delete the
+ *  copy if it can. Until then, keep the two in step.
  *
  *  It must also ask about the view whose document is RENDERED, not the selected
  *  one — during a view switch those differ, and the selected view's flag would
