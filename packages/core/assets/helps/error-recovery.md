@@ -657,6 +657,84 @@ workspace is already on a real filesystem and a conflict still will not
 clear, that is a new bug — report it with the calendar id and the
 record.
 
+## Push skips a record: "the record id cannot be used as a Google event id"
+
+### Symptoms
+
+Push reports a record as skipped and names its id. It never reaches
+Google, however many times the user presses the button. Editing the
+record's other fields changes nothing.
+
+### Cause
+
+A push CREATES the Google event with the record's own primary-key value
+as the event id, so a record keeps its identity across the round trip.
+Google constrains an event id to **lower-case base32hex**: 5-1024
+characters from `0-9a-v` only. So no `w`, `x`, `y` or `z`, no upper
+case, no hyphen, no underscore, no dot.
+
+A semantic id anyone would reach for — `team-standup`, `Weekly_Sync`,
+`2026-07-17` — breaks the rule on the hyphen, the case or the letters.
+Records created through the collection UI get a generated id that
+satisfies it; only a primary key someone typed or imported can fail.
+
+### Fix
+
+Recreate the record without setting the primary field, and let the UI
+generate the id. If the id has to be meaningful, it can be — as long as
+every character is a digit or a letter `a` through `v` and there are at
+least five of them (`teamstandup` passes, `team-standup` does not).
+
+Renaming the primary key of an EXISTING record means deleting it and
+adding it again: the primary key is the record's identity, so nothing
+else reassigns it.
+
+## A record keeps showing as "edited" and the same push repeats forever
+
+### Symptoms
+
+The same record is pushed on every cycle with content that never
+changes, and the Google event's `updated` moves each time. No conflict
+is reported and no data is lost — the calendar just receives the same
+write over and over.
+
+### Cause
+
+The push compares the record against the BASELINE in
+`<workspace>/data/calendar/.push-state.json`, and the baseline advances
+only when a PULL reports the event as changed. If a write reaches Google
+but does NOT change the event's stored value — Google normalising the
+value it was sent, or a write of the value the event already held — then
+Google reports no change, the pull never sees the event, and the
+baseline stays behind. The next push sees the same difference again.
+
+This was checked on a live calendar and the Events API did **not**
+normalise `description` HTML (empty `<div>`, `style` attributes and all
+survived a round trip byte-for-byte), so it is not the common case. It
+is written down because the SYMPTOM is indistinguishable from a real
+repeated edit, and the two are told apart the same way.
+
+### Fix
+
+Look at the baseline, not at the record. Read the event's entry in
+`.push-state.json` and compare it with what `google` (`kind:
+"calendarListEvents"`) reports for that event id:
+
+- **Baseline matches Google, record differs** — an ordinary unpushed
+  edit. Nothing is wrong; the next push sends it.
+- **Baseline differs from Google** — the baseline is stale. `autoPush`
+  does NOT fix this one: it converges only when the push actually
+  changed the stored value, because only then does the pull carry the
+  event. Press Sync to force a pull; if the event is still not reported,
+  the value Google holds is already what the push keeps sending, and the
+  baseline has to be rebuilt.
+
+Rebuilding: delete the calendar's entry from `.push-state.json` (or the
+file, if it covers only that calendar) and press Sync. The next pull
+writes a fresh baseline from Google's current values. Tell the user
+first — until that pull lands, a genuine unpushed local edit would be
+indistinguishable from a mirrored one.
+
 ## A calendar collection only ever holds a handful of records
 
 ### Symptoms
