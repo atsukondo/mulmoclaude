@@ -159,8 +159,29 @@ const ROUTES: Route[] = [
         ACCESS_TOKEN,
         {
           summary: "Lunch",
-          startDateTime: "2026-07-31T12:00:00+09:00",
-          endDateTime: "2026-07-31T13:00:00+09:00",
+          start: { dateTime: "2026-07-31T12:00:00+09:00" },
+          end: { dateTime: "2026-07-31T13:00:00+09:00" },
+          description: undefined,
+          calendarId: undefined,
+          colorId: undefined,
+        },
+      ],
+    ],
+    logged: [["calendar event created", { id: EVENT.id }]],
+  },
+  // An all-day create reaches the engine as `date` on both ends, never as a
+  // midnight `dateTime` — the whole point of #3240.
+  {
+    args: { kind: "calendarCreateEvent", summary: "Holiday", start: "2026-07-31", end: "2026-08-01" },
+    calls: [
+      ["getGoogleAccessToken"],
+      [
+        "createCalendarEvent",
+        ACCESS_TOKEN,
+        {
+          summary: "Holiday",
+          start: { date: "2026-07-31" },
+          end: { date: "2026-08-01" },
           description: undefined,
           calendarId: undefined,
           colorId: undefined,
@@ -179,8 +200,26 @@ const ROUTES: Route[] = [
         {
           eventId: "evt-1",
           summary: "Brunch",
-          startDateTime: undefined,
-          endDateTime: undefined,
+          description: undefined,
+          calendarId: undefined,
+          colorId: undefined,
+        },
+      ],
+    ],
+    logged: [["calendar event updated", { id: EVENT.id }]],
+  },
+  {
+    args: { kind: "calendarUpdateEvent", eventId: "evt-1", start: "2026-07-31", end: "2026-08-02" },
+    calls: [
+      ["getGoogleAccessToken"],
+      [
+        "updateCalendarEvent",
+        ACCESS_TOKEN,
+        {
+          eventId: "evt-1",
+          summary: undefined,
+          start: { date: "2026-07-31" },
+          end: { date: "2026-08-02" },
           description: undefined,
           calendarId: undefined,
           colorId: undefined,
