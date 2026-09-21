@@ -82,15 +82,56 @@ time),
 `transparency` (`"transparent"` when the event does not consume the attendee's
 time; `""` means opaque), `eventType` (all six Google returns: `default` / `birthday` / `focusTime` /
 `fromGmail` / `outOfOffice` / `workingLocation`), `hangoutLink` (the Meet URL),
-`recurringEventId` and `originalStartTime`.
+`recurringEventId`, `originalStartTime`, `selfResponseStatus` and
+`conferenceVideoUri`.
 
-The last two are how a recurring series stays legible. The sync asks Google to
-expand recurrences, so a weekly meeting arrives as one event per occurrence;
-`recurringEventId` names the series each occurrence came from (`""` for a
-one-off), and `originalStartTime` is the slot the occurrence held before anyone
-dragged it — so a moved occurrence reads as a move rather than as a deletion
-plus a new event. Map them when the user asks why one calendar edit produced a
-large batch of record changes.
+`recurringEventId` and `originalStartTime` are how a recurring series stays
+legible. The sync asks Google to expand recurrences, so a weekly meeting arrives
+as one event per occurrence; `recurringEventId` names the series each occurrence
+came from (`""` for a one-off), and `originalStartTime` is the slot the
+occurrence held before anyone dragged it — so a moved occurrence reads as a move
+rather than as a deletion plus a new event. Map them when the user asks why one
+calendar edit produced a large batch of record changes.
+
+### `selfResponseStatus` and `conferenceVideoUri`
+
+These two are not Google field names. Google answers `attendees` as an ARRAY and
+`conferenceData` as an array inside an object, and a collection field holds one
+value — so each is folded down to the single scalar the collection asks it for.
+The rest of those structures is dropped; there is no way to map the attendee
+list itself.
+
+**`selfResponseStatus`** — the signed-in user's own `responseStatus`:
+`needsAction`, `declined`, `tentative` or `accepted`.
+
+`""` means Google reported none, and that is the COMMON case, not an edge one:
+an event with no attendees has no entry to mark as the user, which is most of a
+personal calendar. So it reads as "nothing said", never as "not going".
+
+Filter with **`!= "declined"`**, never with `== "accepted"` — the second hides
+every solo event too. A `flag` field is the usual way:
+
+```jsonc
+"fields": {
+  "rsvp":    { "type": "string", "label": "RSVP" },
+  "onMySchedule": {
+    "type": "flag",
+    "label": "Mine",
+    "where": [{ "field": "rsvp", "op": "ne", "value": "declined" }]
+  }
+},
+"googleCalendar": { "map": { "rsvp": "selfResponseStatus" } }
+```
+
+**`conferenceVideoUri`** — the URL that joins the meeting, taken from the
+`video` entry point. `""` when the event has no conference, and also when its
+only entry points are a phone number or a dial-in page: a column named for
+joining that sometimes held `tel:` would be worse than one the caller can see is
+empty.
+
+`hangoutLink` already carries this for Google Meet. `conferenceVideoUri` is what
+reaches a calendar whose meetings are Zoom or Teams. A Meet event fills both, so
+map whichever the user's calendar actually uses.
 
 `description` is the event body, and Google stores limited **HTML** in it. It is
 kept verbatim — mirroring it through a plain-text field and pushing it back would

@@ -7,6 +7,7 @@
 export { configureGoogleHost, type GoogleLogger } from "./host.js";
 export { isIsoDateTimeWithOffset } from "./datetime.js";
 export { deleteRefusalMessage, planDelete, type DeleteDecision, type DeleteRefusal } from "./deletePlan.js";
+export { conferenceVideoUri, selfResponseStatus } from "./eventDerived.js";
 export {
   isCalendarDateOnly,
   resolvePartialSpanInput,

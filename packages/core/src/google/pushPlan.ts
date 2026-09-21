@@ -95,6 +95,8 @@ const UNPUSHABLE_EVENT_FIELDS: Omit<CalendarEventSummary, keyof ShadowEvent | "i
   transparency: "",
   eventType: "",
   hangoutLink: "",
+  selfResponseStatus: "",
+  conferenceVideoUri: "",
 };
 
 /** A baseline shaped as the event it came from, so the comparison can run

@@ -48,6 +48,15 @@ describe("collection schema — googleCalendar block (#2095)", () => {
     assert.equal(withSync({ map: { title: "attendees" } }).success, false);
   });
 
+  // The array fields are mapped through a DERIVED scalar, never by their own
+  // name: a collection field holds one value, so `attendees` stays rejected
+  // above while the fold it collapses to is accepted here (#3233).
+  it("accepts the derived scalars folded out of attendees and conferenceData", () => {
+    assert.equal(withSync({ map: { title: "selfResponseStatus" } }).success, true);
+    assert.equal(withSync({ map: { title: "conferenceVideoUri" } }).success, true);
+    assert.equal(withSync({ map: { title: "conferenceData" } }).success, false);
+  });
+
   it("accepts the fields the pull gained in #2620", () => {
     assert.equal(withSync({ map: { title: "description" } }).success, true);
     assert.equal(withSync({ map: { title: "location" } }).success, true);

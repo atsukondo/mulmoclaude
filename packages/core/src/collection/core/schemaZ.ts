@@ -627,7 +627,11 @@ export const AgentIngestZ = z.object({
  *  limitation: `transparency` is writable and `eventType` is writable at
  *  creation, yet neither is sent. That is also why
  *  widening this enum needs no `.push-state.json` migration: the push baseline
- *  (`ShadowEvent`) is keyed off the pushable list, not off this one. */
+ *  (`ShadowEvent`) is keyed off the pushable list, not off this one.
+ *
+ *  The last two are not Google field names but DERIVED scalars
+ *  (`google/eventDerived.ts`): the structures they come from are arrays, and a
+ *  collection field holds one value. */
 export const GOOGLE_CALENDAR_SOURCE_FIELDS = [
   "summary",
   "start",
@@ -643,6 +647,8 @@ export const GOOGLE_CALENDAR_SOURCE_FIELDS = [
   "transparency",
   "eventType",
   "hangoutLink",
+  "selfResponseStatus",
+  "conferenceVideoUri",
 ] as const;
 
 /** Marks a collection as the destination of the LLM-free Google Calendar
