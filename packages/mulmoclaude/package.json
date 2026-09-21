@@ -1,6 +1,6 @@
 {
   "name": "mulmoclaude",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "description": "MulmoClaude — GUI-chat with Claude Code + long-term memory. One command to start.",
   "type": "module",
   "bin": {
@@ -46,7 +46,7 @@
     "@mulmoclaude/markdown-utils": "^3.0.0",
     "@mulmoclaude/mulmoscript-plugin": "^5.0.0",
     "@mulmoclaude/shapescript-plugin": "^7.0.0",
-    "@mulmoclaude/spotify-plugin": "^2.0.1",
+    "@mulmoclaude/spotify-plugin": "^2.0.2",
     "@mulmoclaude/x-plugin": "^1.0.4",
     "@receptron/task-scheduler": "^1.0.3",
     "cors": "^2.8.6",
