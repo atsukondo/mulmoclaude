@@ -302,6 +302,21 @@ const deMessages = {
       connectError: "Der Google-Autorisierungsablauf konnte nicht gestartet werden.",
       unlinkError: "Die Google-Verknüpfung konnte nicht aufgehoben werden.",
     },
+    geminiTab: {
+      required: "Die Bildgenerierung erfordert {envKey}. Fügen Sie den Schlüssel unten ein und speichern Sie ihn.",
+      apiKeyLabel: "Gemini-API-Schlüssel",
+      apiKeyPlaceholder: "AIza…",
+      helperText: "Erstellen oder kopieren Sie einen Schlüssel in {studioLink}.",
+      storageNote: "Wird nur auf diesem Rechner gespeichert, außerhalb des Workspace, und ist nur für Sie lesbar. Er wirkt sofort — ohne Neustart.",
+      storedHere: "In der App gespeichert",
+      storedInEnvironment: "Kommt aus der Umgebung",
+      notConfigured: "Nicht konfiguriert",
+      clear: "Löschen",
+      fromEnvironment: "Dieser Schlüssel kommt aus der Shell, die die App gestartet hat, oder aus {envFile}. Ein hier gespeicherter Schlüssel hat Vorrang.",
+      loadError: "Schlüsselstatus konnte nicht geladen werden",
+      saveError: "Schlüssel konnte nicht gespeichert werden",
+      clearError: "Schlüssel konnte nicht gelöscht werden",
+    },
     mapTab: {
       description:
         "Legt den Google-Maps-API-Schlüssel fest, den das Karten-Plugin verwendet. Der Schlüssel wird lokal gespeichert und nur an Google Maps gesendet.",
@@ -432,7 +447,6 @@ const deMessages = {
     // `<i18n-t>`-Slots — die Namen `envKey` / `envFile` werden in
     // SettingsModal.vue als Inline-`<code>` gerendert, sodass die
     // literalen Variablen- und Dateinamen unübersetzt bleiben.
-    geminiRequired: "Die Bildgenerierung erfordert {envKey}. Fügen Sie ihn zu {envFile} hinzu und starten Sie die App neu.",
     geminiAskButton: "Claude fragen",
     geminiAskMessage: "Welche Rolle spielt der Gemini-API-Schlüssel in dieser App?",
     toolNamesLabel: "Tool-Namen",

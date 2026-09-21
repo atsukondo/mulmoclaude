@@ -97,8 +97,9 @@ export const env = Object.freeze({
   sandboxSshAllowedHosts: process.env.SANDBOX_SSH_ALLOWED_HOSTS || "github.com",
   sandboxMountConfigs: asCsv(process.env.SANDBOX_MOUNT_CONFIGS),
 
-  // API credentials (undefined when not configured)
-  geminiApiKey: process.env.GEMINI_API_KEY,
+  // API credentials (undefined when not configured). `GEMINI_API_KEY` is
+  // deliberately NOT here — Settings can write it while the server runs, so
+  // it needs the live reader below rather than a boot snapshot (#871).
   xBearerToken: process.env.X_BEARER_TOKEN,
 
   // Bearer auth token (#272, #316): if set, the server uses this
@@ -185,10 +186,22 @@ export const env = Object.freeze({
 
 // ── Derived helpers ─────────────────────────────────────────────────
 
+/** The Gemini API key in effect right now.
+ *
+ *  The one live read in this module. Everything else is a boot snapshot
+ *  because nothing changes it afterwards; this one does — Settings writes
+ *  the key to `~/.mulmoclaude/secrets/` and into this process's own
+ *  environment (#871), and a frozen copy would leave the app insisting the
+ *  key is missing until a restart. */
+export function geminiApiKey(): string | undefined {
+  return process.env.GEMINI_API_KEY;
+}
+
 /** True iff a Gemini API key is configured. Drives the "image
  *  generation available" hint in the UI. */
 export function isGeminiAvailable(): boolean {
-  return env.geminiApiKey !== undefined && env.geminiApiKey !== "";
+  const key = geminiApiKey();
+  return key !== undefined && key !== "";
 }
 
 /** The components MULMOCLAUDE_ABLATION may disable (evaluation-only —

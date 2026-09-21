@@ -297,6 +297,21 @@ const zhMessages = {
       connectError: "启动 Google 授权流程失败。",
       unlinkError: "解除 Google 关联失败。",
     },
+    geminiTab: {
+      required: "图像生成需要 {envKey}。请在下方粘贴密钥并保存。",
+      apiKeyLabel: "Gemini API 密钥",
+      apiKeyPlaceholder: "AIza…",
+      helperText: "在 {studioLink} 创建或复制密钥。",
+      storageNote: "仅保存在本机、工作区之外，且只有你能读取。保存后立即生效，无需重启。",
+      storedHere: "已保存在应用中",
+      storedInEnvironment: "来自环境变量",
+      notConfigured: "未配置",
+      clear: "清除",
+      fromEnvironment: "当前密钥来自启动应用的 shell 或 {envFile}。在此保存的密钥优先生效。",
+      loadError: "无法读取密钥状态",
+      saveError: "保存密钥失败",
+      clearError: "清除密钥失败",
+    },
     mapTab: {
       description: "设置地图插件使用的 Google Maps API 密钥。密钥仅存储在本地,除发送到 Google Maps 外不会传输到任何地方。",
       apiKeyLabel: "Google Maps API 密钥",
@@ -414,7 +429,6 @@ const zhMessages = {
     },
     // `<i18n-t>` 插槽 — 命名为 `envKey` / `envFile`,在 SettingsModal.vue
     // 中作为行内 `<code>` 渲染,因此字面的变量名和文件名保持不翻译。
-    geminiRequired: "图像生成需要 {envKey}。请将它加入 {envFile} 并重启应用。",
     geminiAskButton: "询问 Claude",
     geminiAskMessage: "Gemini API 密钥在这个应用中起什么作用?",
     toolNamesLabel: "工具名称",

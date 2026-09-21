@@ -304,6 +304,21 @@ const koMessages = {
       connectError: "Google 인증 절차를 시작하지 못했습니다.",
       unlinkError: "Google 연결 해제에 실패했습니다.",
     },
+    geminiTab: {
+      required: "이미지 생성에는 {envKey} 가 필요합니다. 아래 칸에 키를 붙여넣고 저장해주세요.",
+      apiKeyLabel: "Gemini API 키",
+      apiKeyPlaceholder: "AIza…",
+      helperText: "{studioLink} 에서 키를 만들거나 복사해주세요.",
+      storageNote: "이 컴퓨터에만, 워크스페이스 밖에 저장되며 본인만 읽을 수 있습니다. 저장하면 바로 적용되고 재시작은 필요하지 않습니다.",
+      storedHere: "앱에 저장됨",
+      storedInEnvironment: "환경 변수에서 가져옴",
+      notConfigured: "설정되지 않음",
+      clear: "지우기",
+      fromEnvironment: "지금의 키는 앱을 실행한 셸이나 {envFile} 에서 옵니다. 여기에 저장한 키가 우선합니다.",
+      loadError: "키 상태를 불러오지 못했습니다",
+      saveError: "키를 저장하지 못했습니다",
+      clearError: "키를 지우지 못했습니다",
+    },
     mapTab: {
       description: "지도 플러그인에서 사용하는 Google Maps API 키를 설정합니다. 키는 로컬에 저장되며 Google Maps 외부로는 전송되지 않습니다.",
       apiKeyLabel: "Google Maps API 키",
@@ -425,7 +440,6 @@ const koMessages = {
     // `<i18n-t>` 슬롯 — `envKey` / `envFile` 은 SettingsModal.vue 에서
     // 인라인 `<code>` 로 렌더링되므로 변수명·파일명은 번역하지 않고
     // 남깁니다.
-    geminiRequired: "이미지 생성에는 {envKey} 가 필요합니다. {envFile} 에 추가하고 앱을 재시작해주세요.",
     geminiAskButton: "Claude 에게 질문",
     geminiAskMessage: "이 앱에서 Gemini API 키는 어떤 역할을 하나요?",
     toolNamesLabel: "도구 이름",
