@@ -63,6 +63,7 @@ export {
   getCalendarMeta,
   resolveEventSpan,
   CANCELLED_EVENT_STATUS,
+  EVENT_ABSENT_STATUSES,
   HTTP_CONFLICT,
   HTTP_PRECONDITION_FAILED,
   type CalendarColorEntry,

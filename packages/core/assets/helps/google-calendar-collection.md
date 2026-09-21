@@ -281,12 +281,20 @@ those events too. **Ask the user before adding it**, the same as `autoPush` and
 for a stronger reason: `autoPush` changes WHEN a write happens, this makes a
 write irreversible.
 
-Even on, the push **refuses an event that has attendees** and reports it
-instead. Deleting one of those withdraws the event from other people's
-calendars, which is a different act from tidying your own. Any attendee counts,
-including the entry Google adds for the organiser — an event the user actually
-wants gone that way is deleted with the `google` tool's `calendarDeleteEvent`,
-after confirming with them.
+Even on, the push **refuses an event that carries attendees** and reports it
+instead. Deleting an invited event withdraws it from the guests' calendars,
+which is a different act from tidying your own. **Any** attendee entry refuses,
+including the one Google adds for the organiser — so an event only the user was
+ever on is refused too, deliberately: telling the two apart means deciding which
+entry is the user from a payload that may not say, and being wrong there
+withdraws a real invitation. Either way, an event the user actually wants gone
+is deleted with the `google` tool's `calendarDeleteEvent`, after confirming with
+them.
+
+The delete also carries the version the check was made against, so an attendee
+added while the push was running makes Google refuse it rather than letting a
+decision taken a moment earlier stand. That is reported like any other refusal;
+pressing Push again re-checks.
 
 There is no undo here and this app keeps no copy of what it deleted. Google
 Calendar's own Trash holds a deleted event for a while, and that is where a
@@ -294,7 +302,8 @@ mistake is recovered from.
 
 A deletion that carried stops being reported, because its baseline entry goes
 with it. A deletion that was REFUSED keeps being reported on every push — the
-event is still there, and the report is the only thing that says so.
+event is still standing in Google, and the report is the only thing that says
+so.
 
 ## Not for this
 

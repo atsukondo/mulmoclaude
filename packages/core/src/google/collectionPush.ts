@@ -22,6 +22,7 @@ import {
   listCalendars,
   updateCalendarEvent,
   CANCELLED_EVENT_STATUS,
+  EVENT_ABSENT_STATUSES,
   HTTP_CONFLICT,
   HTTP_PRECONDITION_FAILED,
   type CalendarEventInput,
@@ -122,10 +123,15 @@ export interface CalendarPushDeps {
   isLinked: () => Promise<boolean>;
   accessToken: () => Promise<string>;
   calendarMeta: (accessToken: string, calendarId: string | undefined) => Promise<CalendarWriteTarget>;
-  /** Read for the delete guard. Injected like the rest so a test can exercise
-   *  "this event has attendees" without a grant (#3234). */
-  fetchEvent: typeof getCalendarEvent;
-  deleteEvent: typeof deleteCalendarEvent;
+  /** Read and write for the delete guard. Injected like the rest so a test can
+   *  exercise "this event has attendees" without a grant (#3234).
+   *
+   *  OPTIONAL, unlike the rest: `CalendarPushDeps` is an exported type, and a
+   *  deps object written before these existed must keep satisfying it — the
+   *  more so because a collection that never opted into `propagateDeletes`
+   *  cannot reach either of them. Absent means the live implementation. */
+  fetchEvent?: typeof getCalendarEvent;
+  deleteEvent?: typeof deleteCalendarEvent;
 }
 
 /** Resolve the calendar a schema names, for its writability and its timezone.
@@ -447,32 +453,58 @@ const noDeletes = (seen: number): DeleteSweep => ({ seen, deleted: [], skipped: 
  *  argument rather than reached for, so the guard can be exercised against
  *  "this event has attendees" with no grant and no workspace. */
 export interface DeleteSweepDeps {
-  /** What Google currently holds for the event, or null when it is gone. */
-  fetchEvent: (eventId: string) => Promise<{ attendeeCount: number } | null>;
-  deleteEvent: (eventId: string) => Promise<void>;
+  /** What Google currently holds for the event, or null when it is gone. The
+   *  `etag` is the version the decision was made against. */
+  fetchEvent: (eventId: string) => Promise<{ attendeeCount: number; etag: string } | null>;
+  /** Delete it, conditional on that version. */
+  deleteEvent: (eventId: string, ifMatch: string) => Promise<void>;
   /** Drop the event's baseline entry. */
   forget: (eventId: string) => Promise<void>;
 }
+
+/** A delete whose event changed in Google between the guard reading it and the
+ *  delete landing. Reported rather than retried: what changed may be the very
+ *  thing the guard refuses, and re-reading in a loop would race the same way. */
+const staleDeleteMessage = (eventId: string): string =>
+  `${eventId}: left in Google because it changed there while this push was checking it — press Push again to re-check`;
 
 /** Delete ONE event and forget its baseline, or say why it was left alone.
  *
  *  The baseline entry goes only after Google confirms, and it must go: the
  *  baseline is what `locallyDeletedIds` reads, so a kept entry would re-report
  *  the same deletion on every run forever. A refusal keeps its entry on
- *  purpose — the event IS still there, and the report is the only thing saying
- *  so. */
+ *  purpose — the event IS still standing in Google, and the report is the only
+ *  thing saying so.
+ *
+ *  The delete carries the etag the guard read. Without it, an attendee added
+ *  between the two requests would be withdrawn by a decision taken before they
+ *  existed — the same race `updateCalendarEvent` already guards, and it costs
+ *  more here because a delete cannot be undone from this side. */
 async function propagateOneDelete(eventId: string, deps: DeleteSweepDeps): Promise<Partial<DeleteSweep>> {
-  const decision = planDelete(await deps.fetchEvent(eventId));
-  if (!decision.ok) {
+  const fetched = await deps.fetchEvent(eventId);
+  const decision = planDelete(fetched);
+  if (!decision.ok || fetched === null) {
     // An event already gone needs no report and no baseline: nothing is left to
     // diverge, so dropping the entry stops a permanent phantom deletion.
-    if (decision.kind === "already-gone") {
+    if (!decision.ok && decision.kind === "already-gone") {
       await deps.forget(eventId);
       return {};
     }
-    return { skipped: [deleteRefusalMessage(eventId, decision)] };
+    return { skipped: decision.ok ? [] : [deleteRefusalMessage(eventId, decision)] };
   }
-  await deps.deleteEvent(eventId);
+  try {
+    await deps.deleteEvent(eventId, fetched.etag);
+  } catch (error) {
+    if (!isGoogleApiError(error)) throw error;
+    // Gone between the read and the delete: the outcome asked for, reached by
+    // someone else. Forgetting the baseline is what stops the phantom.
+    if (EVENT_ABSENT_STATUSES.includes(error.status)) {
+      await deps.forget(eventId);
+      return {};
+    }
+    if (error.status !== HTTP_PRECONDITION_FAILED) throw error;
+    return { skipped: [staleDeleteMessage(eventId)] };
+  }
   await deps.forget(eventId);
   // Ids only — a summary is personal content, and Google's own Trash is where a
   // deleted event is recovered from, never from this log.
@@ -545,8 +577,8 @@ export async function pushCollectionNow(collection: LoadedCollection, workspaceR
     records.map((record) => fieldText(record[schema.primaryKey])),
   );
   const deletes = await sweepDeletes(deletedIds, schema.googleCalendar?.propagateDeletes === true, {
-    fetchEvent: (eventId) => deps.fetchEvent(accessToken, { calendarId, eventId }),
-    deleteEvent: (eventId) => deps.deleteEvent(accessToken, { calendarId, eventId }),
+    fetchEvent: (eventId) => (deps.fetchEvent ?? getCalendarEvent)(accessToken, { calendarId, eventId }),
+    deleteEvent: (eventId, ifMatch) => (deps.deleteEvent ?? deleteCalendarEvent)(accessToken, { calendarId, eventId, ifMatch }),
     forget: (eventId) => saveCalendarShadow(calendarId, { [eventId]: null }, workspaceRoot),
   });
   const result = tally(slug, attempts, deletes);

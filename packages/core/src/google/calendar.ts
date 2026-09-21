@@ -26,7 +26,11 @@ const HTTP_GONE = 410;
 const HTTP_NOT_FOUND = 404;
 // A GET on an event that is not there: 404 when it never existed on this
 // calendar, 410 when it was deleted and the tombstone is no longer served.
-const EVENT_ABSENT_STATUSES: readonly number[] = [HTTP_NOT_FOUND, HTTP_GONE];
+/** A GET or DELETE on an event that is not there. Exported because the push's
+ *  delete sweep has to read "already gone" as success, not as a failure to
+ *  retry — a retained baseline would announce the same phantom deletion on
+ *  every run. */
+export const EVENT_ABSENT_STATUSES: readonly number[] = [HTTP_NOT_FOUND, HTTP_GONE];
 /** An `If-Match` write whose etag no longer matches — someone else changed the
  *  event since it was read. */
 export const HTTP_PRECONDITION_FAILED = 412;
@@ -100,6 +104,12 @@ export interface UpdateCalendarEventInput {
 export interface DeleteCalendarEventInput {
   eventId: string;
   calendarId?: string | undefined;
+  /** Etag of the version this decision was made against. Sent as `If-Match`, so
+   *  Google answers 412 rather than removing an event that changed after it was
+   *  read — the same guard `updateCalendarEvent` takes, and it matters more
+   *  here: a delete cannot be undone from this side. Omit for an unconditional
+   *  delete. */
+  ifMatch?: string | undefined;
 }
 
 export interface ListEventsInput {
@@ -334,7 +344,10 @@ export async function getCalendarEvent(accessToken: string, input: DeleteCalenda
  *  return; a second delete of the same id answers 410, which surfaces as a
  *  GoogleApiError rather than being swallowed. */
 export async function deleteCalendarEvent(accessToken: string, input: DeleteCalendarEventInput): Promise<void> {
-  await googleRequest(CALENDAR_API_LABEL, accessToken, eventUrl(input.calendarId, input.eventId), { method: "DELETE" });
+  await googleRequest(CALENDAR_API_LABEL, accessToken, eventUrl(input.calendarId, input.eventId), {
+    method: "DELETE",
+    ...(input.ifMatch ? { extraHeaders: { "If-Match": input.ifMatch } } : {}),
+  });
 }
 
 export async function listCalendarEvents(accessToken: string, input: ListEventsInput = {}): Promise<CalendarEventSummary[]> {

@@ -14,18 +14,21 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { sweepDeletes, type DeleteSweepDeps } from "@mulmoclaude/core/google";
+import { googleApiError, sweepDeletes, type DeleteSweepDeps } from "@mulmoclaude/core/google";
+
+type StubEvent = { attendeeCount: number; etag?: string } | null;
 
 /** A calendar stubbed at the three effects the sweep has, recording each. */
-const stub = (events: Record<string, { attendeeCount: number } | null>) => {
-  const calls = { fetched: [] as string[], deleted: [] as string[], forgotten: [] as string[] };
+const stub = (events: Record<string, StubEvent>) => {
+  const calls = { fetched: [] as string[], deleted: [] as [string, string][], forgotten: [] as string[] };
   const deps: DeleteSweepDeps = {
     fetchEvent: async (eventId) => {
       calls.fetched.push(eventId);
-      return events[eventId] ?? null;
+      const event = events[eventId];
+      return event === undefined || event === null ? null : { attendeeCount: event.attendeeCount, etag: event.etag ?? `etag-${eventId}` };
     },
-    deleteEvent: async (eventId) => {
-      calls.deleted.push(eventId);
+    deleteEvent: async (eventId, ifMatch) => {
+      calls.deleted.push([eventId, ifMatch]);
     },
     forget: async (eventId) => {
       calls.forgotten.push(eventId);
@@ -33,6 +36,10 @@ const stub = (events: Record<string, { attendeeCount: number } | null>) => {
   };
   return { deps, calls };
 };
+
+/** A `GoogleApiError`-shaped failure, built the way the engine builds one so
+ *  the sweep's status branches are exercised through `isGoogleApiError`. */
+const apiError = (status: number): Error => googleApiError("Google Calendar API", status, "");
 
 describe("sweepDeletes — off by default", () => {
   it("touches nothing when the collection did not opt in, but still counts", async () => {
@@ -54,7 +61,7 @@ describe("sweepDeletes — a solo event", () => {
     const { deps, calls } = stub({ ev1: { attendeeCount: 0 } });
     const sweep = await sweepDeletes(["ev1"], true, deps);
     assert.deepEqual(sweep, { seen: 1, deleted: ["ev1"], skipped: [], errors: [] });
-    assert.deepEqual(calls.deleted, ["ev1"]);
+    assert.deepEqual(calls.deleted, [["ev1", "etag-ev1"]]);
     assert.deepEqual(calls.forgotten, ["ev1"]);
   });
 
@@ -111,9 +118,9 @@ describe("sweepDeletes — a failure", () => {
     const { deps, calls } = stub(events);
     const wrapped: DeleteSweepDeps = {
       ...deps,
-      deleteEvent: async (eventId) => {
+      deleteEvent: async (eventId, ifMatch) => {
         if (eventId === failOn) throw new Error("Google Calendar API 503");
-        await deps.deleteEvent(eventId);
+        await deps.deleteEvent(eventId, ifMatch);
       },
     };
     return { deps: wrapped, calls };
@@ -142,8 +149,8 @@ describe("sweepDeletes — a failure", () => {
       fetchEvent: async () => {
         throw new Error("Google Calendar API 500");
       },
-      deleteEvent: async (eventId) => {
-        calls.deleted.push(eventId);
+      deleteEvent: async (eventId, ifMatch) => {
+        calls.deleted.push([eventId, ifMatch]);
       },
       forget: async (eventId) => {
         calls.forgotten.push(eventId);
@@ -152,6 +159,59 @@ describe("sweepDeletes — a failure", () => {
     const sweep = await sweepDeletes(["ev1"], true, deps);
     assert.equal(sweep.errors.length, 1);
     assert.deepEqual(calls.deleted, []);
+    assert.deepEqual(calls.forgotten, []);
+  });
+});
+
+// The window between the guard reading the event and the delete landing. It is
+// small and the cost of losing it is a withdrawn invitation, so the delete
+// carries the etag the guard read — the same guard an edit already takes
+// (CodeRabbit on #3247).
+describe("sweepDeletes — the event changed between the read and the delete", () => {
+  const rejectingWith = (status: number, events: Record<string, StubEvent>) => {
+    const { deps, calls } = stub(events);
+    const wrapped: DeleteSweepDeps = {
+      ...deps,
+      deleteEvent: async () => {
+        throw apiError(status);
+      },
+    };
+    return { deps: wrapped, calls };
+  };
+
+  it("sends the etag the guard read as the delete's precondition", async () => {
+    const { deps, calls } = stub({ ev1: { attendeeCount: 0, etag: '"abc123"' } });
+    await sweepDeletes(["ev1"], true, deps);
+    assert.deepEqual(calls.deleted, [["ev1", '"abc123"']]);
+  });
+
+  // 412: someone changed it — possibly by adding the very attendee the guard
+  // refuses. Reported and left standing rather than retried unconditionally.
+  it("leaves it alone on a 412 and keeps its baseline", async () => {
+    const { deps, calls } = rejectingWith(412, { ev1: { attendeeCount: 0 } });
+    const sweep = await sweepDeletes(["ev1"], true, deps);
+    assert.deepEqual(sweep.deleted, []);
+    assert.deepEqual(sweep.errors, []);
+    assert.equal(sweep.skipped.length, 1);
+    assert.match(sweep.skipped[0] ?? "", /ev1: left in Google because it changed there/);
+    assert.deepEqual(calls.forgotten, []);
+  });
+
+  // 404 / 410: the outcome that was asked for, reached by someone else. An
+  // error here would keep the baseline and announce the phantom forever.
+  for (const status of [404, 410]) {
+    it(`treats a ${status} on the delete as the event being gone`, async () => {
+      const { deps, calls } = rejectingWith(status, { ev1: { attendeeCount: 0 } });
+      const sweep = await sweepDeletes(["ev1"], true, deps);
+      assert.deepEqual(sweep, { seen: 1, deleted: [], skipped: [], errors: [] });
+      assert.deepEqual(calls.forgotten, ["ev1"]);
+    });
+  }
+
+  it("still reports any other status as an error and keeps the baseline", async () => {
+    const { deps, calls } = rejectingWith(503, { ev1: { attendeeCount: 0 } });
+    const sweep = await sweepDeletes(["ev1"], true, deps);
+    assert.equal(sweep.errors.length, 1);
     assert.deepEqual(calls.forgotten, []);
   });
 });
