@@ -32,6 +32,10 @@ describe("launchRouteFacts", () => {
     assert.equal(relative.envFilePath, path.join("/repo", ".env"));
     const injected = launchRouteFacts({ launchEnvPath: "/tmp/.env\nWARN something else entirely", launchedFromIcon: false, cwd: "/repo" });
     assert.equal(injected.envFilePath, path.join("/repo", ".env"));
+    // C1 as well as C0: U+009B is CSI, so a terminal reading the log line can
+    // act on it, and a `<= 0x1f` cutoff would have let it through.
+    const csi = launchRouteFacts({ launchEnvPath: "/tmp/\u009b31m.env", launchedFromIcon: false, cwd: "/repo" });
+    assert.equal(csi.envFilePath, path.join("/repo", ".env"));
   });
 
   it("ignores an empty or whitespace-only handed path", () => {
