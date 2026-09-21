@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 
 import {
   buildEventPatch,
+  resolveEventSpan,
   calendarApiError,
   collectCalendarPages,
   toCalendarMeta,
@@ -276,6 +277,27 @@ describe("buildEventPatch (#2569)", () => {
     assert.deepEqual(buildEventPatch({ eventId: "e1", endDateTime: "2026-07-17T11:00:00+09:00" }), { end: { dateTime: "2026-07-17T11:00:00+09:00" } });
   });
 
+  // The structured span is how an all-day event is expressed. `resolveEventSpan`
+  // and this patch builder are the last hop before the request body, so an
+  // all-day `date` surviving both is what makes #3240 reach Google.
+  it("carries a structured all-day span straight into the body", () => {
+    assert.deepEqual(buildEventPatch({ eventId: "e1", start: { date: "2026-07-17" }, end: { date: "2026-07-18" } }), {
+      start: { date: "2026-07-17" },
+      end: { date: "2026-07-18" },
+    });
+  });
+
+  it("prefers the structured span over the flat pair when both are given", () => {
+    const patch = buildEventPatch({
+      eventId: "e1",
+      start: { date: "2026-07-17" },
+      end: { date: "2026-07-18" },
+      startDateTime: "2026-07-17T09:00:00Z",
+      endDateTime: "2026-07-17T10:00:00Z",
+    });
+    assert.deepEqual(patch, { start: { date: "2026-07-17" }, end: { date: "2026-07-18" } });
+  });
+
   it("carries every field together", () => {
     const patch = buildEventPatch({
       eventId: "e1",
@@ -287,6 +309,22 @@ describe("buildEventPatch (#2569)", () => {
       calendarId: "ignored",
     });
     assert.deepEqual(Object.keys(patch).sort(), ["colorId", "description", "end", "start", "summary"]);
+  });
+});
+
+describe("resolveEventSpan", () => {
+  it("wraps the flat pair as date-times", () => {
+    assert.deepEqual(resolveEventSpan({ startDateTime: "2026-07-17T09:00:00+09:00", endDateTime: "2026-07-17T10:00:00+09:00" }), {
+      start: { dateTime: "2026-07-17T09:00:00+09:00" },
+      end: { dateTime: "2026-07-17T10:00:00+09:00" },
+    });
+  });
+
+  it("passes an all-day span through untouched — the shape a create needs for #3240", () => {
+    assert.deepEqual(resolveEventSpan({ start: { date: "2026-07-17" }, end: { date: "2026-07-18" } }), {
+      start: { date: "2026-07-17" },
+      end: { date: "2026-07-18" },
+    });
   });
 });
 
