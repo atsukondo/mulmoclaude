@@ -44,8 +44,23 @@ export function secretsDir(home: string = homedir()): string {
   return path.join(home, ".mulmoclaude", "secrets");
 }
 
+/** The file name for a key, written out as a literal here.
+ *
+ *  Deliberately re-derived instead of passing the key through: it arrives on a
+ *  request, and "`isSecretKey` narrowed it to a one-member union" is a fact the
+ *  type checker knows and a dataflow scanner does not — CodeQL reported
+ *  `js/path-injection` on the previous form. Returning a literal means no
+ *  request string reaches `path.join` at all, and adding a key becomes a
+ *  compile error here rather than a new way to build a path. Same shape as
+ *  `catalogDirForSource` in `server/workspace/skills/catalog.ts`. */
+function secretFileName(key: SecretKey): string {
+  if (key === "GEMINI_API_KEY") return "GEMINI_API_KEY";
+  const exhaustive: never = key;
+  throw new Error(`unknown secret key: ${String(exhaustive)}`);
+}
+
 export function secretFilePath(key: SecretKey, home: string = homedir()): string {
-  return path.join(secretsDir(home), key);
+  return path.join(secretsDir(home), secretFileName(key));
 }
 
 /** Why a value was refused. The UI turns this into a message, so the
