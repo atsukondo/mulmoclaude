@@ -6,6 +6,7 @@
 // link state.
 export { configureGoogleHost, type GoogleLogger } from "./host.js";
 export { isIsoDateTimeWithOffset } from "./datetime.js";
+export { conferenceVideoUri, selfResponseStatus } from "./eventDerived.js";
 export {
   isCalendarDateOnly,
   resolvePartialSpanInput,

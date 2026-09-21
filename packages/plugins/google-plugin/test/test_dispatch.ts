@@ -31,6 +31,8 @@ const EVENT: CalendarEventSummary = {
   transparency: "",
   eventType: "",
   hangoutLink: "",
+  selfResponseStatus: "",
+  conferenceVideoUri: "",
 };
 const CANCELLED_EVENT: CalendarEventSummary = { ...EVENT, id: "evt-cancelled", status: "cancelled" };
 const TASK = { id: "task-1", title: "Buy milk", status: "needsAction", due: "", notes: "" };

@@ -2,6 +2,7 @@
 // user can access (default: their primary); the calendar list and colour
 // palette let callers show non-primary calendars and their colours.
 import { asRecord, googleApiError, googleRequest, isGoogleApiError, itemsOf, stringField, DEFAULT_LIST_MAX_RESULTS } from "./apiClient.js";
+import { conferenceVideoUri, selfResponseStatus } from "./eventDerived.js";
 import { isRecord } from "./util.js";
 
 const CALENDAR_BASE_URL = "https://www.googleapis.com/calendar/v3";
@@ -144,6 +145,14 @@ export interface CalendarEventSummary {
   eventType: string;
   /** Google Meet URL, "" when nothing is attached. */
   hangoutLink: string;
+  /** The signed-in user's own `responseStatus`, folded out of `attendees`.
+   *  `""` when Google reported none — which is every event that HAS no
+   *  attendees, so it reads as "nothing said", never as "not going". */
+  selfResponseStatus: string;
+  /** The URL that joins this event's meeting, folded out of
+   *  `conferenceData.entryPoints`. Covers the conferences `hangoutLink` does
+   *  not: Zoom, Teams, anything attached as conference data. */
+  conferenceVideoUri: string;
 }
 
 export interface CalendarSummary {
@@ -201,6 +210,8 @@ export const toEventSummary = (value: unknown): CalendarEventSummary => {
     transparency: stringField(record, "transparency"),
     eventType: stringField(record, "eventType"),
     hangoutLink: stringField(record, "hangoutLink"),
+    selfResponseStatus: selfResponseStatus(record.attendees),
+    conferenceVideoUri: conferenceVideoUri(record.conferenceData),
   };
 };
 
