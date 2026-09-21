@@ -112,13 +112,35 @@ drifts.
 
 ## Verification
 
-- The card is a UI change, so run the app and look at the sidebar for a
-  `getReport` call — the claim "a card already renders" came from reading code
-  and has not yet been seen on screen.
-- Break-verify the census test: revert the props to `data`/`jsonData` and watch
-  it go red.
-- Unit-test `summarisePl` / `summariseBs` through the real payload shape the
-  router now produces, not a hand-built one.
+- The card is a UI change, so it is checked by rendering it: `e2e/tests/
+  accounting-preview-card.spec.ts` drives the real sidebar in a browser. Reading
+  the code was what produced the wrong gate claim in the first place.
+- Break-verify the census: revert the props to `data`/`jsonData` and watch it go
+  red for accounting.
+- Break-verify the silence: put `getReport` back into `PREVIEW_ACTIONS` and watch
+  `test_router.ts` go red.
+- **Do not restate which actions render a card anywhere but `PREVIEW_ACTIONS`.**
+  That list went stale in three consecutive review rounds — in the router
+  comment, the PR body, a test docblock, the component comment and here. A test
+  now walks the set instead, so it is checked by running rather than by
+  re-reading five copies.
+- **The walk asserts the property, not the set's own definition.** Its first
+  version compared the set against "which actions carry `data`", which is
+  tautological: `data` is attached *because* the action is in the set, so the
+  assertion held with a data-less `getBooks` wrongly a member and caught nothing.
+  What it asserts now is what the set is for — a member reaches the card with a
+  payload, and the card says something about it. Break-verified with four
+  mutations, each confirmed to have landed in the file before measuring: adding a
+  member with no call, adding one whose payload no branch reads, removing a
+  summariser from the dispatch chain, and shrinking the hold-out list without
+  fixing anything. All four go red; the sources restore to their original
+  checksums.
+- **Three cards say only "book `<id>`"** — `upsertAccount`, `voidEntry`,
+  `setOpeningBalances` reach `summariseFallback`'s bare-book branch. Not a
+  regression (before this change they rendered nothing at all) and not fixed
+  here, because each needs an i18n key in all 8 locales. Pinned as an exact set
+  the walk compares against, so it cannot drift in either direction, and tracked
+  in #3228.
 
 ## Not in scope
 

@@ -260,7 +260,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
 // `getReport` was weighed for inclusion under #2716 and deliberately left out
 // (2026-09-21) — a card per report call is noise the narration already covers.
 // The consequence is stated where it bites, on `summarisePl` / `summariseBs`.
-const PREVIEW_ACTIONS = new Set<string>([
+export const PREVIEW_ACTIONS = new Set<string>([
   ACCOUNTING_ACTIONS.openBook,
   ACCOUNTING_ACTIONS.createBook,
   ACCOUNTING_ACTIONS.updateBook,

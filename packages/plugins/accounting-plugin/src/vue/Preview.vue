@@ -1,8 +1,10 @@
 <template>
-  <!-- Compact inline summary for non-openBook tool results. The
-       openBook envelope routes to View.vue (full app) instead of
-       this component; everything that lands here is a
-       compact-result action (addEntries, getReport, …). -->
+  <!-- Compact inline summary for a tool result that is not the openBook
+       envelope, which routes to View.vue (the full app) instead.
+       WHICH actions reach here is decided by PREVIEW_ACTIONS in
+       server/router.ts and asserted by its tests — deliberately not listed
+       again here, because a second copy of that list is what went stale
+       three times in #2716's review. -->
   <div class="text-sm text-gray-700" data-testid="accounting-preview">
     <span class="material-icons text-base align-middle mr-1">account_balance</span>
     <span>{{ summary }}</span>
