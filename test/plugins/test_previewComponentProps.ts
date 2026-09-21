@@ -28,16 +28,11 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 /** Packaged plugins whose built `vue` entry exports a preview component. */
-const PACKAGED_PLUGINS = ["accounting", "chart", "collection", "form", "html", "markdown", "mulmoscript", "shapescript"] as const;
+const PACKAGED_PLUGINS = ["accounting", "chart", "collection", "form", "html", "markdown", "mulmoscript", "shapescript", "spotify"] as const;
 
-// `spotify` is held out, and the reason is the finding rather than an excuse:
-// its preview declares `selectedResult` — the prop name the VIEW slot takes
-// (`App.vue`: `:selected-result`) — and reads `ok` / `error` off it, neither of
-// which is on `ToolResult`. So it is the same class as #2716 but not the same
-// one-line fix: someone has to establish where those fields actually arrive
-// before renaming anything. Tracked as #3226; this list is a ratchet and the
-// entry comes back the moment that lands.
-const KNOWN_UNFIXED = ["spotify"] as const;
+// Empty, and asserted so it stays that way. Holding a plugin out needs a
+// tracking issue and a line here saying which one.
+const KNOWN_UNFIXED: readonly string[] = [];
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 
@@ -52,13 +47,27 @@ const declaredPropNames = (component: unknown): string[] | null => {
   return null;
 };
 
-const previewExportsOf = (moduleNamespace: Record<string, unknown>): [string, unknown][] =>
-  Object.entries(moduleNamespace).filter(([name]) => /preview$/i.test(name));
+/** The component the HOST actually renders. `src/tools/runtimeLoader.ts` reads
+ *  `plugin.previewComponent` off the built `vue` entry — a named `*Preview`
+ *  export is a convenience and need not be the same object. Checking only the
+ *  named export would have passed spotify, which exports no `Preview` at all
+ *  (#3226), so both are gathered and both must declare the prop. */
+const registeredPreviewOf = (moduleNamespace: Record<string, unknown>): [string, unknown][] => {
+  const { plugin } = moduleNamespace;
+  if (!isRecord(plugin)) return [];
+  const preview = plugin.previewComponent;
+  return preview === undefined ? [] : [["plugin.previewComponent", preview]];
+};
+
+const previewExportsOf = (moduleNamespace: Record<string, unknown>): [string, unknown][] => [
+  ...Object.entries(moduleNamespace).filter(([name]) => /preview$/i.test(name)),
+  ...registeredPreviewOf(moduleNamespace),
+];
 
 describe("every packaged plugin preview declares the prop the sidebar passes", () => {
   it("the held-out list stays short and named", () => {
     // A ratchet with no assertion is a list that only ever grows.
-    assert.deepEqual([...KNOWN_UNFIXED], ["spotify"], "add a tracking issue before holding another plugin out");
+    assert.deepEqual([...KNOWN_UNFIXED], [], "add a tracking issue before holding a plugin out");
   });
 
   PACKAGED_PLUGINS.forEach((plugin) => {
