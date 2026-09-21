@@ -271,7 +271,7 @@ to be allowed — being unlisted is not treated as being read-only.
 
 ## Deleting
 
-By default a record deleted in the collection leaves its Google event alone.
+By default, a record deleted in the collection leaves its Google event alone.
 The push reports the count and does nothing else, and the next sync brings the
 record back — which is correct for a calendar Google owns, and wrong for one
 where the collection is the primary copy.
