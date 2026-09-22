@@ -22,20 +22,30 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const REGISTER_HOOKS = pathToFileURL(resolve(dirname(fileURLToPath(import.meta.url)), "fixtures", "noFirebaseRegister.mjs")).href;
 
+/** Fences the child's answer off from anything else it may print. */
+const MARKER = "__EXPORTS__";
+
 /** Import one subpath of the package in a child whose `firebase` cannot be
  *  resolved. Returns what a consumer would see: the names the entry exported,
  *  or the load failure. */
 function importWithoutFirebase(subpath: string): { ok: boolean; names: string[]; stderr: string } {
+  // The names are fenced by a marker rather than taken as the whole of stdout:
+  // a module that logged a line on import would otherwise turn a real result
+  // into a `JSON.parse` crash, which reads as a broken test rather than as
+  // whatever it actually is.
   const script = `
     const entry = await import(${JSON.stringify(subpath)});
-    process.stdout.write(JSON.stringify(Object.keys(entry)));
+    process.stdout.write("\\n${MARKER}" + JSON.stringify(Object.keys(entry)));
   `;
   const child = spawnSync(process.execPath, ["--import", REGISTER_HOOKS, "--input-type=module", "-e", script], {
     cwd: resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", ".."),
     encoding: "utf-8",
   });
-  const names: string[] = child.status === 0 ? JSON.parse(child.stdout) : [];
-  return { ok: child.status === 0, names, stderr: child.stderr };
+  const fenced = (child.stdout ?? "").split("\n").find((line) => line.startsWith(MARKER));
+  const failure = child.error === undefined ? (child.stderr ?? "") : `${child.error.message}\n${child.stderr ?? ""}`;
+  if (child.status !== 0 || fenced === undefined) return { ok: false, names: [], stderr: failure };
+  const names: unknown = JSON.parse(fenced.slice(MARKER.length));
+  return { ok: true, names: Array.isArray(names) ? names.map(String) : [], stderr: failure };
 }
 
 describe("the optional `firebase` peer (#3263)", () => {

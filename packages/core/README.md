@@ -13,7 +13,7 @@ rather than imported, which is what lets the same code run under either.
 
 | Area | Entries |
 | --- | --- |
-| Collections | `./collection`, `./collection/server`, `./collection/paths`, `./collection/registry`, `./collection/registry/server`, `./collection-watchers` |
+| Collections | `./collection`, `./collection/server`, `./collection/paths`, `./collection/firestore`, `./collection/registry`, `./collection/registry/server`, `./collection-watchers` |
 | Knowledge | `./wiki`, `./wiki/server`, `./wiki/paths`, `./feeds`, `./feeds/server`, `./feeds/paths` |
 | Google | `./google` — OAuth (loopback + PKCE), token store, Calendar / Tasks / Drive REST |
 | Runtime | `./scheduler`, `./notifier`, `./skill-bridge`, `./file-change`, `./workspace-setup`, `./artifacts` |
@@ -25,6 +25,13 @@ rather than imported, which is what lets the same code run under either.
 **Server-only**, except the browser-safe entries: `./artifacts`,
 `./whisper/client`, `./workspace-setup/slug`, `./translation/client`,
 `./remote-view`, `./remote-host` and `./plugin-vue`.
+
+`firebase` is an **optional** peer, and only the entries named for it need it:
+`./collection/firestore`, `./remote-host` and `./remote-host/server`. Every
+other entry must LOAD with the package absent — a host that uses no Firestore
+installs nothing. `test/workspace/collections/test_optionalFirebasePeer.ts` in
+the MulmoClaude repository holds that line, by importing the built entry with
+`firebase` made unresolvable.
 
 The package also ships `assets/helps/*` — the help documents the agent reads at
 runtime — which is why a change there alone still warrants a release.
