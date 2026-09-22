@@ -12,7 +12,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 - **A push that really deleted events said they were "not applied"** (`@mulmoclaude/collection-plugin`, #3261, closes #3260) — `propagateDeletes` shipped with the count, the response field and `pushWroteSomething` all correct, and the sentence on screen still built from the four numbers it had before. `localDeletes` counts records that went away HERE, whether or not the deletion carried, so calling it "local deletions not applied" was true only while the push never deleted: a user who opted in deleted three records, watched three events disappear from Google, and was told three local deletions were not applied. The number that means "still standing in Google" is `localDeletes - deletedInGoogle`, and the message now says both. A collection that never opted in reads exactly as it did — the remainder equals the old count there, and the wording with the delete clause appears only once something was actually deleted, so nobody is shown "0 deleted in Google" forever. Found by the mulmoterminal upgrade (receptron/mulmoterminal#2209), which noticed the view formatted only the four original counts.
 
-- **`@mulmoclaude/core/collection/server` loads without `firebase` again** (`@mulmoclaude/core`, #3264, closes #3263) — core declares `firebase` as an OPTIONAL peer, and the `collection/server` entry made it required: a value re-export there linked `firestoreStore` eagerly, which top-level imports `firebase/firestore`, so every consumer without `firebase` installed failed at import with `ERR_MODULE_NOT_FOUND: Cannot find package 'firebase'`. The file already carried the invariant in a comment a few lines above the line that broke it. That had been true since before 5.0.0; 5.3.0 shipped it too. The entry's exported names are unchanged — nothing was removed or added — so this is the same surface, now loadable on a host that never uses Firestore.
+- **`@mulmoclaude/core/collection/server` loads without `firebase` again** (`@mulmoclaude/core`, #3264, closes #3263) — core declares `firebase` as an OPTIONAL peer, and several entries made it required: a top-level `import { Timestamp } from "firebase/firestore"` in `collection/server/firestoreStore.ts` was linked eagerly by everything whose graph reached it — `store.ts` names that module in its storage-backend registry, and the entry re-exports `./store` — so a consumer without `firebase` installed failed at import with `ERR_MODULE_NOT_FOUND: Cannot find package 'firebase'`. The file already carried the invariant in a comment a few lines above the line that broke it. That had been true since before 5.0.0; 5.3.0 shipped it too.
+
+  The entries that could not load, and now can: `./google`, `./collection/server`, `./collection/registry/server`, `./feeds/server`, `./collection-watchers`. The ones that still need `firebase` are the ones whose NAME says so — `./collection/firestore`, `./remote-host`, `./remote-host/server` — under `import` and `require` alike. The exported names of every entry are unchanged, and no runtime behaviour changed.
+
+  **This is a breaking change for TypeScript consumers, and it shipped as a minor.** `FirestoreDocs` is an exported interface and gained one required member, so a host that constructs the seam BY HAND stops compiling:
+
+  ```
+  error TS2741: Property 'timestamp' is missing in type '{ list: ...; get: ...; set: ...; create: ...;
+  delete: ...; watch: ...; }' but required in type 'FirestoreDocs'.
+  ```
+
+  **Migration.** If you build the seam with `createFirestoreDocs` from `@mulmoclaude/core/collection/firestore` — which is what both hosts do in production — there is nothing to do; the adapter supplies the member. If you wrote an implementation by hand, which in practice means a test fake, add it:
+
+  ```ts
+  const FAKE_DOCS = {
+    list: () => Promise.resolve([]),
+    get: () => Promise.resolve(null),
+    set: () => Promise.resolve(),
+    create: () => Promise.resolve(true),
+    delete: () => Promise.resolve(true),
+    watch: () => () => {},
+    // NEW in 5.4.0. `{ seconds, nanoseconds }` is the structured-clone shape of a Firestore
+    // `Timestamp`, which is what the server-time codec duck-types on — a fake does not need
+    // the SDK class. The real adapter returns `new Timestamp(seconds, nanoseconds)`.
+    timestamp: (seconds: number, nanoseconds: number) => ({ seconds, nanoseconds }),
+  };
+  ```
+
+  The member exists so the collection store can obtain Firestore's own instant without importing the SDK — that import is what made the optional peer mandatory. It is required rather than optional deliberately: a fallback would have to write a plain object where a `Timestamp` belongs, and the deployed security rules freeze that field, so the record would become permanently unupdatable, silently. A compile error is the better failure. (`receptron/mulmoterminal#2209` carries the one-line fake fix on the consuming side.)
+
+  Precedent note for whoever cuts the next release: the comparable change in `@mulmoclaude/core@5.0.0` — `CalendarEventSummary` gaining required properties — took a MAJOR bump for exactly this reason. This one did not, on the grounds that the only thing that breaks is a hand-written implementation of an interface whose supported construction path is `createFirestoreDocs`. If that trade looks wrong later, the fix is a major, not a re-publish.
+
+  **How to check the fix is present** in a version you are resolving, without installing `firebase`:
+
+  ```bash
+  node --input-type=module -e 'await import("@mulmoclaude/core/collection/server")'   # must not throw
+  ```
 
 Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.2.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.4.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
@@ -118,11 +154,43 @@ A thread is admitted by its **parent** channel, so `DISCORD_ALLOWED_CHANNELS` an
 
 - **A mirrored Google Calendar can read the fields a two-way sync needs to stay legible** (`@mulmoclaude/core`, #3229) — a `googleCalendar` collection could map six event fields; it can now map fourteen. The six additions are **pull-only in this sync** — the pull fills them and the push never sends them (`transparency` is writable in Google, and `eventType` is writable at creation, but this sync deliberately sends neither): `recurringEventId` and `originalStartTime` (the series an expanded instance came from, and the slot it held before anyone moved it), `updated` (Google's own last-modified time), `transparency`, `eventType` and `hangoutLink`. The first two are what make a recurring series legible — the sync asks Google to expand recurrences, so a weekly meeting arrives as one event per occurrence, and with no key pointing back at the series one calendar edit was indistinguishable from a large batch of unrelated changes; `originalStartTime` additionally makes a dragged occurrence read as a move rather than a deletion plus a new event. Nothing changes for an existing collection until a field is added to its `map`, and the push baseline (`.push-state.json`) is untouched, so there is no state migration. **This is a breaking change for TypeScript consumers**: `CalendarEventSummary` is an exported interface and gained six required properties, so any code constructing one as a literal must add them (they are plain strings, `""` when Google omits the value) — hence the major bump rather than a minor one. `PUSHABLE_SOURCE_FIELDS` now carries a `satisfies` constraint against the pullable set, so a field that is writable but not readable fails the build instead of shipping a baseline that can never be rebuilt from a pull.
 
+  **Migration.** Nothing is required of code that only READS a `CalendarEventSummary`; the six additions are extra properties on a value core hands you. What breaks is code that CONSTRUCTS one as a literal — in practice a test fixture or a mapper:
+
+  ```
+  error TS2739: Type '{ id: string; summary: string; ... }' is missing the following properties from
+  type 'CalendarEventSummary': recurringEventId, originalStartTime, updated, transparency, and 2 more.
+  ```
+
+  All six are plain `string`, and `""` is the value core itself uses when Google omits the field, so an empty string is the correct filler rather than a placeholder:
+
+  ```ts
+  const event: CalendarEventSummary = {
+    id,
+    summary,
+    start,
+    end,
+    htmlLink,
+    status,
+    colorId,
+    description,
+    location,
+    // NEW in 5.0.0 — pull-only. "" is what core writes when Google omits the field.
+    recurringEventId: "", // the series an expanded instance came from
+    originalStartTime: "", // where that instance sat before anyone moved it
+    updated: "", // Google's own last-modified time (RFC3339)
+    transparency: "", // "transparent" when the event does not consume time; "" reads as opaque
+    eventType: "", // which KIND of entry this is
+    hangoutLink: "", // the meeting link, when there is one
+  };
+  ```
+
+  There is no DATA migration: an existing collection is untouched until a field is added to its `map`, and the push baseline (`.push-state.json`) keeps its shape, so a sync that was working keeps working without a re-pull.
+
 - **Discord threads work with the allowlist, and can hold their own session** (`@mulmobridge/discord`, #3217) — a thread is a channel of its own on Discord, with an id minted the moment someone opens it, so `DISCORD_ALLOWED_CHANNELS` and threads could not be used together: you pasted each new thread id into `.env` and restarted, or left the list empty and answered everywhere. A thread is now admitted by its **parent** channel, and listing a thread's own id still works. The new `DISCORD_SESSION_GRANULARITY` chooses what a thread maps to — `thread` (default, and what the bridge already did for any thread that reached it) gives each thread its own conversation; `channel` folds every thread into its parent channel's. It defaults differently from `SLACK_SESSION_GRANULARITY` on purpose, because a Slack thread is a facet of a channel while a Discord thread is a channel. Folding is refused in two cases, both the same invariant — a session is only ever keyed to a channel the bot may actually talk in. A post in a **forum** channel never folds, because Discord does not allow posting into a forum channel itself, so a session keyed by the forum id would have nowhere to deliver a server-initiated reply. And a thread never folds onto a parent the allowlist does not cover, so allowing a thread by its own id cannot aim replies at a channel that was deliberately left out. **Operators should check the bot has `Send Messages in Threads`** — Discord treats it as separate from `Send Messages`, and now that threads reach the bridge by default, a bot missing it receives thread messages and silently fails to reply.
 
 ### Fixed
 
-- **The Spotify sidebar card showed an error panel instead of a summary** (`@mulmoclaude/spotify-plugin`, #3230, closes #3226) — the preview declared `selectedResult`, the prop name the **view** slot takes (`App.vue`: `:selected-result`), while the sidebar passes `result`. So it arrived `undefined` and the computed read `result.ok` off it with no guard. Rendering the built component the way the host renders it throws `TypeError: Cannot read properties of undefined (reading 'ok')`; the runtime loader wraps plugin components in `PluginScopedRoot`, whose `onErrorCaptured` caught it, so every `manageSpotify` call that rendered at all showed the red plugin-error panel. The same class as #2716, which is why the census added there held spotify out by name until the question it raised was answered. That question was **where `ok` / `error` actually arrive**: they do arrive, because the MCP bridge spreads the plugin's whole return value into the posted tool result and the session store keeps it verbatim — they are missing from the `ToolResult` *type*, not from the object. But `ok: false` can never reach this card, since the bridge posts only when `data` is present and every failure return in the plugin's dispatch omits `data`; that branch is therefore gone, and a failed call renders no card rather than an error one. The summary logic moved to a pure module the test runner can reach, which is the part that had been impossible: `tsx --test` cannot load an SFC, so the card's decisions had never been under test. Driving them found two defects in the code being replaced — a now-playing track matched the search-result guard, because `NormalisedTrack` carries an `artists` array of its own and the guard tested key presence, and a category that is not an array was counted by its string length. `getDevices` also read as a track count; it has its own branch now, reusing the existing `devices` label. The census was strengthened in the same change: it read named `*Preview` exports, but the host's runtime loader reads `plugin.previewComponent` — a different property, and the one spotify actually ships, since it exports no `Preview` at all. It now checks both for every packaged plugin, and its held-out list is empty.
+- **The Spotify sidebar card showed an error panel instead of a summary** (`@mulmoclaude/spotify-plugin`, #3230, closes #3226) — the preview declared `selectedResult`, the prop name the **view** slot takes (`App.vue`: `:selected-result`), while the sidebar passes `result`. So it arrived `undefined` and the computed read `result.ok` off it with no guard. Rendering the built component the way the host renders it throws `TypeError: Cannot read properties of undefined (reading 'ok')`; the runtime loader wraps plugin components in `PluginScopedRoot`, whose `onErrorCaptured` caught it, so every `manageSpotify` call that rendered at all showed the red plugin-error panel. The same class as #2716, which is why the census added there held spotify out by name until the question it raised was answered. That question was **where `ok` / `error` actually arrive**: they do arrive, because the MCP bridge spreads the plugin's whole return value into the posted tool result and the session store keeps it verbatim — they are missing from the `ToolResult` _type_, not from the object. But `ok: false` can never reach this card, since the bridge posts only when `data` is present and every failure return in the plugin's dispatch omits `data`; that branch is therefore gone, and a failed call renders no card rather than an error one. The summary logic moved to a pure module the test runner can reach, which is the part that had been impossible: `tsx --test` cannot load an SFC, so the card's decisions had never been under test. Driving them found two defects in the code being replaced — a now-playing track matched the search-result guard, because `NormalisedTrack` carries an `artists` array of its own and the guard tested key presence, and a category that is not an array was counted by its string length. `getDevices` also read as a track count; it has its own branch now, reusing the existing `devices` label. The census was strengthened in the same change: it read named `*Preview` exports, but the host's runtime loader reads `plugin.previewComponent` — a different property, and the one spotify actually ships, since it exports no `Preview` at all. It now checks both for every packaged plugin, and its held-out list is empty.
 
 Ships `@mulmoclaude/accounting-plugin@4.0.0`, `@mulmoclaude/chart-plugin@4.0.0`, `@mulmoclaude/collection-plugin@5.1.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.3.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.0`, `@mulmoclaude/markdown-plugin@5.0.0`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.0`, `@mulmoclaude/shapescript-plugin@7.0.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
