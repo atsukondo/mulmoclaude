@@ -1,0 +1,55 @@
+# fix: カスタムビューが名乗った役割を、使う前に検証する (#3267)
+
+## Request
+
+「3267やって」
+
+## 何が起きているか（自分で辿って確認した）
+
+サンドボックス内のビューが `__MC_VIEW.startChat(prompt, role)` を呼ぶと、`role` は文字列ならそのまま
+ホストへ渡る（`CollectionCustomView.vue:350,380`）。受け口が経路によって非対称だった:
+
+- 送信（`CollectionView.vue:1527`）: `cui.startChat(prompt, payload.role ?? cui.generalRoleId)`。
+  `??` は「無い」ときにしか既定へ落ちないので、**存在する未知の id はそのまま通る**
+- 下書き（同 `:1528`）: `App.vue:1285` が `roles` と照合して、無ければ General に落とす
+
+送信側の下流にも照合は無い（`App.vue:1232-1238` → `sessionLifecycle.ts:13-15` の
+`explicitRoleId ?? (...)`）。役割ごとにシステムプロンプト・ツール・モデルが変わるので、
+これは「文面を組み立てる」以上の権限になる。
+
+## 存在確認だけでは足りない
+
+ホスト側の同じ判断（`server/remoteHost/handlers/startChat.ts:118`）は
+**「存在し、かつ debug でない」**を要求して拒否している。ブラウザ側の `roles` には debug の役割も
+入っていて、選択欄が描画時に隠しているだけ（`RoleSelector.vue:59`）。つまり下書き側の既存の照合も、
+debug の役割は通してしまう。
+
+## 直す場所
+
+**プラグインから呼ばれるホスト側の入口**に置く。プラグイン側の `cui` は役割一覧を持っていないので、
+そこでは判定できない。利用者自身の「＋」ボタンは `createNewSession` を直接呼ぶ別経路なので、
+開発モードで debug の役割を選ぶ操作は壊れない。
+
+- `src/utils/session/roleSelection.ts`（新規・純粋関数）: 渡された id が honour できるなら返し、
+  できなければ `undefined` を返す。判定はホスト側と同じ「存在し、かつ debug でない」
+- `App.vue` の `startNewChat` と `startNewChatDraft` が、渡す前にこれを通す
+
+**既定値は入口ごとに違うので、そこは変えない**。`startNewChat` は id が無ければ選択中の役割
+（`App.vue:480-485` に意図が書かれている）、下書きは General。関数が `undefined` を返すことで、
+それぞれの既定がそのまま効く。
+
+## やらないこと（理由を測った見送り）
+
+`resolveNewSessionRoleId` は渡された id を検証しないままにする。
+
+- 今回の修正後、ここに未検証の id を渡す経路は**利用者自身の「＋」ボタンだけ**になる。選択欄が
+  見せた役割を選んでいるので、サンドボックス由来の値は来ない
+- ここで debug を弾くと、開発モードで debug の役割を選ぶ操作が壊れる。存在確認だけを足すことは
+  できるが、それは既存テストが明示的に固定している挙動（未知の id を素通しする）の変更になり、
+  この issue の欠陥とは別の判断が要る
+
+## テスト
+
+- `test/utils/session/test_roleSelection.ts`（新規）: 正常系と異常系の両方向。存在する役割・未知の
+  id・debug の役割・空文字・`undefined`・役割一覧が空・`isDebugRole` を持たない役割
+- 入口が実際にこの関数を通していることは、`App.vue` を読む既存のテスト層が無いため、PR で明記する
