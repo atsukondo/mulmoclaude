@@ -157,6 +157,9 @@ const APP_ID = "app_test_7f3a";
  *  all of them, so a lossy round trip shows up here. */
 const SEEDED_SECONDS = 1_700_000_000;
 const SEEDED_NANOSECONDS = 123_456_789;
+/** The same instant in the codec's canonical form — exactly what a decode
+ *  produces, so a writer that converted on FORMAT would take the bait. */
+const CANONICAL_INSTANT = "2023-11-14T22:13:20.123456789Z";
 
 const FIRESTORE_SCHEMA = {
   title: "Notes Cloud",
@@ -296,6 +299,20 @@ async function firestoreStoreFixture(): Promise<CollectionStore> {
     assert.equal(written.kind, "ok");
   }
   return store;
+}
+
+/** A shared collection with a `datetime` field — the only kind of field the
+ *  server-time codec touches — wired to a fresh fake. */
+async function stampedStoreFixture(): Promise<{ docs: FakeFirestoreDocs; store: CollectionStore; itemsPath: string }> {
+  writeSkill("stamped", {
+    ...FIRESTORE_SCHEMA,
+    fields: { ...FIRESTORE_SCHEMA.fields, submittedAt: { type: "datetime", label: "Submitted" } },
+  });
+  writeAppManifest();
+  const docs = connectFakeFirestore();
+  const [collection] = await discoverCollections(discoveryOpts());
+  assert.ok(collection);
+  return { docs, store: storeFor(collection, { workspaceRoot: workdir }), itemsPath: sharedItemsPath(sharedCollectionKey(APP_ID, "stamped")) };
 }
 
 const FIXTURES: { name: string; make: () => Promise<CollectionStore>; writable: boolean; nativeQuery: boolean }[] = [
@@ -594,17 +611,8 @@ describe("shared (firestore) collections", () => {
     // entry reaches (#3263). Now it asks the injected seam instead, so this
     // pins the delegation: the parts handed over are the ones the decode
     // produced, and what comes BACK is what gets stored.
-    writeSkill("stamped", {
-      ...FIRESTORE_SCHEMA,
-      fields: { ...FIRESTORE_SCHEMA.fields, submittedAt: { type: "datetime", label: "Submitted" } },
-    });
-    writeAppManifest();
-    const docs = connectFakeFirestore();
-    const [collection] = await discoverCollections(discoveryOpts());
-    assert.ok(collection);
-    const store = storeFor(collection, { workspaceRoot: workdir });
+    const { docs, store, itemsPath } = await stampedStoreFixture();
     assert.ok(store.write);
-    const itemsPath = sharedItemsPath(sharedCollectionKey(APP_ID, "stamped"));
     // Seeded THROUGH the fake: only a document that already holds an instant
     // makes the write path re-encode one. A record created here would not.
     await docs.set(itemsPath, "n1", { id: "n1", title: "T", submittedAt: { seconds: SEEDED_SECONDS, nanoseconds: SEEDED_NANOSECONDS } });
@@ -625,6 +633,27 @@ describe("shared (firestore) collections", () => {
       "the stored field is the seam's value, not a look-alike the store built",
     );
     assert.equal(isRecord(stored) ? stored.title : null, "T2", "the rest of the record is the edit");
+  });
+
+  it("never asks the seam for an instant when nothing was stored — create and first upsert alike", async () => {
+    // The other half of the delegation. With no stored document there is no
+    // instant to preserve, and the rules make a created stamp equal
+    // `request.time`, which no client can build — so a canonical-looking string
+    // arriving here must be written as the string it is. Converting it would
+    // re-type somebody's text as an instant on the strength of its format.
+    const { docs, store, itemsPath } = await stampedStoreFixture();
+    assert.ok(store.write);
+
+    const created = await store.write("c1", { id: "c1", title: "T", submittedAt: CANONICAL_INSTANT }, { refuseOverwrite: true });
+    assert.equal(created.kind, "ok");
+    const upserted = await store.write("u1", { id: "u1", title: "T", submittedAt: CANONICAL_INSTANT });
+    assert.equal(upserted.kind, "ok");
+
+    assert.deepEqual(docs.stamps(), [], "neither write had a stored instant to hand back");
+    for (const recordId of ["c1", "u1"]) {
+      const stored = await docs.get(itemsPath, recordId);
+      assert.equal(isRecord(stored) ? stored.submittedAt : null, CANONICAL_INSTANT, `${recordId} keeps the string it was given`);
+    }
   });
 
   it("refuses create over an existing id — the atomicity the store contract requires", async () => {
