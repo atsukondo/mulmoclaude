@@ -56,3 +56,29 @@ export function pushCounts(result: CollectionPushResult): PushCounts {
     deletesNotApplied: Math.max(result.localDeletes - deletedInGoogle, 0),
   };
 }
+
+/** The message key + interpolation params the push note renders.
+ *
+ *  Extracted from the view because THIS is where the bug lived: the counts were
+ *  right and the sentence built from four of them, so a helper-level test stayed
+ *  green while the user read the wrong thing (#3260). A pure function can be
+ *  rendered against the real dictionaries and diffed against what the old code
+ *  produced; a method inside an SFC cannot be loaded by the test runner at all.
+ *
+ *  `localDeletes` carries the REMAINDER, not the raw count. The `pushDone`
+ *  template says "not applied" about that slot, and the remainder is what is
+ *  actually not applied — with no opt-in the two are equal, which is what keeps
+ *  the existing sentence byte-identical. */
+export interface PushMessage {
+  key: "collectionsView.pushDone" | "collectionsView.pushDoneWithDeletes";
+  params: Record<string, number>;
+}
+
+export function pushMessage(result: CollectionPushResult): PushMessage {
+  const counts = pushCounts(result);
+  const params = { ...counts, localDeletes: counts.deletesNotApplied };
+  // Two keys rather than five slots: a collection that never opted in must not
+  // be shown "0 deleted in Google" forever, and for it the remainder equals the
+  // old count, so the sentence it already saw is unchanged.
+  return counts.deletedInGoogle > 0 ? { key: "collectionsView.pushDoneWithDeletes", params } : { key: "collectionsView.pushDone", params };
+}
