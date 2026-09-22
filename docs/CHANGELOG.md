@@ -8,6 +8,70 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-09-22
+
+**A mirrored calendar finishes the round trip: deleting a record can delete the event, the mirror can carry your RSVP and the meeting link, and the `google` tool's all-day support reaches npm.**
+
+### Highlights
+
+#### Deleting a record can delete the event (#3234, PR #3247)
+
+The push has always reported a locally deleted record and left the Google event standing, because
+`events.delete` removes it for everyone it was sent to and cannot be undone from this side. That is
+right for a calendar Google owns and wrong for one where the collection is the primary copy: the
+deletion never carried, the next pull brought the record back, and you deleted it again.
+
+Ask for it and the collection opts in (`"propagateDeletes": true`). Its absence means exactly what it
+always did, so nothing changes for a collection that does not ask.
+
+Even when it is on, the push **refuses an event that carries attendees** and reports it instead — any
+attendee entry refuses, the organiser's included, because telling "only me" apart means deciding
+which entry is you from a payload that may not say, and being wrong there withdraws a real
+invitation. The delete is conditional on the version the check was made against, so an attendee added
+while the push is running makes Google refuse it rather than letting a moment-old decision stand.
+
+No copy of a deleted event is kept. Google Calendar's own Trash is the recovery path.
+
+#### A mirror can carry your RSVP and the meeting link (#3233, PR #3244)
+
+`attendees` and `conferenceData` were the last two fields a schema could not name, because Google
+answers them as arrays while a collection field holds one value. Two derived columns now fold them:
+`selfResponseStatus` (your own response) and `conferenceVideoUri` (the join URL for the conferences
+`hangoutLink` does not reach — Zoom, Teams).
+
+One behaviour is worth knowing before mapping the first: `selfResponseStatus` is empty whenever
+Google reported no status, and that is the majority case rather than an edge one, because an event
+with no attendees has no entry to mark as you. It reads as "nothing said", never as "not going", so
+filter it with `!= "declined"` — `== "accepted"` hides every solo event as well.
+
+#### The `google` tool can write an all-day event (#3240, PR #3242)
+
+The host half of this shipped in 1.20.0; the `google` tool half is here, because it lives in
+`@mulmoclaude/google-plugin` and that package needed its own release. `calendarCreateEvent` and
+`calendarUpdateEvent` now take a bare date on both ends. An all-day `end` is **exclusive** — the day
+after the last day — which is Google's own convention and the value it reports back, so it is passed
+through rather than "corrected".
+
+#### Two push failures the agent can now diagnose (PR #3243)
+
+The agent reads `error-recovery.md` before asking you a clarifying question on a tool failure, and
+neither of these was in it. A record whose id cannot be a Google event id (Google wants lower-case
+base32hex, so `team-standup` fails on the hyphen), and a stale push baseline — a write that does not
+change Google's stored value never comes back through the pull, so the same record is sent every
+cycle and it looks exactly like a real repeated edit.
+
+#### Fixes
+
+- **Windows CI had been red for half a day** (#3251, PR #3252) — the secret store's test asserted a
+  POSIX file mode, which Windows cannot carry: it maps only the read-only bit, so a `0600` write
+  reads back as `0666`. The mode assertion is now POSIX-only, a second test pins what holds
+  everywhere (the secret lives under your own profile directory, whose ACL it inherits), and
+  `server/system` / `test/system` joined the Windows PR gate so the next one is caught before merge.
+- **The remote-view chat policy said the phone always sends** (PR #3250) — it does not; every surface
+  follows the view's `allowSendChat` declaration. Comments only.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.0`, `@mulmoclaude/chart-plugin@4.0.0`, `@mulmoclaude/collection-plugin@5.1.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.3.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.0`, `@mulmoclaude/markdown-plugin@5.0.0`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.0`, `@mulmoclaude/shapescript-plugin@7.0.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+
 ## [1.20.0] - 2026-09-21
 
 **Google Calendar gains the fields and the all-day handling a real two-way mirror needs, the Gemini key moves into Settings, and no workspace file is stranded behind a preview the server cannot open.**
@@ -39,10 +103,6 @@ A thread is admitted by its **parent** channel, so `DISCORD_ALLOWED_CHANNELS` an
 ### Package detail
 
 - **The agent's Gemini help stops sending people to hunt for a `.env`** (`@mulmoclaude/core`, #3231 then #3238) — two rounds landed on the same two help files. #3231 (closes #2626) first made the instructions honest: the `.env` they described only exists when the app is started from a terminal, because an icon launch has no launch directory — macOS starts apps in `/`, so the app starts from home and reads `~/.env`, and a shell `export` never reaches it since the launcher takes PATH from the login shell and nothing else. #3238 then made the question moot by letting the key be entered in **Settings → Gemini**, and both `gemini.md` and `error-recovery.md` now lead with that: it applies immediately, needs no restart and no file to locate, and wins over a stale value in the shell or a `.env`. `error-recovery.md` also spells out what the agent should do when a render fails for a missing key — including that a render started before the key was saved keeps the environment it was spawned with, so it must be re-run rather than resumed.
-
-- **A collection can be told to carry its deletions through to Google** (`@mulmoclaude/core`, the launcher, #3247, closes #3234, from #2620) — the push has always reported a locally deleted record and left the Google event standing, because `events.delete` removes it for everyone it was sent to and cannot be undone from here. That is right for a calendar Google owns and wrong for one where the collection is the primary copy: the deletion never carries, the next pull brings the record back, and the user deletes it again. `"propagateDeletes": true` in the `googleCalendar` block now makes the push delete those events too, and its absence means exactly what it always did, so nothing changes for anyone who does not ask. Even on, the push **refuses an event that has attendees** and reports it instead — any attendee counts, including the entry Google adds for the organiser, because a rule that tried to exclude "only me" would have to work out which entry is the user from a payload that may not say, and being wrong there withdraws a real invitation. The baseline in `.push-state.json` is what makes the report honest: a deletion that carried drops its entry and stops being announced, while a REFUSED one keeps its entry and is reported on every push, since the event is still standing in Google and the report is the only thing that says so. No copy of a deleted event is kept here; Google Calendar's own Trash is the recovery path, and the help doc says so.
-
-- **A calendar collection can mirror an event's own RSVP and its meeting link** (`@mulmoclaude/core`, #3244, closes #3233, from #2620) — the last two fields the two-way sync work asked for, and the only ones a schema could not name: Google answers `attendees` as an array and `conferenceData` as an array inside an object, while a collection field holds one value, so the blocker was never the type but that nothing had decided WHICH value each becomes. `selfResponseStatus` is now the signed-in user's own `responseStatus`, and `conferenceVideoUri` the `video` entry point's URL — the one `hangoutLink` does not reach, because `hangoutLink` is Meet and this is what a Zoom or Teams calendar carries. Two decisions are worth knowing before mapping them. `selfResponseStatus` is `""` whenever Google reported no status, which is the MAJORITY case rather than an edge one — an event with no attendees has no entry to mark as the user — so it reads as "nothing said", never as "not going", and a filter has to be written `!= "declined"`; `== "accepted"` would hide every solo event as well. And `conferenceVideoUri` does not fall back to the phone or dial-in entry points, because a column named for joining that sometimes held a `tel:` URI would be worse than one the caller can see is empty. Both are pull-only, so the push never sends them and the baseline in `.push-state.json` is unchanged — mapping them needs no migration.
 
 - **An all-day event can be created and edited through every write surface** (`@mulmoclaude/core`, `@mulmoclaude/google-plugin`, the launcher, #3242, from #2620) — the engine's `CalendarEventTime` has carried Google's `{ date }` spelling since the Push to Google work, but both write surfaces validated `start` / `end` with `isIsoDateTimeWithOffset`, which exists to REFUSE a date-only value. So the `google` tool and the remote-host channel could read an all-day event and never write one, and a calendar whose entries are all-day had to be kept by hand. A new pure module now owns the rule once for both: each end is an RFC3339 instant with an offset or a bare `YYYY-MM-DD`, the two must agree, and an all-day `end` must fall after its start. That end stays **exclusive** — the day AFTER the last day — because the pull reports Google's own value and the push sends it straight back, so converting an inclusive end on the way in would shorten the event by a day on every read-modify-write; an `end` that is not after its start is refused here, with the rule in the message, rather than becoming an opaque 400. The collection push already creates an all-day event when the mapped column keeps a bare date (a `date` or `string` column, not a `datetime` one, whose `…T00:00` is indistinguishable from a real midnight appointment), so that route is pinned by tests and written into the help docs instead of being changed.
 
