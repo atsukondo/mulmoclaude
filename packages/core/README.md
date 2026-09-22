@@ -29,11 +29,12 @@ rather than imported, which is what lets the same code run under either.
 `firebase` is an **optional** peer, and only the entries named for it need it:
 `./collection/firestore`, `./remote-host` and `./remote-host/server`. Every
 other entry must LOAD with the package absent — a host that uses no Firestore
-installs nothing. `test/workspace/collections/test_optionalFirebasePeer.ts` in
-the MulmoClaude repository holds that line, by importing the built entry with
-`firebase` made unresolvable. It is a sweep, not a static guarantee: an import
-added to a module the entry reaches is caught by running that test, not by the
-type checker.
+installs nothing — under `import` and `require` alike.
+`test/workspace/collections/test_optionalFirebasePeer.ts` in the MulmoClaude
+repository holds that line: it loads every entry in the exports map, under both
+conditions, with `firebase` made unresolvable. It is a sweep, not a static
+guarantee — an import added to a module an entry reaches is caught by running
+that test, not by the type checker.
 
 A host wires shared collections by handing `setFirestoreAccessor` a
 `FirestoreDocs`. Build it with `createFirestoreDocs` from

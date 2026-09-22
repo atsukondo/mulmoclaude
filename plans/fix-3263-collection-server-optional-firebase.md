@@ -68,14 +68,29 @@ the exception that broke the entry.
 
 ## The guard
 
-`test/workspace/collections/test_optionalFirebasePeer.ts` loads the built entry
-in a child process under a resolve hook that refuses `firebase`, which is what a
-consumer without the peer sees. A hook rather than a fixture tree because Node
-resolves from the importer's real path — a temp directory that omits firebase
-still finds the copy this checkout installed.
+`test/workspace/collections/test_optionalFirebasePeer.ts` loads EVERY entry of
+the exports map — read from `packages/core/package.json`, so a new entry is
+covered the day it is declared — under `import` and under `require`, in a child
+process whose resolver refuses `firebase`. That is what a consumer without the
+peer sees. A hook rather than a fixture tree because Node resolves from the
+importer's real path — a temp directory that omits firebase still finds the copy
+this checkout installed.
 
-It carries a CONTROL: `collection/firestore` must still fail the same way. Without
-it, a green result could equally mean the hook never fired.
+It sweeps rather than naming `collection/server` because the one import took
+down six entries, and a guard written around the entry that happened to be
+noticed would have missed the other five.
+
+The hook is `module.registerHooks` (synchronous), not `module.register` (async).
+Only the synchronous kind reaches `require()`, and the package ships a CommonJS
+build that has to hold the same line — reverting the fix shows the `.cjs` chunk
+failing exactly as the `.js` one does. A CJS sweep built on the async API passes
+whether or not the entry needs firebase; measured, `require` of
+`collection/firestore` succeeds under it.
+
+It carries a CONTROL in each condition: the entries whose name says they need the
+SDK must still fail, with `ERR_MODULE_NOT_FOUND` naming firebase. Without it, a
+green sweep could equally mean the hook never fired — which is exactly what the
+async API would have produced under `require`.
 
 Confirmed both directions: green with the fix, red with the fix reverted (the
 control stays green in both).
