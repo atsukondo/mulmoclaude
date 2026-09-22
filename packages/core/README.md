@@ -31,7 +31,15 @@ rather than imported, which is what lets the same code run under either.
 other entry must LOAD with the package absent — a host that uses no Firestore
 installs nothing. `test/workspace/collections/test_optionalFirebasePeer.ts` in
 the MulmoClaude repository holds that line, by importing the built entry with
-`firebase` made unresolvable.
+`firebase` made unresolvable. It is a sweep, not a static guarantee: an import
+added to a module the entry reaches is caught by running that test, not by the
+type checker.
+
+A host wires shared collections by handing `setFirestoreAccessor` a
+`FirestoreDocs`. Build it with `createFirestoreDocs` from
+`./collection/firestore` — that adapter tracks the interface. **Hand-writing an
+implementation means a new member is a compile break on upgrade** — which is
+what `timestamp` was for anyone who had one.
 
 The package also ships `assets/helps/*` — the help documents the agent reads at
 runtime — which is why a change there alone still warrants a release.

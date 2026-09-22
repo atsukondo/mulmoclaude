@@ -12,7 +12,11 @@
 // load with `ERR_MODULE_NOT_FOUND` for every module reachable from this entry.
 //
 // This runs against `packages/core/dist`, the artifact that ships — CI builds
-// the workspace packages before the test step.
+// the workspace packages before the test step, so what it reads there is this
+// commit. Run by hand on a tree whose `dist` predates your edit, it answers for
+// the OLD build and says so nowhere: `yarn build:packages` first. A missing
+// `dist` fails loudly, which is the case worth having loud; a stale one cannot
+// be told apart from a fresh one by reading it.
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";

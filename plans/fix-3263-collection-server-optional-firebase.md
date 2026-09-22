@@ -55,7 +55,14 @@ the exception that broke the entry.
   through `docs.timestamp(...)`. Nothing else about the module changes; needing
   an instant was correct and stays correct.
 - The test fakes return the structured-clone shape `{ seconds, nanoseconds }`,
-  which is what the codec duck-types on (`collection/core/serverTime.ts`).
+  which is what the codec duck-types on (`collection/core/serverTime.ts`), plus
+  a marker so a test can tell a value that came back through the seam from one
+  that merely looks like an instant. Two tests carry what the fakes no longer
+  can: `packages/core/test/collection/test_firestoreDocs.ts` pins that the REAL
+  adapter builds Firestore's own class, and the store-contract suite pins the
+  delegation — the parts handed over are the ones the decode produced, and what
+  comes back is what gets stored. Both were confirmed to go red with the fix
+  reverted.
 - `sharedItemsPath` stays where it is. Once the module holds no SDK import there
   is nothing to move it away from, and moving it would not have fixed anything.
 
@@ -82,6 +89,29 @@ control stays green in both).
   looked healthy everywhere.
 - Writing the invariant down did not either — it was written, and broken seven
   lines below.
+
+## What this breaks, deliberately
+
+`FirestoreDocs` gains a member, so a host that HAND-WROTE the interface fails to
+compile on upgrade. Everything in this repository builds it through
+`createFirestoreDocs`, and so does MulmoTerminal's production wiring
+(`server/backends/sharedCollections.ts`) — but MulmoTerminal's
+`test/server/infra/sharedAppTool.spec.ts` has a literal `FAKE_DOCS` that will
+need the member added.
+
+Made required rather than optional on purpose. A fallback would have to invent
+an instant without the SDK, and a plain object written where a `Timestamp`
+belongs is refused by the rules that freeze that field — so the record becomes
+permanently unupdatable, silently. A compile error is the better failure.
+
+## What the guard does NOT cover
+
+It reads `packages/core/dist`, so it answers for whatever build is on disk. CI
+builds the workspace packages before the test step; run by hand on a stale
+`dist` it reports the old artifact, and nothing in the result says so. Noted
+rather than fixed: the obvious fix is comparing mtimes, and CI restores `dist`
+from a cache whose timestamps would make that check fire on a perfectly good
+build.
 
 ## Follow-up (not in this PR)
 
