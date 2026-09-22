@@ -35,7 +35,7 @@
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
-    "vite-plugin-dts": "^5.1.0"
+    "vite-plugin-dts": "^5.1.1"
   },
   "license": "MIT",
   "homepage": "https://github.com/receptron/mulmoclaude/tree/main/packages/plugins/x-plugin#readme",
