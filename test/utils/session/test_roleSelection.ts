@@ -29,6 +29,12 @@ describe("resolveRequestedRoleId", () => {
     assert.equal(resolveRequestedRoleId("", ROLES), undefined);
   });
 
+  it("refuses an empty id even when a role carries one", () => {
+    // `RoleSchema` does not forbid `id: ""`, so without an early return the
+    // lookup would MATCH and hand the empty id on as a real answer.
+    assert.equal(resolveRequestedRoleId("", [{ id: "" }, ...ROLES]), undefined);
+  });
+
   it("asks for nothing when no id was supplied, so the caller's own default stands", () => {
     assert.equal(resolveRequestedRoleId(undefined, ROLES), undefined);
   });
@@ -39,7 +45,8 @@ describe("resolveRequestedRoleId", () => {
 
   it("does not match on a prototype property name", () => {
     // `find` compares ids, so nothing here can name `toString` or `constructor`
-    // into a role — pinned because a lookup written as a map would.
+    // into a role — pinned because a lookup rewritten as a map could hand the
+    // requested string back as though a role had matched.
     assert.equal(resolveRequestedRoleId("constructor", ROLES), undefined);
     assert.equal(resolveRequestedRoleId("toString", ROLES), undefined);
   });

@@ -1237,10 +1237,11 @@ function startNewChat(message: string, roleId?: string): void {
   // Cross-route push behaviour (so browser Back returns to /wiki)
   // is now handled inside createNewSession via the isChatPage check.
   //
-  // The id arrives from a plugin, and behind it possibly a sandboxed custom
-  // view: an id it may not have stays undefined here, which leaves the
-  // selector's current pick standing exactly as an omitted id does.
-  createNewSession(resolveRequestedRoleId(roleId, roles.value));
+  // The id arrives from a plugin, and behind it possibly a sandboxed custom view.
+  // Asking for nothing still inherits the selector's current pick, but an id this
+  // refuses falls to General rather than to that pick — the more suspicious input
+  // must not get the broader answer, and the draft path already answers General.
+  createNewSession(roleId === undefined ? undefined : (resolveRequestedRoleId(roleId, roles.value) ?? BUILTIN_ROLE_IDS.general));
   void sendMessage(message);
   void seedCollectionPresentation(message);
 }
@@ -1282,8 +1283,8 @@ async function isKnownCollectionSlug(slug: string): Promise<boolean> {
 // DRAFT instead of sending it — the user reviews / edits / sends (or clears) it.
 // Used by custom collection views (`__MC_VIEW.startChat`) so a view button can
 // propose a chat without the view's code triggering an agent run on its own.
-// `roleId` comes from a plugin and is honoured only when it names a role the
-// user could have picked; anything else opens in General (createNewSession does
+// `roleId` comes from a plugin and is honoured only when `roleSelection.ts`
+// allows it; anything else opens in General (createNewSession does
 // not validate the id it is handed). When the draft is a collection slash
 // command, the collection is presented in the canvas up front (#1768) —
 // presentCollection first, then the prefilled draft.

@@ -57,7 +57,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   /** The view called `__MC_VIEW.startChat(prompt, role)` — open a new chat with
-   *  `prompt`; `role` resolves to the general role when it names no known one.
+   *  `prompt`; `role` is honoured only when it names a role the host allows —
+   *  known, and not a debug role — and opens in the general role otherwise.
    *  `send` carries the view's DECLARED intent (`allowSendChat`): false ⇒ prefill
    *  it as an editable draft, true ⇒ run it.
    *  The PHONE runtime always runs it (no Enter key to press there —

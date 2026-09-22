@@ -10,12 +10,16 @@
 ホストへ渡る（`CollectionCustomView.vue:350,380`）。受け口が経路によって非対称だった:
 
 - 送信（`CollectionView.vue:1527`）: `cui.startChat(prompt, payload.role ?? cui.generalRoleId)`。
-  `??` は「無い」ときにしか既定へ落ちないので、**存在する未知の id はそのまま通る**
+  `??` は「無い」ときにしか既定へ落ちないので、**渡された id がそのまま通る**
 - 下書き（同 `:1528`）: `App.vue:1285` が `roles` と照合して、無ければ General に落とす
 
 送信側の下流にも照合は無い（`App.vue:1232-1238` → `sessionLifecycle.ts:13-15` の
-`explicitRoleId ?? (...)`）。役割ごとにシステムプロンプト・ツール・モデルが変わるので、
-これは「文面を組み立てる」以上の権限になる。
+`explicitRoleId ?? (...)`）。
+
+**牙は「存在しない id」ではなく debug の役割の方**。存在しない id は、セッションの役割を
+解決する側（`App.vue` の `roleOfSession`）が一覧に無いものを既定へ落とすので、実際に走る
+assistant は変わらない（見出しの表示が名乗ったままになる、という誤表示に留まる）。一方
+`debug` は**実在する役割**で、`manageDebug` を持ち、送信・下書きの両方に通っていた。
 
 ## 存在確認だけでは足りない
 
@@ -51,5 +55,8 @@ debug の役割は通してしまう。
 ## テスト
 
 - `test/utils/session/test_roleSelection.ts`（新規）: 正常系と異常系の両方向。存在する役割・未知の
-  id・debug の役割・空文字・`undefined`・役割一覧が空・`isDebugRole` を持たない役割
-- 入口が実際にこの関数を通していることは、`App.vue` を読む既存のテスト層が無いため、PR で明記する
+  id・debug の役割・空文字（空 id を持つ役割が一覧にある場合も）・`undefined`・役割一覧が空
+- **入口が実際にこの関数を通していること**は `e2e/tests/collection-custom-view-send-chat.spec.ts`
+  に足す。実物のサンドボックスから `startChat(prompt, 'debug')` を投げ、記録された
+  `POST /api/agent` の本文の `roleId` がそれでないことを見る。起動時は選択中の役割が既定と
+  同じなので、肯定形では「拒否された」と「たまたま一致した」を区別できない。否定形で書く
