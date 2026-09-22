@@ -214,7 +214,7 @@ export function buildRemoteViewCsp(cdns: readonly string[] = SANDBOXED_VIEW_CDN_
  *  - `startChat(prompt, role)`: same message type as the desktop bridge — the
  *    parent opens a new chat seeded with `prompt`. Whether it runs follows the
  *    view's `allowSendChat` declaration on every surface, read from the
- *    collection schema — the phone out of the schema it already holds, the
+ *    collection schema — the phone reads it from the schema it already holds, the
  *    desktop surfaces through `customViewSendsChat`. Never from this message:
  *    the sandbox composes the prompt, so letting it also decide whether the
  *    prompt runs would hand it both halves.
