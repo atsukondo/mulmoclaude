@@ -1511,8 +1511,9 @@ function onCustomViewOpenItem(payload: { id: string; mode: "view" | "edit" }): v
 }
 
 /** The custom view called `__MC_VIEW.startChat(prompt, role)` — open a new chat
- *  seeded with the prompt. `role` is optional and resolves to General when it
- *  names no known role, the same way a schema action's role does.
+ *  seeded with the prompt. `role` is optional; the host honours it only when it
+ *  names a role it allows — known, and not a debug role — and opens in General
+ *  otherwise, the same way a schema action's role does.
  *
  *  Draft by default: the view's code only PROPOSES text, and the user approves /
  *  edits / sends it, so no capability is required. A view whose `views[]` entry
