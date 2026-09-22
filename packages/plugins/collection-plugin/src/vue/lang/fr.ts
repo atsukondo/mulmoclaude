@@ -104,6 +104,8 @@ const frMessages: CollectionMessages = {
     pushCalendar: "Envoyer vers Google",
     pushFailed: "Échec de l'envoi : {error}",
     pushDone: "Envoyé vers Google : {created} créés, {updated} mis à jour, {conflicts} conflits ignorés, {localDeletes} suppressions locales non appliquées.",
+    pushDoneWithDeletes:
+      "Envoyé vers Google : {created} créés, {updated} mis à jour, {conflicts} conflits ignorés, {deletedInGoogle} supprimés dans Google, {localDeletes} suppressions locales non appliquées.",
     feedChatSeed:
       "Le flux « {slug} » est défini par le schéma `feeds/{slug}/schema.json` et ses enregistrements se trouvent dans `{dataPath}/` (un fichier `<id>.json` par enregistrement). Utilise ce schéma et ces données pour répondre à cette demande : {message}",
     feedsTitle: "Flux de données",

@@ -104,6 +104,8 @@ const ptBRMessages: CollectionMessages = {
     pushFailed: "Falha ao enviar: {error}",
     pushDone:
       "Enviado para o Google: {created} criados, {updated} atualizados, {conflicts} conflitos ignorados, {localDeletes} exclusões locais não aplicadas.",
+    pushDoneWithDeletes:
+      "Enviado para o Google: {created} criados, {updated} atualizados, {conflicts} conflitos ignorados, {deletedInGoogle} excluídos no Google, {localDeletes} exclusões locais não aplicadas.",
     feedChatSeed:
       'O feed "{slug}" é definido pelo esquema `feeds/{slug}/schema.json` e seus registros ficam em `{dataPath}/` (um arquivo `<id>.json` por registro). Use esse esquema e esses dados para responder a esta solicitação: {message}',
     feedsTitle: "Feeds de dados",

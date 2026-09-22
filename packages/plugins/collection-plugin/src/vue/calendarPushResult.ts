@@ -26,3 +26,33 @@ export function pushProblems(result: CollectionPushResult): string[] {
 export function pushWroteSomething(result: CollectionPushResult): boolean {
   return result.created > 0 || result.updated > 0 || (result.deletedInGoogle ?? 0) > 0;
 }
+
+/** The counts the push message states, with the deletions split.
+ *
+ *  `localDeletes` means "records that went away HERE", and it means that whether
+ *  or not the deletion carried — so it is NOT the number to call "not applied".
+ *  Reporting it as such told a user who had opted into `propagateDeletes` that
+ *  nothing reached Google while the events were in fact gone (#3260). */
+export interface PushCounts {
+  created: number;
+  updated: number;
+  conflicts: number;
+  /** Deleted here AND in Google. */
+  deletedInGoogle: number;
+  /** Deleted here and still standing in Google — no opt-in, or the guard
+   *  refused the event. The reason for a refusal rides in `skipped`. */
+  deletesNotApplied: number;
+}
+
+export function pushCounts(result: CollectionPushResult): PushCounts {
+  const deletedInGoogle = result.deletedInGoogle ?? 0;
+  return {
+    created: result.created,
+    updated: result.updated,
+    conflicts: result.conflicts,
+    deletedInGoogle,
+    // Clamped: an older host answers no `deletedInGoogle` at all, and a
+    // negative count here would render as one.
+    deletesNotApplied: Math.max(result.localDeletes - deletedInGoogle, 0),
+  };
+}

@@ -365,7 +365,7 @@ import { useCollectionRendering } from "../useCollectionRendering";
 import { writeCollectionViewMode, writeCollectionSort, writeCollectionFlagFilters, type CollectionViewMode } from "../collectionViewMode";
 import type { CollectionConfirmOptions, CollectionPushResult } from "../uiContext";
 import { useCollectionUi } from "../scopedUi";
-import { pushProblems } from "../calendarPushResult";
+import { pushCounts, pushProblems } from "../calendarPushResult";
 import { useTableSort } from "../composables/useTableSort";
 import { useCollectionActions } from "../composables/useCollectionActions";
 import { useFlagFilters } from "../composables/useFlagFilters";
@@ -692,8 +692,13 @@ function reportPush(result: CollectionPushResult): void {
     inlineError.value = t("collectionsView.pushFailed", { error: problems.join("; ") });
     return;
   }
-  const { created, updated, conflicts, localDeletes } = result;
-  showRefreshNote(t("collectionsView.pushDone", { created, updated, conflicts, localDeletes }));
+  const counts = pushCounts(result);
+  // Two messages, not five slots: a collection that never opted into
+  // `propagateDeletes` should not be shown "0 deleted in Google" forever, and
+  // for it `deletesNotApplied` equals the old `localDeletes`, so the sentence
+  // it already saw is unchanged (#3260).
+  const key = counts.deletedInGoogle > 0 ? "collectionsView.pushDoneWithDeletes" : "collectionsView.pushDone";
+  showRefreshNote(t(key, { ...counts, localDeletes: counts.deletesNotApplied }));
 }
 
 /** Show a transient refresh note, replacing any pending auto-clear. */
