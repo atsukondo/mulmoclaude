@@ -39,6 +39,13 @@ describe("resolveRequestedRoleId", () => {
     assert.equal(resolveRequestedRoleId(undefined, ROLES), undefined);
   });
 
+  it("refuses a duplicated id whose first entry is a debug role", () => {
+    // `loadCustomRoles` warns about duplicate ids without collapsing them, so two
+    // roles can share one. First-wins is the answer this file gives, and it is the
+    // safe one: a scan that accepted any non-debug twin would honour the id.
+    assert.equal(resolveRequestedRoleId("dup", [{ id: "dup", isDebugRole: true }, { id: "dup" }]), undefined);
+  });
+
   it("refuses everything while no roles are known", () => {
     assert.equal(resolveRequestedRoleId("general", []), undefined);
   });
