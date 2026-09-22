@@ -224,6 +224,11 @@ function makeFakeFirestoreDocs(): FakeFirestoreDocs {
         listener.live = false;
       };
     },
+    // The structured-clone shape of a Firestore `Timestamp`, which is what the
+    // codec duck-types on (`serverTime.ts`) — the SDK class is not needed to
+    // stand in for it, and depending on it here would defeat the point of the
+    // seam.
+    timestamp: (seconds, nanoseconds) => ({ seconds, nanoseconds }),
   };
 }
 
