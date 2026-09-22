@@ -111,6 +111,19 @@ function loadWithoutFirebase(condition: Condition, specifiers: string[]): Map<st
 const describeFailure = (result: EntryResult | undefined, specifier: string): string =>
   result === undefined ? `${specifier}: no result` : `${specifier}: ${result.code} ${result.message.split("\n")[0]}`;
 
+// The exemption list must name real entries. A name left behind by a rename or
+// a removal would sit here exempting nothing, and the control below would go on
+// passing on whatever remained — a stale set that reads as a checked one. (A
+// renamed SDK-bound entry is already loud: under its new name it is not exempt,
+// so the sweep expects it to load and it fails.)
+describe("the SDK-bound exemption list", () => {
+  it("names only entries the package actually declares", () => {
+    const declared = new Set(declaredEntries().map((entry) => entry.subpath));
+    const stale = [...SDK_BOUND].filter((subpath) => !declared.has(subpath));
+    assert.deepEqual(stale, [], `SDK_BOUND names entries the exports map no longer has: ${stale.join(", ")}`);
+  });
+});
+
 (["import", "require"] as const).forEach((condition) => {
   describe(`the optional \`firebase\` peer, under \`${condition}\` (#3263)`, () => {
     const entries = declaredEntries().filter((entry) => entry.conditions.includes(condition));
