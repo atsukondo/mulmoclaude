@@ -504,10 +504,11 @@ export const CustomViewZ = z.object({
   // code ask is what keeps the decision reviewable — the schema is short and
   // human-read, the view HTML is not — and it is why an already-shipped view
   // cannot start auto-running turns just because the host was upgraded. The
-  // host reads THIS, never a flag the iframe posts up. Note the phone runtime
-  // (`target: "mobile"`) has always sent — it has no Enter key to press
-  // (receptron/mulmoterminal#1253) — so there the flag only affects the desktop
-  // phone-frame preview.
+  // host reads THIS, never a flag the iframe posts up. It governs the phone
+  // (`target: "mobile"`) as well as the desktop: the phone runtime once always
+  // sent, on the grounds that it has no Enter key to press
+  // (receptron/mulmoterminal#1253), but that silently overrode default-deny on a
+  // device the view's author never tested (receptron/mulmoserver#273).
   allowSendChat: z.boolean().optional(),
   // Mobile-only write policy (plans/done/feat-remote-writable-view.md). Default-deny:
   // a `target: "mobile"` view may patch ONLY these fields via

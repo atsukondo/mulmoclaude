@@ -13,12 +13,21 @@ import type { CollectionCustomView } from "./schema";
  *  code composes the prompt text; letting it also decide whether that text runs
  *  would put both halves of the decision inside the sandbox.
  *
- *  EVERY surface consults this, the phone included. The phone once always sent,
- *  on the grounds that it has no Enter key to press — but that made the same
- *  view behave differently depending on where it was opened, and it silently
- *  overrode default-deny on a device the author never tested. The phone is
- *  served the resolved flag in its view payload rather than re-reading the
- *  schema, because it never sees the schema. */
+ *  EVERY surface honours this declaration, the phone included. The phone once
+ *  always sent, on the grounds that it has no Enter key to press — but that made
+ *  the same view behave differently depending on where it was opened, and it
+ *  silently overrode default-deny on a device the author never tested.
+ *
+ *  The phone does not call THIS function: it reads `allowSendChat` out of the
+ *  collection schema it already receives (`toDetail` sends the schema whole) and
+ *  applies the same `=== true` rule in its own copy. Two reasons for that copy
+ *  have been written down and both were wrong, so this states none — if you are
+ *  touching it, check whether the phone can import this subpath and delete the
+ *  copy if it can. Until then, keep the two in step.
+ *
+ *  It must also ask about the view whose document is RENDERED, not the selected
+ *  one — during a view switch those differ, and the selected view's flag would
+ *  decide for the previous view's still-running sandbox. */
 export function customViewSendsChat(view: Pick<CollectionCustomView, "allowSendChat">): boolean {
   return view.allowSendChat === true;
 }
