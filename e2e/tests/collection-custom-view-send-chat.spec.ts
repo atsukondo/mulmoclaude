@@ -189,6 +189,21 @@ test.describe("custom view startChat — draft by default, sent when declared", 
     await expect(page.getByTestId("user-input")).toHaveValue("");
   });
 
+  test("the role a DRAFTING view names does not become the turn's role either", async ({ page }) => {
+    // The same one-line rule guards both call sites, and only one of them was held
+    // by a test of the wiring. The draft path POSTs nothing by itself, so the draft
+    // is sent from the composer and the role is read off what the host then runs.
+    const agentRuns = await setup(page);
+
+    await pressGo(page, DRAFT_VIEW.id, "go-as-debug");
+
+    await expect(page.getByTestId("user-input")).toHaveValue(PROMPT);
+    await page.getByTestId("send-btn").click();
+
+    await expect.poll(() => agentRuns.length, { timeout: 2 * ONE_SECOND_MS }).toBe(1);
+    expect(JSON.parse(agentRuns[0] ?? "{}").roleId).not.toBe(NAMED_ROLE);
+  });
+
   test("the role the view names for itself does not become the turn's role", async ({ page }) => {
     // The view composes the text; it must not also pick the assistant that runs it.
     // Asserted as a negative: at boot the picker's own value is the default role,

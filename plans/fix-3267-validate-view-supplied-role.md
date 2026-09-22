@@ -7,13 +7,13 @@
 ## 何が起きているか（自分で辿って確認した）
 
 サンドボックス内のビューが `__MC_VIEW.startChat(prompt, role)` を呼ぶと、`role` は文字列ならそのまま
-ホストへ渡る（`CollectionCustomView.vue:350,380`）。受け口が経路によって非対称だった:
+ホストへ渡る（`CollectionCustomView.vue` の `handleStartChat` と `mc-start-chat` の受け口）。受け口が経路によって非対称だった:
 
-- 送信（`CollectionView.vue:1527`）: `cui.startChat(prompt, payload.role ?? cui.generalRoleId)`。
+- 送信（`CollectionView.vue` の `onCustomViewStartChat`）: `cui.startChat(prompt, payload.role ?? cui.generalRoleId)`。
   `??` は「無い」ときにしか既定へ落ちないので、**渡された id がそのまま通る**
-- 下書き（同 `:1528`）: `App.vue:1285` が `roles` と照合して、無ければ General に落とす
+- 下書き（同じ関数の else 側）: `App.vue` の `startNewChatDraft` が `roles` と照合して、無ければ General に落とす
 
-送信側の下流にも照合は無い（`App.vue:1232-1238` → `sessionLifecycle.ts:13-15` の
+送信側の下流にも照合は無い（`App.vue` の `startNewChat` → `sessionLifecycle.ts` の
 `explicitRoleId ?? (...)`）。
 
 **牙は「存在しない id」ではなく debug の役割の方**。存在しない id は、セッションの役割を
@@ -23,9 +23,9 @@ assistant は変わらない（見出しの表示が名乗ったままになる�
 
 ## 存在確認だけでは足りない
 
-ホスト側の同じ判断（`server/remoteHost/handlers/startChat.ts:118`）は
+ホスト側の同じ判断（`server/remoteHost/handlers/startChat.ts` の `resolveRoleId`）は
 **「存在し、かつ debug でない」**を要求して拒否している。ブラウザ側の `roles` には debug の役割も
-入っていて、選択欄が描画時に隠しているだけ（`RoleSelector.vue:59`）。つまり下書き側の既存の照合も、
+入っていて、選択欄が描画時に隠しているだけ（`RoleSelector.vue` の絞り込み）。つまり下書き側の既存の照合も、
 debug の役割は通してしまう。
 
 ## 直す場所
