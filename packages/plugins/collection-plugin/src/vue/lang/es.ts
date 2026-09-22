@@ -104,6 +104,8 @@ const esMessages: CollectionMessages = {
     pushFailed: "Error al enviar: {error}",
     pushDone:
       "Enviado a Google: {created} creados, {updated} actualizados, {conflicts} conflictos omitidos, {localDeletes} eliminaciones locales no aplicadas.",
+    pushDoneWithDeletes:
+      "Enviado a Google: {created} creados, {updated} actualizados, {conflicts} conflictos omitidos, {deletedInGoogle} eliminados en Google, {localDeletes} eliminaciones locales no aplicadas.",
     feedChatSeed:
       "El feed «{slug}» está definido por el esquema `feeds/{slug}/schema.json` y sus registros se guardan en `{dataPath}/` (un archivo `<id>.json` por registro). Usa ese esquema y esos datos para responder a esta solicitud: {message}",
     feedsTitle: "Fuentes de datos",

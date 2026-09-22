@@ -26,3 +26,59 @@ export function pushProblems(result: CollectionPushResult): string[] {
 export function pushWroteSomething(result: CollectionPushResult): boolean {
   return result.created > 0 || result.updated > 0 || (result.deletedInGoogle ?? 0) > 0;
 }
+
+/** The counts the push message states, with the deletions split.
+ *
+ *  `localDeletes` means "records that went away HERE", and it means that whether
+ *  or not the deletion carried — so it is NOT the number to call "not applied".
+ *  Reporting it as such told a user who had opted into `propagateDeletes` that
+ *  nothing reached Google while the events were in fact gone (#3260). */
+export interface PushCounts {
+  created: number;
+  updated: number;
+  conflicts: number;
+  /** Deleted here AND in Google. */
+  deletedInGoogle: number;
+  /** Deleted here and still standing in Google — no opt-in, or the guard
+   *  refused the event. The reason for a refusal rides in `skipped`. */
+  deletesNotApplied: number;
+}
+
+export function pushCounts(result: CollectionPushResult): PushCounts {
+  const deletedInGoogle = result.deletedInGoogle ?? 0;
+  return {
+    created: result.created,
+    updated: result.updated,
+    conflicts: result.conflicts,
+    deletedInGoogle,
+    // Clamped: an older host answers no `deletedInGoogle` at all, and a
+    // negative count here would render as one.
+    deletesNotApplied: Math.max(result.localDeletes - deletedInGoogle, 0),
+  };
+}
+
+/** The message key + interpolation params the push note renders.
+ *
+ *  Extracted from the view because THIS is where the bug lived: the counts were
+ *  right and the sentence built from four of them, so a helper-level test stayed
+ *  green while the user read the wrong thing (#3260). A pure function can be
+ *  rendered against the real dictionaries and diffed against what the old code
+ *  produced; a method inside an SFC cannot be loaded by the test runner at all.
+ *
+ *  `localDeletes` carries the REMAINDER, not the raw count. The `pushDone`
+ *  template says "not applied" about that slot, and the remainder is what is
+ *  actually not applied — with no opt-in the two are equal, which is what keeps
+ *  the existing sentence byte-identical. */
+export interface PushMessage {
+  key: "collectionsView.pushDone" | "collectionsView.pushDoneWithDeletes";
+  params: Record<string, number>;
+}
+
+export function pushMessage(result: CollectionPushResult): PushMessage {
+  const counts = pushCounts(result);
+  const params = { ...counts, localDeletes: counts.deletesNotApplied };
+  // Two keys rather than five slots: a collection that never opted in must not
+  // be shown "0 deleted in Google" forever, and for it the remainder equals the
+  // old count, so the sentence it already saw is unchanged.
+  return counts.deletedInGoogle > 0 ? { key: "collectionsView.pushDoneWithDeletes", params } : { key: "collectionsView.pushDone", params };
+}

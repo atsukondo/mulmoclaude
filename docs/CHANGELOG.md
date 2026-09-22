@@ -8,6 +8,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+### Fixed
+
+- **A push that really deleted events said they were "not applied"** (`@mulmoclaude/collection-plugin`, #3261, closes #3260) — `propagateDeletes` shipped with the count, the response field and `pushWroteSomething` all correct, and the sentence on screen still built from the four numbers it had before. `localDeletes` counts records that went away HERE, whether or not the deletion carried, so calling it "local deletions not applied" was true only while the push never deleted: a user who opted in deleted three records, watched three events disappear from Google, and was told three local deletions were not applied. The number that means "still standing in Google" is `localDeletes - deletedInGoogle`, and the message now says both. A collection that never opted in reads exactly as it did — the remainder equals the old count there, and the wording with the delete clause appears only once something was actually deleted, so nobody is shown "0 deleted in Google" forever. Found by the mulmoterminal upgrade (receptron/mulmoterminal#2209), which noticed the view formatted only the four original counts.
+
 ## [1.21.0] - 2026-09-22
 
 **A mirrored calendar finishes the round trip: deleting a record can delete the event, the mirror can carry your RSVP and the meeting link, and the `google` tool's all-day support reaches npm.**
@@ -70,7 +74,7 @@ cycle and it looks exactly like a real repeated edit.
 - **The remote-view chat policy said the phone always sends** (PR #3250) — it does not; every surface
   follows the view's `allowSendChat` declaration. Comments only.
 
-Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.1.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.3.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.2.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.3.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.20.0] - 2026-09-21
 

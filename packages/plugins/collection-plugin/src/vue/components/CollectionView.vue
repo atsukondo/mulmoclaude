@@ -365,7 +365,7 @@ import { useCollectionRendering } from "../useCollectionRendering";
 import { writeCollectionViewMode, writeCollectionSort, writeCollectionFlagFilters, type CollectionViewMode } from "../collectionViewMode";
 import type { CollectionConfirmOptions, CollectionPushResult } from "../uiContext";
 import { useCollectionUi } from "../scopedUi";
-import { pushProblems } from "../calendarPushResult";
+import { pushMessage, pushProblems } from "../calendarPushResult";
 import { useTableSort } from "../composables/useTableSort";
 import { useCollectionActions } from "../composables/useCollectionActions";
 import { useFlagFilters } from "../composables/useFlagFilters";
@@ -692,8 +692,8 @@ function reportPush(result: CollectionPushResult): void {
     inlineError.value = t("collectionsView.pushFailed", { error: problems.join("; ") });
     return;
   }
-  const { created, updated, conflicts, localDeletes } = result;
-  showRefreshNote(t("collectionsView.pushDone", { created, updated, conflicts, localDeletes }));
+  const { key, params } = pushMessage(result);
+  showRefreshNote(t(key, params));
 }
 
 /** Show a transient refresh note, replacing any pending auto-clear. */

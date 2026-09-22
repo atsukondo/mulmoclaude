@@ -102,6 +102,8 @@ const koMessages: CollectionMessages = {
     pushCalendar: "Google로 내보내기",
     pushFailed: "내보내기 실패: {error}",
     pushDone: "Google로 내보냈습니다: {created}건 생성, {updated}건 수정, 충돌 {conflicts}건 건너뜀, 로컬 삭제 {localDeletes}건 미반영.",
+    pushDoneWithDeletes:
+      "Google로 내보냈습니다: {created}건 생성, {updated}건 수정, 충돌 {conflicts}건 건너뜀, Google에서 {deletedInGoogle}건 삭제, 로컬 삭제 {localDeletes}건 미반영.",
     feedChatSeed:
       "“{slug}” 피드는 스키마 `feeds/{slug}/schema.json`로 정의되며, 레코드는 `{dataPath}/`(레코드당 `<id>.json` 파일 하나)에 저장됩니다. 이 스키마와 데이터를 사용하여 다음 요청에 응답하세요: {message}",
     feedsTitle: "데이터 소스 피드",
