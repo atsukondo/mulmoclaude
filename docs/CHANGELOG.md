@@ -8,7 +8,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-09-23
+
+**Plugins stop shipping private copies of three and mermaid, a custom view can no longer pick the role its chat runs in, and a refused Google deletion no longer hides a successful push.**
+
+### Highlights
+
+#### One copy of three and of mermaid (#3274, PRs #3276 / #3279 / #3281)
+
+`@mulmoclaude/shapescript-plugin` bundled three, and `@mulmoclaude/markdown-plugin` bundled `@mulmoclaude/markdown-utils` with mermaid, MathJax, KaTeX and cytoscape inside it. A host that also draws with three or renders markdown got a second copy of each — mulmoserver warned `Multiple instances of Three.js being imported`, and MulmoClaude's own client build carried every mermaid chunk twice. Both plugins now leave those libraries to the consumer (they stay `dependencies`, so npm still installs them): the markdown plugin shrinks from ~16 MB to ~190 KB, shapescript from ~2.5 MB to ~1.2 MB, and the client build loses about a quarter of its size. Models, exports, diagrams and math render as before. A build-time test in each plugin goes red if the library is bundled again.
+
+#### A custom view cannot choose the role its chat runs in (#3267, PR #3270)
+
+`__MC_VIEW.startChat(prompt, role)` passed the view's `role` straight to the new session on the send path, so a view declaring `allowSendChat` could start a turn in a role the selector hides — `debug` included. Both entry points now apply the host's rule (the role must exist and must not be a debug role), and an unusable role falls back to that entry point's default.
+
 ### Fixed
+
+- **A custom view's `startChat` role was honoured unchecked on the send path** (mulmoclaude, #3270, closes #3267) — the send path took the view-supplied `role` as-is (`??` falls back only when it is absent), while the draft path checked it only for existence, so the `debug` role passed both. Both now use `resolveRequestedRoleId`, the same rule the remote-host `startChat` handler applies.
 
 - **The markdown plugin no longer ships its own mermaid and MathJax** (`@mulmoclaude/markdown-plugin`, `@mulmoclaude/markdown-utils`, refs #3274) — the plugin bundled `@mulmoclaude/markdown-utils`, and with it mermaid, MathJax, KaTeX and cytoscape, while the host renders markdown through its own markdown-utils; the host build carried two copies of each. markdown-utils is now external to the plugin, so one copy is shared, and the plugin's dist drops from ~16 MB to ~400 KB. Doing so exposed four relative imports in markdown-utils without a `.js` extension, which fail with `ERR_MODULE_NOT_FOUND` when loaded in plain Node ESM (bundlers and tsx resolve them); they name their file now, and a test requires it of every relative import.
 
