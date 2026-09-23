@@ -7,15 +7,13 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import typescript from "typescript";
 import { loadConfigFromFile } from "vite";
 
 type External = string | RegExp;
 
 const PACKAGE_DIR = join(import.meta.dirname, "..");
 const SRC = join(PACKAGE_DIR, "src");
-// Every way a module names another: `from "…"` (static import / re-export),
-// `import "…"` (side effect) and `import("…")` (dynamic).
-const THREE_SPECIFIER = /\b(?:from|import)\s*\(?\s*["'](three[^"']*)["']/g;
 
 // Loaded the way `vite build` loads it: the config uses `__dirname`, which only
 // Vite's loader defines for an ESM package.
@@ -39,8 +37,13 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+// TypeScript's own scanner, so every form counts — static, re-export,
+// side-effect, dynamic — and strings or comments do not.
 function threeSpecifiersIn(text: string): string[] {
-  return [...text.matchAll(THREE_SPECIFIER)].flatMap((match) => (match[1] === undefined ? [] : [match[1]]));
+  return typescript
+    .preProcessFile(text, true, true)
+    .importedFiles.map((file) => file.fileName)
+    .filter((specifier) => specifier.startsWith("three"));
 }
 
 function threeSpecifiersInSource(): string[] {
