@@ -13,7 +13,9 @@ type External = string | RegExp;
 
 const PACKAGE_DIR = join(import.meta.dirname, "..");
 const SRC = join(PACKAGE_DIR, "src");
-const THREE_SPECIFIER = /from\s+["'](three[^"']*)["']/g;
+// Every way a module names another: `from "…"` (static import / re-export),
+// `import "…"` (side effect) and `import("…")` (dynamic).
+const THREE_SPECIFIER = /\b(?:from|import)\s*\(?\s*["'](three[^"']*)["']/g;
 
 // Loaded the way `vite build` loads it: the config uses `__dirname`, which only
 // Vite's loader defines for an ESM package.
@@ -37,10 +39,12 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+function threeSpecifiersIn(text: string): string[] {
+  return [...text.matchAll(THREE_SPECIFIER)].flatMap((match) => (match[1] === undefined ? [] : [match[1]]));
+}
+
 function threeSpecifiersInSource(): string[] {
-  const found = sourceFiles(SRC).flatMap((file) =>
-    [...readFileSync(file, "utf8").matchAll(THREE_SPECIFIER)].flatMap((match) => (match[1] === undefined ? [] : [match[1]])),
-  );
+  const found = sourceFiles(SRC).flatMap((file) => threeSpecifiersIn(readFileSync(file, "utf8")));
   return [...new Set(found)].sort();
 }
 
@@ -80,5 +84,28 @@ describe("isExternal", () => {
 
   it("matches nothing against an empty list", () => {
     assert.equal(isExternal("three", []), false);
+  });
+});
+
+describe("threeSpecifiersIn", () => {
+  it("finds a specifier in every import form", () => {
+    assert.deepEqual(threeSpecifiersIn(`import * as THREE from "three";`), ["three"]);
+    assert.deepEqual(threeSpecifiersIn(`export { Evaluator } from 'three-bvh-csg';`), ["three-bvh-csg"]);
+    assert.deepEqual(threeSpecifiersIn(`import "three/examples/jsm/utils/BufferGeometryUtils.js";`), ["three/examples/jsm/utils/BufferGeometryUtils.js"]);
+    assert.deepEqual(threeSpecifiersIn(`const m = await import("three/examples/jsm/exporters/GLTFExporter.js");`), [
+      "three/examples/jsm/exporters/GLTFExporter.js",
+    ]);
+    assert.deepEqual(threeSpecifiersIn(`await import ( 'three' )`), ["three"]);
+  });
+
+  it("finds a specifier split across lines", () => {
+    assert.deepEqual(threeSpecifiersIn(`import {\n  Mesh,\n} from\n  "three";`), ["three"]);
+  });
+
+  it("ignores three named anywhere but an import", () => {
+    assert.deepEqual(threeSpecifiersIn(`const lib = "three";`), []);
+    assert.deepEqual(threeSpecifiersIn(`// load three/examples lazily`), []);
+    assert.deepEqual(threeSpecifiersIn(`reimport("three")`), []);
+    assert.deepEqual(threeSpecifiersIn(`import { x } from "./three-helpers";`), []);
   });
 });
