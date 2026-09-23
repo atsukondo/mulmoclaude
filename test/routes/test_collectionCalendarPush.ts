@@ -18,6 +18,7 @@ const result = (overrides: Partial<CalendarCollectionPushResult> = {}): Calendar
   localDeletes: 0,
   deletedInGoogle: 0,
   skipped: [],
+  keptInGoogle: [],
   errors: [],
   unpushedIds: [],
   ...overrides,
@@ -111,7 +112,17 @@ describe("reportedAccessRole — what an unlisted calendar says about itself", (
 describe("calendarPushBody — a real push", () => {
   it("passes the counts through", () => {
     const body = calendarPushBody({ kind: "pushed", result: result({ created: 2, updated: 3, conflicts: 1, localDeletes: 4, deletedInGoogle: 1 }) });
-    assert.deepEqual(body, { pushed: true, created: 2, updated: 3, conflicts: 1, localDeletes: 4, deletedInGoogle: 1, skipped: [], errors: [] });
+    assert.deepEqual(body, {
+      pushed: true,
+      created: 2,
+      updated: 3,
+      conflicts: 1,
+      localDeletes: 4,
+      deletedInGoogle: 1,
+      skipped: [],
+      keptInGoogle: [],
+      errors: [],
+    });
   });
 
   // `localDeletes` counts what went away HERE and `deletedInGoogle` what the
@@ -130,6 +141,19 @@ describe("calendarPushBody — a real push", () => {
     });
     assert.deepEqual(body.skipped, ["abcde: needs a mapped start and end"]);
     assert.deepEqual(body.errors, ["ev9: HTTP 500"]);
+  });
+
+  // A refused deletion rides its OWN list to the caller. Merged into `skipped` it
+  // took the caller's problem branch with it, and one refusal then hid every
+  // create and update the same push made (#3272).
+  it("carries a refused deletion apart from records that could not be pushed", () => {
+    const body = calendarPushBody({
+      kind: "pushed",
+      result: result({ created: 10, keptInGoogle: ["ev1: left in Google because it has attendees"], skipped: ["abcde: needs a mapped start and end"] }),
+    });
+    assert.deepEqual(body.keptInGoogle, ["ev1: left in Google because it has attendees"]);
+    assert.deepEqual(body.skipped, ["abcde: needs a mapped start and end"]);
+    assert.equal(body.created, 10);
   });
 
   it("reports a conflict count without touching either side", () => {

@@ -45,13 +45,13 @@ describe("sweepDeletes — off by default", () => {
   it("touches nothing when the collection did not opt in, but still counts", async () => {
     const { deps, calls } = stub({ ev1: { attendeeCount: 0 } });
     const sweep = await sweepDeletes(["ev1", "ev2"], false, deps);
-    assert.deepEqual(sweep, { seen: 2, deleted: [], skipped: [], errors: [] });
+    assert.deepEqual(sweep, { seen: 2, deleted: [], kept: [], errors: [] });
     assert.deepEqual(calls, { fetched: [], deleted: [], forgotten: [] });
   });
 
   it("does not even read Google when there is nothing to delete", async () => {
     const { deps, calls } = stub({});
-    assert.deepEqual(await sweepDeletes([], true, deps), { seen: 0, deleted: [], skipped: [], errors: [] });
+    assert.deepEqual(await sweepDeletes([], true, deps), { seen: 0, deleted: [], kept: [], errors: [] });
     assert.deepEqual(calls.fetched, []);
   });
 });
@@ -60,7 +60,7 @@ describe("sweepDeletes — a solo event", () => {
   it("deletes it and forgets its baseline, in that order", async () => {
     const { deps, calls } = stub({ ev1: { attendeeCount: 0 } });
     const sweep = await sweepDeletes(["ev1"], true, deps);
-    assert.deepEqual(sweep, { seen: 1, deleted: ["ev1"], skipped: [], errors: [] });
+    assert.deepEqual(sweep, { seen: 1, deleted: ["ev1"], kept: [], errors: [] });
     assert.deepEqual(calls.deleted, [["ev1", "etag-ev1"]]);
     assert.deepEqual(calls.forgotten, ["ev1"]);
   });
@@ -78,8 +78,8 @@ describe("sweepDeletes — an event with attendees", () => {
     const { deps, calls } = stub({ ev1: { attendeeCount: 2 } });
     const sweep = await sweepDeletes(["ev1"], true, deps);
     assert.deepEqual(sweep.deleted, []);
-    assert.equal(sweep.skipped.length, 1);
-    assert.match(sweep.skipped[0] ?? "", /ev1: left in Google because it carries attendees/);
+    assert.equal(sweep.kept.length, 1);
+    assert.match(sweep.kept[0] ?? "", /ev1: left in Google because it carries attendees/);
     assert.deepEqual(calls.deleted, []);
   });
 
@@ -95,7 +95,7 @@ describe("sweepDeletes — an event with attendees", () => {
     const { deps, calls } = stub({ ev1: { attendeeCount: 0 }, ev2: { attendeeCount: 5 }, ev3: { attendeeCount: 0 } });
     const sweep = await sweepDeletes(["ev1", "ev2", "ev3"], true, deps);
     assert.deepEqual(sweep.deleted, ["ev1", "ev3"]);
-    assert.equal(sweep.skipped.length, 1);
+    assert.equal(sweep.kept.length, 1);
     assert.deepEqual(calls.forgotten, ["ev1", "ev3"]);
   });
 });
@@ -107,7 +107,7 @@ describe("sweepDeletes — an event already gone from Google", () => {
   it("forgets its baseline without reporting or deleting", async () => {
     const { deps, calls } = stub({ ev1: null });
     const sweep = await sweepDeletes(["ev1"], true, deps);
-    assert.deepEqual(sweep, { seen: 1, deleted: [], skipped: [], errors: [] });
+    assert.deepEqual(sweep, { seen: 1, deleted: [], kept: [], errors: [] });
     assert.deepEqual(calls.deleted, []);
     assert.deepEqual(calls.forgotten, ["ev1"]);
   });
@@ -192,8 +192,8 @@ describe("sweepDeletes — the event changed between the read and the delete", (
     const sweep = await sweepDeletes(["ev1"], true, deps);
     assert.deepEqual(sweep.deleted, []);
     assert.deepEqual(sweep.errors, []);
-    assert.equal(sweep.skipped.length, 1);
-    assert.match(sweep.skipped[0] ?? "", /ev1: left in Google because it changed there/);
+    assert.equal(sweep.kept.length, 1);
+    assert.match(sweep.kept[0] ?? "", /ev1: left in Google because it changed there/);
     assert.deepEqual(calls.forgotten, []);
   });
 
@@ -203,7 +203,7 @@ describe("sweepDeletes — the event changed between the read and the delete", (
     it(`treats a ${status} on the delete as the event being gone`, async () => {
       const { deps, calls } = rejectingWith(status, { ev1: { attendeeCount: 0 } });
       const sweep = await sweepDeletes(["ev1"], true, deps);
-      assert.deepEqual(sweep, { seen: 1, deleted: [], skipped: [], errors: [] });
+      assert.deepEqual(sweep, { seen: 1, deleted: [], kept: [], errors: [] });
       assert.deepEqual(calls.forgotten, ["ev1"]);
     });
   }

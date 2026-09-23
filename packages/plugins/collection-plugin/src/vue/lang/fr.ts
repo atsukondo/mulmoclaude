@@ -104,6 +104,7 @@ const frMessages: CollectionMessages = {
     pushCalendar: "Envoyer vers Google",
     pushFailed: "Échec de l'envoi : {error}",
     pushDone: "Envoyé vers Google : {created} créés, {updated} mis à jour, {conflicts} conflits ignorés, {localDeletes} suppressions locales non appliquées.",
+    pushKeptDeletes: "{count} suppression(s) ont été laissées dans Google : {reasons}",
     pushDoneWithDeletes:
       "Envoyé vers Google : {created} créés, {updated} mis à jour, {conflicts} conflits ignorés, {deletedInGoogle} supprimés dans Google, {localDeletes} suppressions locales non appliquées.",
     feedChatSeed:

@@ -16,6 +16,9 @@ export interface CollectionPushBody {
   deletedInGoogle: number;
   /** Records that could not be pushed as they stand, each with its reason. */
   skipped: string[];
+  /** Deletions left standing in Google, each with its reason — reported apart
+   *  from `skipped` so one refusal does not read as a failed push (#3272). */
+  keptInGoogle: string[];
   errors: string[];
 }
 
@@ -35,6 +38,7 @@ const empty = (errors: string[]): CollectionPushBody => ({
   localDeletes: 0,
   deletedInGoogle: 0,
   skipped: [],
+  keptInGoogle: [],
   errors,
 });
 
@@ -46,6 +50,7 @@ const fromResult = (result: CalendarCollectionPushResult): CollectionPushBody =>
   localDeletes: result.localDeletes,
   deletedInGoogle: result.deletedInGoogle,
   skipped: result.skipped,
+  keptInGoogle: result.keptInGoogle,
   errors: result.errors,
 });
 

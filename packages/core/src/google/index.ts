@@ -112,6 +112,7 @@ export {
   pushCalendarForCollection,
   pushCollectionNow,
   reportedAccessRole,
+  pushReportLists,
   sweepDeletes,
   unsentLocalEdits,
   type DeleteSweep,

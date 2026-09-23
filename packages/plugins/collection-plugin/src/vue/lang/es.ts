@@ -104,6 +104,7 @@ const esMessages: CollectionMessages = {
     pushFailed: "Error al enviar: {error}",
     pushDone:
       "Enviado a Google: {created} creados, {updated} actualizados, {conflicts} conflictos omitidos, {localDeletes} eliminaciones locales no aplicadas.",
+    pushKeptDeletes: "{count} eliminación(es) se dejaron en Google: {reasons}",
     pushDoneWithDeletes:
       "Enviado a Google: {created} creados, {updated} actualizados, {conflicts} conflictos omitidos, {deletedInGoogle} eliminados en Google, {localDeletes} eliminaciones locales no aplicadas.",
     feedChatSeed:

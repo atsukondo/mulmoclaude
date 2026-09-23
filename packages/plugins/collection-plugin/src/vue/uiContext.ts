@@ -82,6 +82,10 @@ export interface CollectionPushResult {
   deletedInGoogle?: number;
   /** Records that could not be pushed as they stand, each with its reason. */
   skipped: string[];
+  /** Deletions left standing in Google, each with its reason. Apart from
+   *  `skipped` because a refused deletion is not a failed push; optional so an
+   *  older host, whose body does not carry the key, still parses (#3272). */
+  keptInGoogle?: string[];
   errors: string[];
 }
 

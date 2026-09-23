@@ -365,7 +365,7 @@ import { useCollectionRendering } from "../useCollectionRendering";
 import { writeCollectionViewMode, writeCollectionSort, writeCollectionFlagFilters, type CollectionViewMode } from "../collectionViewMode";
 import type { CollectionConfirmOptions, CollectionPushResult } from "../uiContext";
 import { useCollectionUi } from "../scopedUi";
-import { pushMessage, pushProblems } from "../calendarPushResult";
+import { pushKeptDeletes, pushMessage, pushProblems } from "../calendarPushResult";
 import { useTableSort } from "../composables/useTableSort";
 import { useCollectionActions } from "../composables/useCollectionActions";
 import { useFlagFilters } from "../composables/useFlagFilters";
@@ -685,7 +685,10 @@ async function pushCalendar(): Promise<void> {
 }
 
 /** Say what the push did. Problems arrive as fields on an HTTP 200, so a silent
- *  success here would render a setup failure as "nothing to push". */
+ *  success here would render a setup failure as "nothing to push".
+ *
+ *  A deletion Google refused is NOT a problem: it rides alongside the counts, so
+ *  one refusal cannot hide what the run actually wrote (#3272). */
 function reportPush(result: CollectionPushResult): void {
   const problems = pushProblems(result);
   if (problems.length > 0) {
@@ -693,7 +696,14 @@ function reportPush(result: CollectionPushResult): void {
     return;
   }
   const { key, params } = pushMessage(result);
-  showRefreshNote(t(key, params));
+  showRefreshNote([t(key, params), ...keptDeletesNote(result)].join(" "));
+}
+
+/** The sentence naming the deletions left standing, or nothing to add. */
+function keptDeletesNote(result: CollectionPushResult): string[] {
+  const kept = pushKeptDeletes(result);
+  if (kept.length === 0) return [];
+  return [t("collectionsView.pushKeptDeletes", { count: kept.length, reasons: kept.join("; ") })];
 }
 
 /** Show a transient refresh note, replacing any pending auto-clear. */

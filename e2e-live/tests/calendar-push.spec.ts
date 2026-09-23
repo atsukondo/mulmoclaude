@@ -303,6 +303,7 @@ test.describe("Collection → Google push, end to end (#2602)", () => {
       localDeletes: 0,
       deletedInGoogle: 0,
       skipped: [],
+      keptInGoogle: [],
       errors: [],
       unpushedIds: [],
     };
