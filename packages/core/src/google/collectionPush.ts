@@ -382,7 +382,7 @@ function pushedShadow(outcomes: readonly PushOutcome[]): Record<string, ShadowEv
 
 /** One record's push, kept with the id so the pull can be told which records to
  *  leave alone. */
-interface PushAttempt {
+export interface PushAttempt {
   eventId: string;
   outcome: PushOutcome;
 }

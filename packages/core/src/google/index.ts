@@ -117,6 +117,7 @@ export {
   unsentLocalEdits,
   type DeleteSweep,
   type DeleteSweepDeps,
+  type PushAttempt,
   type PushOutcomeKind,
   type CalendarCollectionPushResult,
   type CalendarPushDeps,

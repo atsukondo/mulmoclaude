@@ -16,6 +16,7 @@ import { pushResultFrom, type CalendarEventSummary, type DeleteSweep } from "@mu
 
 const SLUG = "my-schedule";
 const REFUSAL = "ev1: left in Google because it has attendees";
+const SECOND_REFUSAL = "ev2: left in Google because it has attendees";
 const SWEEP_FAILURE = "ev2: 500 from Google";
 const UNPUSHABLE = "row-9: needs a mapped start and end";
 const PUSH_FAILURE = "row-7: HTTP 500";
@@ -68,12 +69,19 @@ describe("pushResultFrom — where a refused deletion is reported", () => {
         { eventId: "row-9", outcome: { kind: "skipped", message: UNPUSHABLE } },
         { eventId: "row-7", outcome: { kind: "error", message: PUSH_FAILURE } },
       ],
-      sweep({ seen: 2, deleted: ["ev3"], skipped: [REFUSAL], errors: [SWEEP_FAILURE] }),
+      sweep({ seen: 3, deleted: ["ev3"], skipped: [REFUSAL, SECOND_REFUSAL], errors: [SWEEP_FAILURE] }),
     );
     assert.deepEqual(result.skipped, [UNPUSHABLE]);
-    assert.deepEqual(result.keptInGoogle, [REFUSAL]);
+    // EVERY refusal, in order: told about one of three, the other two are silent
+    // divergence — the harm this separation exists to prevent.
+    assert.deepEqual(result.keptInGoogle, [REFUSAL, SECOND_REFUSAL]);
     assert.deepEqual(result.errors, [PUSH_FAILURE, SWEEP_FAILURE]);
     assert.equal(result.created, 1);
+    // The counts this assembler also owns: `localDeletes` is what went away HERE,
+    // never what Google removed, and the pull must be told which records to leave.
+    assert.equal(result.localDeletes, 3);
+    assert.equal(result.deletedInGoogle, 1);
+    assert.deepEqual(result.unpushedIds, ["row-7"]);
   });
 
   it("treats a sweep FAILURE as an error — a 500 is not a decision", () => {

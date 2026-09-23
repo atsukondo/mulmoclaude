@@ -109,14 +109,16 @@ test.describe("collection → Google Calendar push button", () => {
   test("shows what the push wrote AND that a deletion was left in Google", async ({ page }) => {
     await mockCollection(page, CALENDAR_COLLECTION);
     const calls: string[] = [];
-    const refusal = "team-standup: left in Google because it has attendees";
-    await mockPush(page, { ...emptyPush, created: 10, localDeletes: 1, keptInGoogle: [refusal] }, calls);
+    const refusals = ["team-standup: left in Google because it has attendees", "board-review: left in Google because it has attendees"];
+    await mockPush(page, { ...emptyPush, created: 10, localDeletes: 2, keptInGoogle: refusals }, calls);
 
     await page.goto("/collections/my-schedule");
     await page.getByTestId("collections-push-calendar").click();
     await expect.poll(() => calls).toEqual(["POST"]);
     await expect(page.getByText(/10 created/)).toBeVisible();
-    await expect(page.getByText(/left in Google because it has attendees/)).toBeVisible();
+    // Both of them: reporting only the first leaves the rest as silent divergence.
+    await expect(page.getByText(/team-standup: left in Google/)).toBeVisible();
+    await expect(page.getByText(/board-review: left in Google/)).toBeVisible();
   });
 
   // Both at once: the refusal must not be the thing that disappears, and the

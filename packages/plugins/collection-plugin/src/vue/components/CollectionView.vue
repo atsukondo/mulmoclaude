@@ -695,16 +695,14 @@ function reportPush(result: CollectionPushResult): void {
   if (problems.length > 0) {
     // The refusal rides along even here: it is the only thing saying an event is
     // still standing in Google, and the help file promises every push reports it.
-    inlineError.value = [t("collectionsView.pushFailed", { error: problems.join("; ") }), ...kept].join(" ");
+    // ` / ` rather than a space: no `pushFailed` template ends in punctuation, and
+    // several locales have neither capitals nor inter-word spaces, so a space alone
+    // leaves the two sentences with no boundary at all.
+    inlineError.value = [t("collectionsView.pushFailed", { error: problems.join("; ") }), ...kept].join(" / ");
     return;
   }
-  showRefreshNote([t(...pushMessageArgs(result)), ...kept].join(" "));
-}
-
-/** `pushMessage`'s key and params, as arguments for `t`. */
-function pushMessageArgs(result: CollectionPushResult): [string, Record<string, number>] {
   const { key, params } = pushMessage(result);
-  return [key, params];
+  showRefreshNote([t(key, params), ...kept].join(" "));
 }
 
 /** The sentence naming the deletions left standing, or nothing to add. */
