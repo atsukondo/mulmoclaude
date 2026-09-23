@@ -10,6 +10,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ### Fixed
 
+- **ShapeScript no longer ships its own copy of three** (`@mulmoclaude/shapescript-plugin`, refs #3274) — the plugin bundled three into its dist, so a host that also draws with three got two copies: mulmoserver's shape page warned `Multiple instances of Three.js being imported`, and its scene, OrbitControls and exporters were handed objects built from the other copy. `three` is now external and resolved from the consumer (the plugin still declares it as a dependency, so npm installs it). The `three/examples` modules and the CSG helpers stay bundled and import that same `three`, which keeps Node on one copy too. Models and the GLB / STL exports are byte-identical. A USDZ export differs only in the numbers inside its prim names (`Object_N`, `Geometry_N`, `Material_N`), which come from three's global id counters and now start later; renumbered by first appearance, its content is identical. The package is smaller.
 - **A deletion Google refused no longer reads as a failed push** — with `propagateDeletes` on, one refused
   deletion made the view show only the failure and drop the counts of everything the push did write. The
   refusal now travels in its own list (`keptInGoogle`) and is reported beside the counts, on both the
@@ -57,7 +58,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
   node --input-type=module -e 'await import("@mulmoclaude/core/collection/server")'   # must not throw
   ```
 
-Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.2.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.4.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.2.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.4.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.1.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.21.0] - 2026-09-22
 
