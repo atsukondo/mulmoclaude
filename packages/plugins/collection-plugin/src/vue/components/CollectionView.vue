@@ -365,7 +365,7 @@ import { useCollectionRendering } from "../useCollectionRendering";
 import { writeCollectionViewMode, writeCollectionSort, writeCollectionFlagFilters, type CollectionViewMode } from "../collectionViewMode";
 import type { CollectionConfirmOptions, CollectionPushResult } from "../uiContext";
 import { useCollectionUi } from "../scopedUi";
-import { pushMessage, pushProblems } from "../calendarPushResult";
+import { pushKeptDeletes, pushMessage, pushProblems } from "../calendarPushResult";
 import { useTableSort } from "../composables/useTableSort";
 import { useCollectionActions } from "../composables/useCollectionActions";
 import { useFlagFilters } from "../composables/useFlagFilters";
@@ -685,15 +685,31 @@ async function pushCalendar(): Promise<void> {
 }
 
 /** Say what the push did. Problems arrive as fields on an HTTP 200, so a silent
- *  success here would render a setup failure as "nothing to push". */
+ *  success here would render a setup failure as "nothing to push".
+ *
+ *  A deletion Google refused is NOT a problem: it rides alongside the counts, so
+ *  one refusal cannot hide what the run actually wrote (#3272). */
 function reportPush(result: CollectionPushResult): void {
   const problems = pushProblems(result);
+  const kept = keptDeletesNote(result);
   if (problems.length > 0) {
-    inlineError.value = t("collectionsView.pushFailed", { error: problems.join("; ") });
+    // The refusal rides along even here: it is the only thing saying an event is
+    // still standing in Google, and the help file promises every push reports it.
+    // ` / ` rather than a space: no `pushFailed` template ends in punctuation, and
+    // several locales have neither capitals nor inter-word spaces, so a space alone
+    // leaves the two sentences with no boundary at all.
+    inlineError.value = [t("collectionsView.pushFailed", { error: problems.join("; ") }), ...kept].join(" / ");
     return;
   }
   const { key, params } = pushMessage(result);
-  showRefreshNote(t(key, params));
+  showRefreshNote([t(key, params), ...kept].join(" "));
+}
+
+/** The sentence naming the deletions left standing, or nothing to add. */
+function keptDeletesNote(result: CollectionPushResult): string[] {
+  const kept = pushKeptDeletes(result);
+  if (kept.length === 0) return [];
+  return [t("collectionsView.pushKeptDeletes", { reasons: kept.join("; ") })];
 }
 
 /** Show a transient refresh note, replacing any pending auto-clear. */

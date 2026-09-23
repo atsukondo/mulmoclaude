@@ -104,6 +104,7 @@ const ptBRMessages: CollectionMessages = {
     pushFailed: "Falha ao enviar: {error}",
     pushDone:
       "Enviado para o Google: {created} criados, {updated} atualizados, {conflicts} conflitos ignorados, {localDeletes} exclusões locais não aplicadas.",
+    pushKeptDeletes: "Mantido no Google: {reasons}",
     pushDoneWithDeletes:
       "Enviado para o Google: {created} criados, {updated} atualizados, {conflicts} conflitos ignorados, {deletedInGoogle} excluídos no Google, {localDeletes} exclusões locais não aplicadas.",
     feedChatSeed:

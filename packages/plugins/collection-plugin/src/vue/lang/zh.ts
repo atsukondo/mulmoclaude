@@ -101,6 +101,7 @@ const zhMessages: CollectionMessages = {
     pushCalendar: "推送到 Google",
     pushFailed: "推送失败：{error}",
     pushDone: "已推送到 Google：新建 {created} 条，更新 {updated} 条，跳过 {conflicts} 条冲突，{localDeletes} 条本地删除未同步。",
+    pushKeptDeletes: "保留在 Google 中：{reasons}",
     pushDoneWithDeletes:
       "已推送到 Google：新建 {created} 条，更新 {updated} 条，跳过 {conflicts} 条冲突，从 Google 删除 {deletedInGoogle} 条，{localDeletes} 条本地删除未同步。",
     feedChatSeed:

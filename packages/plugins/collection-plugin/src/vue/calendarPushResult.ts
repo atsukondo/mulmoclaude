@@ -17,6 +17,18 @@ export function pushProblems(result: CollectionPushResult): string[] {
   return [...result.errors, ...result.skipped];
 }
 
+/** Deletions Google refused, each with its reason.
+ *
+ *  Deliberately NOT part of `pushProblems`: the record went away here and the
+ *  event is still standing there, which the user has to be told, but the rest of
+ *  the push carried. Reported through `pushProblems` it took the banner's early
+ *  return with it and hid every successful create and update (#3272).
+ *
+ *  Empty for an older host: the key is absent from its body, not false. */
+export function pushKeptDeletes(result: CollectionPushResult): string[] {
+  return result.keptInGoogle ?? [];
+}
+
 /** Whether anything reached Google.
  *
  *  A conflict is reported but deliberately not acted on, so it is not work
@@ -40,7 +52,7 @@ export interface PushCounts {
   /** Deleted here AND in Google. */
   deletedInGoogle: number;
   /** Deleted here and still standing in Google — no opt-in, or the guard
-   *  refused the event. The reason for a refusal rides in `skipped`. */
+   *  refused the event. The reason for a refusal rides in `keptInGoogle`. */
   deletesNotApplied: number;
 }
 

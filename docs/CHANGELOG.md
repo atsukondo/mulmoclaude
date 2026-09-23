@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 ### Fixed
 
 - **ShapeScript no longer ships its own copy of three** (`@mulmoclaude/shapescript-plugin`, refs #3274) — the plugin bundled three into its dist, so a host that also draws with three got two copies: mulmoserver's shape page warned `Multiple instances of Three.js being imported`, and its scene, OrbitControls and exporters were handed objects built from the other copy. `three` is now external and resolved from the consumer (the plugin still declares it as a dependency, so npm installs it). The `three/examples` modules and the CSG helpers stay bundled and import that same `three`, which keeps Node on one copy too. Models and the GLB / STL exports are byte-identical. A USDZ export differs only in the numbers inside its prim names (`Object_N`, `Geometry_N`, `Material_N`), which come from three's global id counters and now start later; renumbered by first appearance, its content is identical. The package is smaller.
+- **A deletion Google refused no longer reads as a failed push** — with `propagateDeletes` on, one refused
+  deletion made the view show only the failure and drop the counts of everything the push did write. The
+  refusal now travels in its own list (`keptInGoogle`) and is reported beside the counts, on both the
+  success and the problem path (#3272, `@mulmoclaude/core` + `@mulmoclaude/collection-plugin`).
 
 - **The help the agent reads when it writes a phone view still said the phone always sends** (`@mulmoclaude/core`, closes #3268) — `custom-view-remote.md` and `custom-view.md` told the agent that a `target: "mobile"` view's `startChat` runs the prompt whether or not it declares `allowSendChat`. Since #3249 / receptron/mulmoserver#273 the phone follows the declaration like every other surface, so a view written from that help left the flag off and drafted on the phone — the symptom #3249 reported, reproduced once per new view. Both helps now say undeclared drafts and declared sends, and the remote help shows the declaration. Reaches npm users with the next `@mulmoclaude/core` release (the helps ship in `assets/`).
 
@@ -54,7 +58,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
   node --input-type=module -e 'await import("@mulmoclaude/core/collection/server")'   # must not throw
   ```
 
-Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.2.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.4.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.1.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.3.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.5.0`, `@mulmoclaude/form-plugin@2.0.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.0.1`, `@mulmoclaude/markdown-utils@3.0.0`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.1.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.21.0] - 2026-09-22
 

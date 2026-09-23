@@ -93,6 +93,13 @@ export interface CalendarCollectionPushResult {
   deletedInGoogle: number;
   /** Records that cannot be pushed as they stand, each with the reason. */
   skipped: string[];
+  /** Deletions the sweep left standing in Google, each with the reason.
+   *
+   *  NOT merged into `skipped`: that list means "this push did not do what you
+   *  asked", and a refused deletion is "it was deliberately not deleted" while
+   *  the rest of the run carried. Merging them made one refusal hide every
+   *  successful create and update from the caller (#3272). */
+  keptInGoogle: string[];
   errors: string[];
   /** Records whose local edit did NOT reach Google and would be destroyed by
    *  the pull that follows an automatic push (#2620).
@@ -375,7 +382,7 @@ function pushedShadow(outcomes: readonly PushOutcome[]): Record<string, ShadowEv
 
 /** One record's push, kept with the id so the pull can be told which records to
  *  leave alone. */
-interface PushAttempt {
+export interface PushAttempt {
   eventId: string;
   outcome: PushOutcome;
 }
@@ -387,9 +394,22 @@ const UNPUSHED_KINDS: readonly PushOutcome["kind"][] = ["conflict", "error"];
  *  pull must not overwrite the record and the baseline must not advance. */
 export const isUnpushed = (kind: PushOutcomeKind): boolean => UNPUSHED_KINDS.includes(kind);
 
-function tally(slug: string, attempts: readonly PushAttempt[], deletes: DeleteSweep): CalendarCollectionPushResult {
+/** The whole report one run produces, from what each record's push did and what
+ *  the delete sweep did.
+ *
+ *  A sweep's refusal goes to `keptInGoogle`, NEVER to `skipped`: that list means
+ *  "this push did not do what you asked", and a refusal means "the event was
+ *  deliberately left standing" while the rest of the run carried. Merged, one
+ *  refusal took the caller's problem branch and hid every create and update
+ *  (#3272).
+ *
+ *  Exported because it is pure — a list of attempts and a sweep, no workspace,
+ *  grant or clock — so the separation above is something a test drives rather
+ *  than argues. */
+export function pushResultFrom(slug: string, attempts: readonly PushAttempt[], deletes: DeleteSweep): CalendarCollectionPushResult {
   const outcomes = attempts.map((attempt) => attempt.outcome);
   const count = (kind: PushOutcome["kind"]): number => outcomes.filter((outcome) => outcome.kind === kind).length;
+  const messagesOf = (kind: "skipped" | "error"): string[] => outcomes.flatMap((outcome) => (outcome.kind === kind ? [outcome.message] : []));
   return {
     slug,
     created: count("created"),
@@ -397,8 +417,11 @@ function tally(slug: string, attempts: readonly PushAttempt[], deletes: DeleteSw
     conflicts: count("conflict"),
     localDeletes: deletes.seen,
     deletedInGoogle: deletes.deleted.length,
-    skipped: [...outcomes.flatMap((outcome) => (outcome.kind === "skipped" ? [outcome.message] : [])), ...deletes.skipped],
-    errors: [...outcomes.flatMap((outcome) => (outcome.kind === "error" ? [outcome.message] : [])), ...deletes.errors],
+    skipped: messagesOf("skipped"),
+    // Copied, not aliased: a result handed to a caller must not change if the
+    // sweep it came from is appended to later.
+    keptInGoogle: [...deletes.skipped],
+    errors: [...messagesOf("error"), ...deletes.errors],
     unpushedIds: attempts.filter((attempt) => isUnpushed(attempt.outcome.kind)).map((attempt) => attempt.eventId),
   };
 }
@@ -443,6 +466,9 @@ export async function unsentLocalEdits(collection: LoadedCollection, workspaceRo
 export interface DeleteSweep {
   seen: number;
   deleted: string[];
+  /** Deletions left standing in Google, each with the reason. Reported apart
+   *  from the push's own `skipped` on the result: that list means "could not be
+   *  sent", and a refusal means "deliberately left alone" (#3272). */
   skipped: string[];
   errors: string[];
 }
@@ -580,7 +606,7 @@ export async function pushCollectionNow(collection: LoadedCollection, workspaceR
     deleteEvent: (eventId, ifMatch) => (deps.deleteEvent ?? deleteCalendarEvent)(accessToken, { calendarId, eventId, ifMatch }),
     forget: (eventId) => saveCalendarShadow(calendarId, { [eventId]: null }, workspaceRoot),
   });
-  const result = tally(slug, attempts, deletes);
+  const result = pushResultFrom(slug, attempts, deletes);
   if (result.errors.length > 0) log.warn("google", "calendar push finished with errors", { slug, errors: result.errors.length });
   return { kind: "pushed", result };
 }
