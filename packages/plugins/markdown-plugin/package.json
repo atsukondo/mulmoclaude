@@ -1,6 +1,6 @@
 {
   "name": "@mulmoclaude/markdown-plugin",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "Full-fidelity markdown document plugin (presentDocument) \u2014 Marp slides, PDF export, AI image-fill \u2014 shared gui-chat-protocol plugin for MulmoClaude and MulmoTerminal.",
   "type": "module",
   "main": "./dist/index.js",
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@marp-team/marp-core": "^4.4.0",
-    "@mulmoclaude/markdown-utils": "^3.0.0",
+    "@mulmoclaude/markdown-utils": "^3.0.1",
     "js-yaml": "^5.4.2",
     "marked": "^18.0.14",
     "mathjax-full": "^3.2.2",
