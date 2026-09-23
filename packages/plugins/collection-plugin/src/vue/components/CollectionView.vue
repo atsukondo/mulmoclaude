@@ -691,19 +691,27 @@ async function pushCalendar(): Promise<void> {
  *  one refusal cannot hide what the run actually wrote (#3272). */
 function reportPush(result: CollectionPushResult): void {
   const problems = pushProblems(result);
+  const kept = keptDeletesNote(result);
   if (problems.length > 0) {
-    inlineError.value = t("collectionsView.pushFailed", { error: problems.join("; ") });
+    // The refusal rides along even here: it is the only thing saying an event is
+    // still standing in Google, and the help file promises every push reports it.
+    inlineError.value = [t("collectionsView.pushFailed", { error: problems.join("; ") }), ...kept].join(" ");
     return;
   }
+  showRefreshNote([t(...pushMessageArgs(result)), ...kept].join(" "));
+}
+
+/** `pushMessage`'s key and params, as arguments for `t`. */
+function pushMessageArgs(result: CollectionPushResult): [string, Record<string, number>] {
   const { key, params } = pushMessage(result);
-  showRefreshNote([t(key, params), ...keptDeletesNote(result)].join(" "));
+  return [key, params];
 }
 
 /** The sentence naming the deletions left standing, or nothing to add. */
 function keptDeletesNote(result: CollectionPushResult): string[] {
   const kept = pushKeptDeletes(result);
   if (kept.length === 0) return [];
-  return [t("collectionsView.pushKeptDeletes", { count: kept.length, reasons: kept.join("; ") })];
+  return [t("collectionsView.pushKeptDeletes", { reasons: kept.join("; ") })];
 }
 
 /** Show a transient refresh note, replacing any pending auto-clear. */

@@ -10,6 +10,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ### Fixed
 
+- **A deletion Google refused no longer reads as a failed push** — with `propagateDeletes` on, one refused
+  deletion made the view show only the failure and drop the counts of everything the push did write. The
+  refusal now travels in its own list (`keptInGoogle`) and is reported beside the counts, on both the
+  success and the problem path (#3272, `@mulmoclaude/core` + `@mulmoclaude/collection-plugin`).
+
 - **The help the agent reads when it writes a phone view still said the phone always sends** (`@mulmoclaude/core`, closes #3268) — `custom-view-remote.md` and `custom-view.md` told the agent that a `target: "mobile"` view's `startChat` runs the prompt whether or not it declares `allowSendChat`. Since #3249 / receptron/mulmoserver#273 the phone follows the declaration like every other surface, so a view written from that help left the flag off and drafted on the phone — the symptom #3249 reported, reproduced once per new view. Both helps now say undeclared drafts and declared sends, and the remote help shows the declaration. Reaches npm users with the next `@mulmoclaude/core` release (the helps ship in `assets/`).
 
 - **A push that really deleted events said they were "not applied"** (`@mulmoclaude/collection-plugin`, #3261, closes #3260) — `propagateDeletes` shipped with the count, the response field and `pushWroteSomething` all correct, and the sentence on screen still built from the four numbers it had before. `localDeletes` counts records that went away HERE, whether or not the deletion carried, so calling it "local deletions not applied" was true only while the push never deleted: a user who opted in deleted three records, watched three events disappear from Google, and was told three local deletions were not applied. The number that means "still standing in Google" is `localDeletes - deletedInGoogle`, and the message now says both. A collection that never opted in reads exactly as it did — the remainder equals the old count there, and the wording with the delete clause appears only once something was actually deleted, so nobody is shown "0 deleted in Google" forever. Found by the mulmoterminal upgrade (receptron/mulmoterminal#2209), which noticed the view formatted only the four original counts.

@@ -151,3 +151,18 @@ describe("pushMessage — the mutations that reintroduce the bug", () => {
     assert.notEqual(pushMessage(pushResult).params.localDeletes, pushResult.localDeletes);
   });
 });
+
+/** The slot names a template asks to be filled. */
+const slotsOf = (template: string): string[] => [...template.matchAll(/\{(\w+)\}/g)].map((match) => match[1] ?? "").sort();
+
+// The sentence a refused deletion rides (#3272). Its reason is the only thing
+// saying an event is still standing in Google, so a locale spelling the slot
+// differently would show the user a raw `{reasons}`. Typecheck pins that the key
+// EXISTS in all eight; nothing pins what it asks for.
+describe("pushKeptDeletes — every locale asks for the same one slot", () => {
+  for (const locale of locales) {
+    it(`asks only for the reasons in ${locale}`, () => {
+      assert.deepEqual(slotsOf(templateFor(locale, "pushKeptDeletes")), ["reasons"]);
+    });
+  }
+});

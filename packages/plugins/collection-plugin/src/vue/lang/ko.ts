@@ -102,7 +102,7 @@ const koMessages: CollectionMessages = {
     pushCalendar: "Google로 내보내기",
     pushFailed: "내보내기 실패: {error}",
     pushDone: "Google로 내보냈습니다: {created}건 생성, {updated}건 수정, 충돌 {conflicts}건 건너뜀, 로컬 삭제 {localDeletes}건 미반영.",
-    pushKeptDeletes: "{count}건의 삭제는 Google에 그대로 두었습니다: {reasons}",
+    pushKeptDeletes: "Google에 그대로 두었습니다: {reasons}",
     pushDoneWithDeletes:
       "Google로 내보냈습니다: {created}건 생성, {updated}건 수정, 충돌 {conflicts}건 건너뜀, Google에서 {deletedInGoogle}건 삭제, 로컬 삭제 {localDeletes}건 미반영.",
     feedChatSeed:

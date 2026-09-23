@@ -394,7 +394,8 @@ const UNPUSHED_KINDS: readonly PushOutcome["kind"][] = ["conflict", "error"];
  *  pull must not overwrite the record and the baseline must not advance. */
 export const isUnpushed = (kind: PushOutcomeKind): boolean => UNPUSHED_KINDS.includes(kind);
 
-/** The three report lists, and which of them each thing goes into.
+/** The whole report one run produces, from what each record's push did and what
+ *  the delete sweep did.
  *
  *  A sweep's refusal goes to `keptInGoogle`, NEVER to `skipped`: that list means
  *  "this push did not do what you asked", and a refusal means "the event was
@@ -402,25 +403,13 @@ export const isUnpushed = (kind: PushOutcomeKind): boolean => UNPUSHED_KINDS.inc
  *  refusal took the caller's problem branch and hid every create and update
  *  (#3272).
  *
- *  All three are built here rather than at the call site, so the separation is
- *  something a test can drive: `tally` needs a workspace and a grant, this needs
- *  a list and a sweep. The outcomes are taken structurally for the same reason. */
-export function pushReportLists(
-  outcomes: readonly { kind: PushOutcomeKind; message?: string }[],
-  deletes: DeleteSweep,
-): Pick<CalendarCollectionPushResult, "skipped" | "keptInGoogle" | "errors"> {
-  const messagesOf = (kind: PushOutcomeKind): string[] =>
-    outcomes.flatMap((outcome) => (outcome.kind === kind && outcome.message !== undefined ? [outcome.message] : []));
-  return {
-    skipped: messagesOf("skipped"),
-    keptInGoogle: deletes.kept,
-    errors: [...messagesOf("error"), ...deletes.errors],
-  };
-}
-
-function tally(slug: string, attempts: readonly PushAttempt[], deletes: DeleteSweep): CalendarCollectionPushResult {
+ *  Exported because it is pure — a list of attempts and a sweep, no workspace,
+ *  grant or clock — so the separation above is something a test drives rather
+ *  than argues. */
+export function pushResultFrom(slug: string, attempts: readonly PushAttempt[], deletes: DeleteSweep): CalendarCollectionPushResult {
   const outcomes = attempts.map((attempt) => attempt.outcome);
   const count = (kind: PushOutcome["kind"]): number => outcomes.filter((outcome) => outcome.kind === kind).length;
+  const messagesOf = (kind: "skipped" | "error"): string[] => outcomes.flatMap((outcome) => (outcome.kind === kind ? [outcome.message] : []));
   return {
     slug,
     created: count("created"),
@@ -428,7 +417,11 @@ function tally(slug: string, attempts: readonly PushAttempt[], deletes: DeleteSw
     conflicts: count("conflict"),
     localDeletes: deletes.seen,
     deletedInGoogle: deletes.deleted.length,
-    ...pushReportLists(outcomes, deletes),
+    skipped: messagesOf("skipped"),
+    // Copied, not aliased: a result handed to a caller must not change if the
+    // sweep it came from is appended to later.
+    keptInGoogle: [...deletes.skipped],
+    errors: [...messagesOf("error"), ...deletes.errors],
     unpushedIds: attempts.filter((attempt) => isUnpushed(attempt.outcome.kind)).map((attempt) => attempt.eventId),
   };
 }
@@ -473,14 +466,14 @@ export async function unsentLocalEdits(collection: LoadedCollection, workspaceRo
 export interface DeleteSweep {
   seen: number;
   deleted: string[];
-  /** Deletions left standing in Google, each with the reason. NOT called
-   *  "skipped": the push uses that word for a record it could not send, and one
-   *  list named for both is what merged them into a single report (#3272). */
-  kept: string[];
+  /** Deletions left standing in Google, each with the reason. Reported apart
+   *  from the push's own `skipped` on the result: that list means "could not be
+   *  sent", and a refusal means "deliberately left alone" (#3272). */
+  skipped: string[];
   errors: string[];
 }
 
-const noDeletes = (seen: number): DeleteSweep => ({ seen, deleted: [], kept: [], errors: [] });
+const noDeletes = (seen: number): DeleteSweep => ({ seen, deleted: [], skipped: [], errors: [] });
 
 /** What `sweepDeletes` needs, narrowed to the three effects it has. Taken as an
  *  argument rather than reached for, so the guard can be exercised against
@@ -522,7 +515,7 @@ async function propagateOneDelete(eventId: string, deps: DeleteSweepDeps): Promi
       await deps.forget(eventId);
       return {};
     }
-    return { kept: [deleteRefusalMessage(eventId, decision)] };
+    return { skipped: [deleteRefusalMessage(eventId, decision)] };
   }
   try {
     await deps.deleteEvent(eventId, decision.etag);
@@ -535,7 +528,7 @@ async function propagateOneDelete(eventId: string, deps: DeleteSweepDeps): Promi
       return {};
     }
     if (error.status !== HTTP_PRECONDITION_FAILED) throw error;
-    return { kept: [staleDeleteMessage(eventId)] };
+    return { skipped: [staleDeleteMessage(eventId)] };
   }
   await deps.forget(eventId);
   // Ids only — a summary is personal content, and Google's own Trash is where a
@@ -556,7 +549,7 @@ export async function sweepDeletes(eventIds: readonly string[], propagate: boole
     try {
       const one = await propagateOneDelete(eventId, deps);
       sweep.deleted.push(...(one.deleted ?? []));
-      sweep.kept.push(...(one.kept ?? []));
+      sweep.skipped.push(...(one.skipped ?? []));
     } catch (error) {
       // Reported, not thrown: one unreachable event must not abandon the rest,
       // and its baseline stays, so the next run tries again.
@@ -613,7 +606,7 @@ export async function pushCollectionNow(collection: LoadedCollection, workspaceR
     deleteEvent: (eventId, ifMatch) => (deps.deleteEvent ?? deleteCalendarEvent)(accessToken, { calendarId, eventId, ifMatch }),
     forget: (eventId) => saveCalendarShadow(calendarId, { [eventId]: null }, workspaceRoot),
   });
-  const result = tally(slug, attempts, deletes);
+  const result = pushResultFrom(slug, attempts, deletes);
   if (result.errors.length > 0) log.warn("google", "calendar push finished with errors", { slug, errors: result.errors.length });
   return { kind: "pushed", result };
 }

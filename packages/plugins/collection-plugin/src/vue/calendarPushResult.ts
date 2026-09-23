@@ -52,7 +52,7 @@ export interface PushCounts {
   /** Deleted here AND in Google. */
   deletedInGoogle: number;
   /** Deleted here and still standing in Google — no opt-in, or the guard
-   *  refused the event. The reason for a refusal rides in `skipped`. */
+   *  refused the event. The reason for a refusal rides in `keptInGoogle`. */
   deletesNotApplied: number;
 }
 

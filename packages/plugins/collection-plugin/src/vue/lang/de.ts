@@ -104,7 +104,7 @@ const deMessages: CollectionMessages = {
     pushFailed: "Senden fehlgeschlagen: {error}",
     pushDone:
       "An Google gesendet: {created} erstellt, {updated} aktualisiert, {conflicts} Konflikte übersprungen, {localDeletes} lokale Löschungen nicht übernommen.",
-    pushKeptDeletes: "{count} Löschung(en) blieben in Google erhalten: {reasons}",
+    pushKeptDeletes: "In Google verblieben: {reasons}",
     pushDoneWithDeletes:
       "An Google gesendet: {created} erstellt, {updated} aktualisiert, {conflicts} Konflikte übersprungen, {deletedInGoogle} in Google gelöscht, {localDeletes} lokale Löschungen nicht übernommen.",
     feedChatSeed:

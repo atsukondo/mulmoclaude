@@ -100,7 +100,7 @@ const enMessages = {
     pushCalendar: "Push to Google",
     pushFailed: "Push failed: {error}",
     pushDone: "Pushed to Google: {created} created, {updated} updated, {conflicts} conflicts skipped, {localDeletes} local deletions not applied.",
-    pushKeptDeletes: "{count} deletion(s) were left in Google: {reasons}",
+    pushKeptDeletes: "Left in Google: {reasons}",
     pushDoneWithDeletes:
       "Pushed to Google: {created} created, {updated} updated, {conflicts} conflicts skipped, {deletedInGoogle} deleted in Google, {localDeletes} local deletions not applied.",
     feedChatSeed:

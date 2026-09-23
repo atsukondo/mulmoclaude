@@ -102,7 +102,7 @@ const jaMessages: CollectionMessages = {
     pushCalendar: "Googleへ書き出し",
     pushFailed: "書き出しに失敗しました: {error}",
     pushDone: "Googleへ書き出しました: {created}件作成、{updated}件更新、{conflicts}件は競合のためスキップ、{localDeletes}件のローカル削除は未反映。",
-    pushKeptDeletes: "{count}件の削除はGoogle側に残しました: {reasons}",
+    pushKeptDeletes: "Google側に残しました: {reasons}",
     pushDoneWithDeletes:
       "Googleへ書き出しました: {created}件作成、{updated}件更新、{conflicts}件は競合のためスキップ、{deletedInGoogle}件をGoogleから削除、{localDeletes}件のローカル削除は未反映。",
     feedChatSeed:
