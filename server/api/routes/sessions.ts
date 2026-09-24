@@ -19,6 +19,7 @@ import {
 import { readManifest, removeSessionFromIndex } from "../../workspace/chat-index/indexer.js";
 import type { ChatIndexEntry } from "../../workspace/chat-index/types.js";
 import { markRead, getSession, evictSession, publishSessionsChanged } from "../../events/session-store/index.js";
+import { snapshotMayBeMidRun, type RunSample } from "./snapshotRunState.js";
 import { notFound, type ApiResponse, type ErrorBody } from "../../utils/httpError.js";
 import { singleLineForLog } from "../../utils/logPreview.js";
 import { createStampedCache } from "../../utils/stampedCache.js";
@@ -376,10 +377,9 @@ async function parseSessionEntry(line: string): Promise<unknown> {
   return entry;
 }
 
-// Checked on both sides of the file read: a run that starts or ends while the
-// file is being read still marks the snapshot as possibly incomplete.
-function isSessionRunning(sessionId: string): boolean {
-  return getSession(sessionId)?.isRunning ?? false;
+function sampleRunState(sessionId: string): RunSample {
+  const live = getSession(sessionId);
+  return { isRunning: live?.isRunning ?? false, runGeneration: live?.runGeneration ?? 0 };
 }
 
 router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res: ApiResponse<unknown[]>) => {
@@ -389,7 +389,7 @@ router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res
   log.info("sessions", "detail: start", { sessionId: sessionIdForLog });
   try {
     const meta = await readSessionMeta(chatDir, sessionId);
-    const runningBeforeRead = isSessionRunning(sessionId);
+    const runBeforeRead = sampleRunState(sessionId);
     const content = await readSessionJsonl(sessionId);
     if (!content) {
       log.warn("sessions", "detail: not found", { sessionId: sessionIdForLog });
@@ -400,7 +400,7 @@ router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res
     // Prepend metadata as session_meta entry for the frontend. `isRunning`
     // tells a catch-up whether this snapshot can be complete: while a run is in
     // progress the text being streamed is not in the file yet.
-    const isRunning = runningBeforeRead || isSessionRunning(sessionId);
+    const isRunning = snapshotMayBeMidRun(runBeforeRead, sampleRunState(sessionId));
     const result = [{ type: EVENT_TYPES.sessionMeta, ...(meta ?? {}), isRunning }, ...entries];
     log.info("sessions", "detail: ok", { sessionId: sessionIdForLog, entries: result.length });
     res.json(result);

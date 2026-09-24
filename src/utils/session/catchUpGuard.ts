@@ -57,3 +57,11 @@ export function decideCatchUpAdoption(state: CatchUpState): CatchUpDecision {
   if (transcriptChangedSince(state.snapshotAtFetch, state.clientResults)) return "stale";
   return shouldAdoptServerTranscript(state.serverResults, state.clientResults) ? "adopt" : "not-richer";
 }
+
+/** After a refresh, does the client verifiably hold everything the server has?
+ *  Only then may a stop that was never announced by `session_finished` mark the
+ *  session read — otherwise the finished turn could be cleared unseen. `null`
+ *  means the refresh did not get as far as deciding. */
+export function holdsWholeTurn(decision: CatchUpDecision | null): boolean {
+  return decision === "adopt" || decision === "not-richer";
+}

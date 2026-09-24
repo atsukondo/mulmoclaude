@@ -10,6 +10,7 @@ import { EVENT_TYPES } from "../../../src/types/events.js";
 import {
   captureTranscript,
   decideCatchUpAdoption,
+  holdsWholeTurn,
   snapshotTakenMidRun,
   transcriptChangedSince,
   type CatchUpState,
@@ -119,5 +120,15 @@ describe("decideCatchUpAdoption", () => {
 
   it("handles an empty client and an empty server", () => {
     assert.equal(decideCatchUpAdoption({ ...baseState([]), serverResults: [] }), "not-richer");
+  });
+});
+
+describe("holdsWholeTurn", () => {
+  it("is true only when the client verifiably has everything the server has", () => {
+    assert.equal(holdsWholeTurn("adopt"), true);
+    assert.equal(holdsWholeTurn("not-richer"), true);
+    assert.equal(holdsWholeTurn("running"), false);
+    assert.equal(holdsWholeTurn("stale"), false);
+    assert.equal(holdsWholeTurn(null), false);
   });
 });

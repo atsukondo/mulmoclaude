@@ -17,7 +17,7 @@ import { apiGet } from "../utils/api";
 import { API_ROUTES } from "../config/apiRoutes";
 import { createEmptySession } from "../utils/session/sessionFactory";
 import { buildLoadedSession, parseSessionEntries } from "../utils/session/sessionEntries";
-import { captureTranscript, decideCatchUpAdoption, snapshotTakenMidRun } from "../utils/session/catchUpGuard";
+import { captureTranscript, decideCatchUpAdoption, snapshotTakenMidRun, type CatchUpDecision } from "../utils/session/catchUpGuard";
 import { adoptServerTranscript } from "../utils/session/adoptTranscript";
 import {
   resolveNewSessionRoleId,
@@ -163,12 +163,13 @@ async function loadSession(ctx: LifecycleCtx, sessionId: string): Promise<void> 
 // frame. Adopts the server view only when it is strictly richer (#2096) AND
 // complete and current (`decideCatchUpAdoption`), so it stays idempotent
 // against races with live events.
-async function refreshSessionTranscript(ctx: LifecycleCtx, sessionId: string): Promise<void> {
+async function refreshSessionTranscript(ctx: LifecycleCtx, sessionId: string): Promise<CatchUpDecision | null> {
   const session = ctx.sessionMap.get(sessionId);
-  if (!session || session.isRunning) return;
+  if (!session) return null;
+  if (session.isRunning) return "running";
   const snapshotAtFetch = captureTranscript(session.toolResults);
   const response = await apiGet<SessionEntry[]>(API_ROUTES.sessions.detail.replace(":id", encodeURIComponent(sessionId)));
-  if (!response.ok) return;
+  if (!response.ok) return null;
   const summary = ctx.sessions.value.find((entry) => entry.id === sessionId);
   const serverResults = parseSessionEntries(response.data, summary?.origin);
   const decision = decideCatchUpAdoption({
@@ -184,6 +185,7 @@ async function refreshSessionTranscript(ctx: LifecycleCtx, sessionId: string): P
     session.selectedResultUuid = adopted.selectedResultUuid;
     session.resultTimestamps = adopted.resultTimestamps;
   }
+  return decision;
 }
 
 // Land on /chat with no specific session in mind (initial load / home

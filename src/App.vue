@@ -393,6 +393,7 @@ import { applyAgentEvent, type AgentEventContext } from "./utils/agent/eventDisp
 import { parseSseEvent } from "./utils/agent/parseSseEvent";
 import { pushErrorMessage, beginUserTurn, updateResult, applyToolResultToSession } from "./utils/session/sessionHelpers";
 import { resolveRequestedRoleId } from "./utils/session/roleSelection";
+import { holdsWholeTurn } from "./utils/session/catchUpGuard";
 import { parseCollectionSlashSeed, makeSyntheticCollectionResult, hasRealCollectionResult } from "./utils/collections/presentSeed";
 import { mergeBufferedIntoDraft } from "./utils/chat/buffer";
 import { createInFlightShare } from "./utils/inFlightShare";
@@ -726,10 +727,13 @@ const { markSessionRead, refreshSessionStates } = useSessionSync({
   // hard delete on the sessions channel, so this is the one place a
   // deleted session's draft has to be forgotten.
   onSessionDeleted: dropSessionDraft,
-  // A missed `session_finished` skipped everything it does — the transcript
-  // refresh, the read mark or unsubscribe — so do it now that the session
-  // list shows the run has ended.
-  onSessionStopped: (sessionId) => handleSessionFinished(sessionId),
+  // A missed `session_finished` skipped its refresh and read mark; the
+  // session list is what noticed the run ended.
+  onSessionStopped: (sessionId) => {
+    handleRecoveredStop(sessionId).catch((err: unknown) => {
+      console.warn("[chat-ui] recovering a missed session_finished failed:", err);
+    });
+  },
   lastFetchFailed: () => historyError.value !== null,
 });
 
@@ -1007,6 +1011,18 @@ function handleSessionFinished(sessionId: string): void {
   }
 }
 
+// A stop the session list found rather than `session_finished` announced: the
+// finished turn may not be on screen yet, so the session is marked read only
+// once the refreshed transcript verifiably holds it.
+async function handleRecoveredStop(sessionId: string): Promise<void> {
+  const decision = await refreshSessionTranscript(sessionId);
+  if (currentSessionId.value === sessionId) {
+    if (holdsWholeTurn(decision)) markSessionRead(sessionId);
+  } else if (!hasPendingGenerations(sessionId)) {
+    unsubscribeSession(sessionId);
+  }
+}
+
 // After the client silently loses events, this pulls fresh state from the
 // server so the UI recovers without a page reload (#1915). Two trigger
 // surfaces:
@@ -1048,11 +1064,13 @@ function catchUpMissedEvents(reason: "reconnect" | "visibility"): void {
     }),
   );
   if (!currentId) return;
-  void catchUpShare.run(`transcript:${currentId}`, () =>
-    refreshSessionTranscript(currentId).catch((err: unknown) => {
+  void catchUpShare.run(`transcript:${currentId}`, async () => {
+    try {
+      await refreshSessionTranscript(currentId);
+    } catch (err: unknown) {
       console.warn("[chat-ui] refreshSessionTranscript failed:", err);
-    }),
-  );
+    }
+  });
 }
 
 // Capture the unsubscribe so remount / HMR doesn't accumulate stale

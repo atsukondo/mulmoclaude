@@ -124,3 +124,43 @@ describe("GET /api/sessions/:id — isRunning on the snapshot", () => {
     assert.deepEqual(first, { source: "user", type: "text", message: "hi" });
   });
 });
+
+describe("snapshotMayBeMidRun", () => {
+  it("is false only when no run was live at either end and none happened in between", async () => {
+    const { snapshotMayBeMidRun } = await import("../../server/api/routes/snapshotRunState.js");
+    assert.equal(snapshotMayBeMidRun({ isRunning: false, runGeneration: 3 }, { isRunning: false, runGeneration: 3 }), false);
+    assert.equal(snapshotMayBeMidRun({ isRunning: true, runGeneration: 3 }, { isRunning: false, runGeneration: 3 }), true);
+    assert.equal(snapshotMayBeMidRun({ isRunning: false, runGeneration: 3 }, { isRunning: true, runGeneration: 4 }), true);
+    // A whole run started and ended during the read: both samples idle, generation moved.
+    assert.equal(snapshotMayBeMidRun({ isRunning: false, runGeneration: 3 }, { isRunning: false, runGeneration: 4 }), true);
+  });
+});
+
+describe("the session store's run generation", () => {
+  it("advances once per accepted run, so a run inside a read is detectable", () => {
+    const now = new Date().toISOString();
+    const session = store.getOrCreateSession("gen-1", {
+      roleId: "general",
+      resultsFilePath: path.join(tmpRoot, "results.jsonl"),
+      startedAt: now,
+      updatedAt: now,
+    });
+    assert.equal(session.runGeneration, 0);
+    assert.equal(
+      store.beginRun("gen-1", () => {}),
+      true,
+    );
+    store.endRun("gen-1");
+    assert.equal(
+      store.beginRun("gen-1", () => {}),
+      true,
+    );
+    assert.equal(session.runGeneration, 2);
+    assert.equal(
+      store.beginRun("gen-1", () => {}),
+      false,
+      "a rejected begin must not advance it",
+    );
+    assert.equal(session.runGeneration, 2);
+  });
+});

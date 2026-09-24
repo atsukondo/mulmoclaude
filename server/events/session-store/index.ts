@@ -31,6 +31,9 @@ export interface ServerSession {
   chatSessionId: string;
   roleId: string;
   isRunning: boolean;
+  /** Bumped by every `beginRun`. Sampled around a transcript read, a change
+   *  means a whole run started (and maybe ended) during the read. */
+  runGeneration: number;
   hasUnread: boolean;
   statusMessage: string;
   toolCallHistory: ToolCallHistoryItem[];
@@ -126,6 +129,7 @@ export function getOrCreateSession(
     chatSessionId,
     roleId: opts.roleId,
     isRunning: false,
+    runGeneration: 0,
     hasUnread: opts.hasUnread ?? false,
     statusMessage: "",
     toolCallHistory: [],
@@ -189,6 +193,7 @@ export function beginRun(chatSessionId: string, abortRun: () => void): boolean {
   if (!session) return false;
   if (session.isRunning) return false;
   session.isRunning = true;
+  session.runGeneration += 1;
   session.statusMessage = "";
   session.toolCallHistory = [];
   session.abortRun = abortRun;
