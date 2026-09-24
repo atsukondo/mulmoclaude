@@ -17,6 +17,7 @@ import { apiGet } from "../utils/api";
 import { API_ROUTES } from "../config/apiRoutes";
 import { createEmptySession } from "../utils/session/sessionFactory";
 import { buildLoadedSession, parseSessionEntries, shouldAdoptServerTranscript } from "../utils/session/sessionEntries";
+import { adoptServerTranscript } from "../utils/session/adoptTranscript";
 import {
   resolveNewSessionRoleId,
   shouldReplaceHistory,
@@ -168,7 +169,10 @@ async function refreshSessionTranscript(ctx: LifecycleCtx, sessionId: string): P
   const summary = ctx.sessions.value.find((entry) => entry.id === sessionId);
   const serverResults = parseSessionEntries(response.data, summary?.origin);
   if (shouldAdoptServerTranscript(serverResults, session.toolResults)) {
-    session.toolResults = serverResults;
+    const adopted = adoptServerTranscript(session, serverResults, Date.now());
+    session.toolResults = adopted.toolResults;
+    session.selectedResultUuid = adopted.selectedResultUuid;
+    session.resultTimestamps = adopted.resultTimestamps;
   }
 }
 
