@@ -12,8 +12,10 @@ shows the user's message and nothing else — the error and its advice (e.g. #32
 - Server (`server/api/routes/agent.ts`): after flushing accumulated text, append
   `{ source: "assistant", type: "error", message }` for every error that reaches
   `handleAgentEvent`, and for the one the catch block publishes.
-- Errors swallowed for recovery (`detectRecovery`: stale session, broker not ready) never
-  reach `handleAgentEvent`, so they stay out of history without a special case.
+- An error `detectRecovery` swallows (stale session, broker not ready) while a retry
+  is still available never reaches `handleAgentEvent`, so a recovered turn leaves no
+  error in history. Once retries are exhausted the error is not swallowed; it takes the
+  normal path and IS persisted, which is intended: that turn really failed.
 - Client: `ErrorEntry` / `isErrorEntry` in `src/types/session.ts`; `parseSessionEntries`
   replays it through the same `makeErrorResult` the live path uses, so a reloaded error
   card is identical to the live one.
