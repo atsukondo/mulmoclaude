@@ -2,11 +2,8 @@ import type { ToolResult } from "gui-chat-protocol";
 import type { PluginRegistration, ToolPlugin } from "../../tools/types";
 import toolDefinition, { TOOL_NAME } from "./definition";
 import type { ImageToolData } from "./definition";
-import { makePostExecute } from "../execute";
-import { isGenerateImageResult } from "./hostResponse";
+import { makeGuardedImageExecute } from "../imageRouteResult";
 import { wrapWithScope } from "../scope";
-import { makeUuid } from "../../utils/id";
-import type { ImageEndpoints } from "../editImages/definition";
 import View from "./View.vue";
 import Preview from "./Preview.vue";
 
@@ -19,19 +16,10 @@ function createUploadedImageResult(imageData: string, fileName: string, prompt: 
   };
 }
 
-const postToImageRoute = makePostExecute<ImageEndpoints, ImageToolData>("image", "generate", TOOL_NAME);
-
 const generateImagePlugin: ToolPlugin<ImageToolData> = {
   toolDefinition,
 
-  // A body the route was not supposed to send becomes a message rather than a
-  // blank panel: the view renders `data.imageData`, and nothing downstream
-  // checks that it arrived.
-  execute: async (context, args) => {
-    const result = await postToImageRoute(context, args);
-    if (isGenerateImageResult(result)) return result;
-    return { toolName: TOOL_NAME, uuid: makeUuid(), message: "The image service answered with an unrecognized response." };
-  },
+  execute: makeGuardedImageExecute<ImageToolData>("generate", TOOL_NAME),
 
   isEnabled: () => true,
   generatingMessage: "Generating image...",

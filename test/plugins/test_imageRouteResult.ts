@@ -10,12 +10,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { isGenerateImageResult } from "../../../src/plugins/generateImage/hostResponse.ts";
+import { isImageRouteResult } from "../../src/plugins/imageRouteResult.ts";
 
-describe("isGenerateImageResult — what the route sends", () => {
+describe("isImageRouteResult — what the route sends", () => {
   it("accepts a generated image, as the route and the executor build it", () => {
     assert.equal(
-      isGenerateImageResult({
+      isImageRouteResult({
         toolName: "generateImage",
         uuid: "1234",
         message: "Saved image to images/a.png",
@@ -30,65 +30,65 @@ describe("isGenerateImageResult — what the route sends", () => {
   // The route answers 200 with a message and no `data` when the model returned
   // no image — a refusal, typically. That is a result to show, not an error.
   it("accepts the no-image answer, which carries a message and nothing else", () => {
-    assert.equal(isGenerateImageResult({ message: "no image data in response" }), true);
+    assert.equal(isImageRouteResult({ message: "no image data in response" }), true);
   });
 
   it("accepts a prompt-less payload, since the field is optional", () => {
-    assert.equal(isGenerateImageResult({ message: "", data: { imageData: "images/a.png" } }), true);
+    assert.equal(isImageRouteResult({ message: "", data: { imageData: "images/a.png" } }), true);
   });
 
   it("accepts the protocol's own optional flags", () => {
     assert.equal(
-      isGenerateImageResult({ message: "m", action: "open", instructionsRequired: true, updating: false, cancelled: false, viewState: { zoom: 2 } }),
+      isImageRouteResult({ message: "m", action: "open", instructionsRequired: true, updating: false, cancelled: false, viewState: { zoom: 2 } }),
       true,
     );
   });
 });
 
-describe("isGenerateImageResult — what it refuses", () => {
+describe("isImageRouteResult — what it refuses", () => {
   it("refuses a body with no message", () => {
-    assert.equal(isGenerateImageResult({ data: { imageData: "images/a.png" } }), false);
+    assert.equal(isImageRouteResult({ data: { imageData: "images/a.png" } }), false);
   });
 
   it("refuses a message that is not a string", () => {
-    assert.equal(isGenerateImageResult({ message: 42 }), false);
+    assert.equal(isImageRouteResult({ message: 42 }), false);
   });
 
   // The field the view reads. Without this check it renders an empty image.
   it("refuses data without a string imageData", () => {
-    assert.equal(isGenerateImageResult({ message: "m", data: {} }), false);
-    assert.equal(isGenerateImageResult({ message: "m", data: { imageData: 7 } }), false);
-    assert.equal(isGenerateImageResult({ message: "m", data: "images/a.png" }), false);
+    assert.equal(isImageRouteResult({ message: "m", data: {} }), false);
+    assert.equal(isImageRouteResult({ message: "m", data: { imageData: 7 } }), false);
+    assert.equal(isImageRouteResult({ message: "m", data: "images/a.png" }), false);
   });
 
   // An empty path renders an empty image: the shape is right and the panel is
   // still blank, which is the case this guard is for. "No image" is a body
   // with no `data`, covered above.
   it("refuses an empty imageData", () => {
-    assert.equal(isGenerateImageResult({ message: "m", data: { imageData: "" } }), false);
-    assert.equal(isGenerateImageResult({ message: "m", data: { imageData: "", prompt: "a cat" } }), false);
+    assert.equal(isImageRouteResult({ message: "m", data: { imageData: "" } }), false);
+    assert.equal(isImageRouteResult({ message: "m", data: { imageData: "", prompt: "a cat" } }), false);
   });
 
   it("refuses a prompt that is not a string", () => {
-    assert.equal(isGenerateImageResult({ message: "m", data: { imageData: "images/a.png", prompt: 7 } }), false);
+    assert.equal(isImageRouteResult({ message: "m", data: { imageData: "images/a.png", prompt: 7 } }), false);
   });
 
   // This tool sends nothing structured to the LLM — its result type says so —
   // and a body that carries jsonData is answering for some other tool.
   it("refuses a body carrying jsonData", () => {
-    assert.equal(isGenerateImageResult({ message: "m", jsonData: { rows: [] } }), false);
+    assert.equal(isImageRouteResult({ message: "m", jsonData: { rows: [] } }), false);
   });
 
   it("refuses wrong types on the optional fields", () => {
-    assert.equal(isGenerateImageResult({ message: "m", title: 7 }), false);
-    assert.equal(isGenerateImageResult({ message: "m", toolName: 7 }), false);
-    assert.equal(isGenerateImageResult({ message: "m", updating: "yes" }), false);
-    assert.equal(isGenerateImageResult({ message: "m", viewState: "big" }), false);
+    assert.equal(isImageRouteResult({ message: "m", title: 7 }), false);
+    assert.equal(isImageRouteResult({ message: "m", toolName: 7 }), false);
+    assert.equal(isImageRouteResult({ message: "m", updating: "yes" }), false);
+    assert.equal(isImageRouteResult({ message: "m", viewState: "big" }), false);
   });
 
   it("refuses what is not an object at all", () => {
     for (const value of [null, undefined, "", "ok", 0, 1, true, [], [{ message: "m" }]]) {
-      assert.equal(isGenerateImageResult(value), false, `accepted ${JSON.stringify(value)}`);
+      assert.equal(isImageRouteResult(value), false, `accepted ${JSON.stringify(value)}`);
     }
   });
 });
