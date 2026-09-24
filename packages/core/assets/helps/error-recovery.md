@@ -175,6 +175,12 @@ The user runs `claude /login` (or `claude login`) in a terminal **on the host**,
 resends the message. If they authenticate with `ANTHROPIC_API_KEY` instead, check that
 key. Switching auth mode is not the fix — a fresh `/login` is.
 
+If `/login` succeeds and the error persists (typically `401 OAuth access token is
+invalid`), check whether `CLAUDE_CODE_OAUTH_TOKEN` is set in the environment MulmoClaude
+was started from (shell profile or `.env`). It overrides the stored login, and the
+spawned CLI inherits the server's environment — so the user must unset or replace it
+and **restart MulmoClaude**; a new terminal does not change the running server.
+
 You will usually be reading this AFTER the user re-logged in (a failing turn never
 reaches you); answer "why did that happen" with the cause above rather than
 investigating MulmoClaude's settings.
