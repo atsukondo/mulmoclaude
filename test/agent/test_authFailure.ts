@@ -102,14 +102,21 @@ describe("createStreamParser — CLI auth failure", () => {
 });
 
 describe("isRedundantExitError", () => {
-  it("drops the bare exit error once the stream surfaced one", () => {
-    assert.equal(isRedundantExitError(true, ""), true);
-    assert.equal(isRedundantExitError(true, "  \n"), true);
+  it("drops the bare exit-code-1 error once the stream surfaced one", () => {
+    assert.equal(isRedundantExitError(true, 1, ""), true);
+    assert.equal(isRedundantExitError(true, 1, "  \n"), true);
   });
 
   it("keeps the exit error when nothing was surfaced, or stderr says more", () => {
-    assert.equal(isRedundantExitError(false, ""), false);
-    assert.equal(isRedundantExitError(false, "boom"), false);
-    assert.equal(isRedundantExitError(true, "No conversation found with session ID"), false);
+    assert.equal(isRedundantExitError(false, 1, ""), false);
+    assert.equal(isRedundantExitError(false, 1, "boom"), false);
+    assert.equal(isRedundantExitError(true, 1, "No conversation found with session ID"), false);
+  });
+
+  it("keeps any other exit code or a signal death — an independent failure", () => {
+    assert.equal(isRedundantExitError(true, 2, ""), false);
+    assert.equal(isRedundantExitError(true, 0, ""), false);
+    assert.equal(isRedundantExitError(true, 137, ""), false);
+    assert.equal(isRedundantExitError(true, null, ""), false);
   });
 });

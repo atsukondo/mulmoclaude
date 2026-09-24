@@ -156,11 +156,13 @@ export function buildExitErrorEvent(
   return { type: EVENT_TYPES.error, message: stderrOutput || exitSummary };
 }
 
-// A stream frame that already surfaced an error (a failed login) explains the
-// non-zero exit; the bare "claude exited with code 1" that follows only buries
-// it. Kept whenever stderr has content, since that is new information.
-export function isRedundantExitError(streamErrorSurfaced: boolean, stderrOutput: string): boolean {
-  return streamErrorSurfaced && stderrOutput.trim() === "";
+// The CLI exits 1 with empty stderr after an error frame (a failed login); the
+// bare "claude exited with code 1" that follows only buries the surfaced error.
+// Any other code, a signal, or stderr content is new information and is kept.
+const STREAM_ERROR_EXIT_CODE = 1;
+
+export function isRedundantExitError(streamErrorSurfaced: boolean, exitCode: number | null, stderrOutput: string): boolean {
+  return streamErrorSurfaced && exitCode === STREAM_ERROR_EXIT_CODE && stderrOutput.trim() === "";
 }
 
 interface ProcessExit {
@@ -173,7 +175,7 @@ interface ProcessExit {
 
 function exitErrorToSurface(processExit: ProcessExit): { type: typeof EVENT_TYPES.error; message: string } | null {
   const { exitCode, signal, abortSignal, stderrOutput, streamErrorSurfaced } = processExit;
-  if (isRedundantExitError(streamErrorSurfaced, stderrOutput)) return null;
+  if (isRedundantExitError(streamErrorSurfaced, exitCode, stderrOutput)) return null;
   return buildExitErrorEvent(exitCode, signal, abortSignal, stderrOutput) ?? brokerNotReadyErrorEvent(stderrOutput);
 }
 
