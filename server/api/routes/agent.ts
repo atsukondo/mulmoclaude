@@ -814,6 +814,7 @@ async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContext): Pro
       contentBytes: event.content.length,
     });
   } else {
+    if (event.type === EVENT_TYPES.error) await appendErrorEntry(ctx.chatSessionId, event.message);
     return;
   }
   // Fire-and-forget: tool-trace persistence failures must not block
@@ -852,6 +853,17 @@ async function handleInjectedText(ctx: EventContext, message: string): Promise<v
   // (as plain text, the flag is already cleared) so jsonl order is preserved.
   await flushTextAccumulator(ctx);
   await writeSkillEntry(ctx, skill.skillName, message);
+}
+
+// Keep an agent error in the transcript so a failed turn still explains itself
+// after a reload. Best-effort: it is also called from the run's catch block,
+// where a second throw would escape the background run unhandled.
+async function appendErrorEntry(chatSessionId: string, message: string): Promise<void> {
+  try {
+    await appendSessionLine(chatSessionId, JSON.stringify({ source: "assistant", type: EVENT_TYPES.error, message }));
+  } catch (err) {
+    log.warn("agent", "failed to persist error entry", { chatSessionId, error: String(err) });
+  }
 }
 
 // Write the accumulated streaming text chunks as one consolidated
@@ -1277,6 +1289,7 @@ async function runAgentInBackground(params: BackgroundRunParams): Promise<void> 
       type: EVENT_TYPES.error,
       message: String(err),
     });
+    await appendErrorEntry(chatSessionId, String(err));
   } finally {
     await finalizeRun(chatSessionId, params.origin, didError, requestStartedAt, eventCtx.lastAssistantText);
   }
