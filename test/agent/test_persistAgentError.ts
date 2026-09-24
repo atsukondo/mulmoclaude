@@ -83,6 +83,14 @@ describe("handleAgentEvent — error persistence", () => {
     ]);
   });
 
+  it("does not throw when the flush before the error fails", async () => {
+    const { context } = newContext();
+    context.chatSessionId = `blocked-${randomUUID()}`;
+    await mkdir(path.join(root, "conversations", "chat", `${context.chatSessionId}.jsonl`), { recursive: true });
+    context.textAccumulator.push("half a reply");
+    await assert.doesNotReject(routes.handleAgentEvent({ type: EVENT_TYPES.error, message: "boom" }, context));
+  });
+
   it("writes nothing for a status event — only errors get an entry", async () => {
     const { chatSessionId, context } = newContext();
     await routes.handleAgentEvent({ type: EVENT_TYPES.status, message: "Thinking..." }, context);

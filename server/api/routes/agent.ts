@@ -793,6 +793,7 @@ export async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContex
   // Any non-text event marks the end of a text burst — flush so
   // jsonl order matches the live stream and crashes mid-run don't
   // lose already-streamed text.
+  if (event.type === EVENT_TYPES.error) return recordAgentError(ctx, event.message);
   await flushTextAccumulator(ctx);
   if (event.type === EVENT_TYPES.toolCall) {
     updatePendingSkillOnToolCall(ctx, event);
@@ -814,7 +815,6 @@ export async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContex
       contentBytes: event.content.length,
     });
   } else {
-    if (event.type === EVENT_TYPES.error) await appendErrorEntry(ctx.chatSessionId, event.message);
     return;
   }
   // Fire-and-forget: tool-trace persistence failures must not block
@@ -866,17 +866,22 @@ async function appendErrorEntry(chatSessionId: string, message: string): Promise
   }
 }
 
+// Record an error in the transcript after the text streamed before it. The
+// flush keeps the file in live order, but its own failure must never swallow
+// the error it was only meant to precede — so it is logged, not thrown.
+async function recordAgentError(ctx: EventContext, message: string): Promise<void> {
+  await flushTextAccumulator(ctx).catch((flushErr: unknown) => {
+    log.warn("agent", "failed to flush text before recording an error", { chatSessionId: ctx.chatSessionId, error: String(flushErr) });
+  });
+  await appendErrorEntry(ctx.chatSessionId, message);
+}
+
 // A run that threw still has to tell the user — live and in the transcript.
-// The text flush comes first so the file keeps live order, but its own failure
-// must not swallow the error it was only meant to precede.
 export async function reportRunFailure(ctx: EventContext, err: unknown): Promise<void> {
   const message = String(err);
-  await flushTextAccumulator(ctx).catch((flushErr: unknown) => {
-    log.warn("agent", "failed to flush text before reporting a run failure", { chatSessionId: ctx.chatSessionId, error: String(flushErr) });
-  });
   log.error("agent", "request failed", { chatSessionId: ctx.chatSessionId, error: message });
   pushSessionEvent(ctx.chatSessionId, { type: EVENT_TYPES.error, message });
-  await appendErrorEntry(ctx.chatSessionId, message);
+  await recordAgentError(ctx, message);
 }
 
 // Write the accumulated streaming text chunks as one consolidated
