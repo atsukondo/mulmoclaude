@@ -10,6 +10,7 @@ import { usePubSub } from "./usePubSub";
 import { PUBSUB_CHANNELS, readSessionDeletedIds } from "../config/pubsubChannels";
 import { apiPost } from "../utils/api";
 import { API_ROUTES } from "../config/apiRoutes";
+import { applySessionSummary } from "../utils/session/applySessionSummary";
 
 export interface SessionSyncOptions {
   sessionMap: Map<string, ActiveSession>;
@@ -24,10 +25,14 @@ export interface SessionSyncOptions {
    *  they come back through the same broadcast), so the host can drop
    *  state it keeps outside sessionMap, e.g. the session's chat draft. */
   onSessionDeleted?: (sessionId: string) => void;
+  /** Called when a refresh finds that a session this client still thought was
+   *  running has finished — i.e. its `session_finished` event was missed, so
+   *  the post-run transcript refresh never happened. */
+  onSessionStopped?: (sessionId: string) => void;
 }
 
 export function useSessionSync(opts: SessionSyncOptions) {
-  const { sessionMap, currentSessionId, fetchSessions, onCurrentSessionDeleted, onSessionDeleted } = opts;
+  const { sessionMap, currentSessionId, fetchSessions, onCurrentSessionDeleted, onSessionDeleted, onSessionStopped } = opts;
   const { subscribe } = usePubSub();
 
   // Monotonic sequence token — protects sessionMap from stale overwrites when
@@ -52,12 +57,8 @@ export function useSessionSync(opts: SessionSyncOptions) {
     for (const summary of summaries) {
       const live = sessionMap.get(summary.id);
       if (!live) continue;
-      live.isRunning = summary.isRunning ?? false;
-      live.statusMessage = summary.statusMessage ?? "";
-      const unread = summary.hasUnread ?? false;
-      if (!(unread && summary.id === currentSessionId.value)) {
-        live.hasUnread = unread;
-      }
+      const stopped = applySessionSummary(live, summary, summary.id === currentSessionId.value);
+      if (stopped) onSessionStopped?.(summary.id);
     }
   }
 
