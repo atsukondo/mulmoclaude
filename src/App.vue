@@ -726,13 +726,11 @@ const { markSessionRead, refreshSessionStates } = useSessionSync({
   // hard delete on the sessions channel, so this is the one place a
   // deleted session's draft has to be forgotten.
   onSessionDeleted: dropSessionDraft,
-  // A missed `session_finished` also skipped its transcript refresh, and a
-  // catch-up does not adopt while the client still thinks the run is live.
-  onSessionStopped: (sessionId) => {
-    refreshSessionTranscript(sessionId).catch((err: unknown) => {
-      console.warn("[chat-ui] refreshSessionTranscript after a missed finish failed:", err);
-    });
-  },
+  // A missed `session_finished` skipped everything it does — the transcript
+  // refresh, the read mark or unsubscribe — so do it now that the session
+  // list shows the run has ended.
+  onSessionStopped: (sessionId) => handleSessionFinished(sessionId),
+  lastFetchFailed: () => historyError.value !== null,
 });
 
 // External URL changes (back/forward button, typed URL) → update ref.

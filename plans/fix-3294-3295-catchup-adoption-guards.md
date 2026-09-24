@@ -15,16 +15,25 @@ richer (`shouldAdoptServerTranscript`). Two situations make that unsafe:
 
 ## Change
 
-- `src/utils/session/catchUpGuard.ts` (pure):
-  - `transcriptRevision` combines card count, last uuid and the last card's text length.
-  - `decideCatchUpAdoption` checks, in order: `running`, then `stale`, then
-    `not-richer`; otherwise `adopt`.
-- `refreshSessionTranscript` skips a running session before fetching, takes the revision
-  before the fetch, and adopts only on `adopt`.
-- **A missed `session_finished` is also recovered.** It used to trigger the post-run
-  refresh. Now `refreshSessionStates` reports each session it flips from running to
-  stopped (`onSessionStopped`, via the new pure `applySessionSummary`), and `App.vue`
-  refreshes that session's transcript.
+- **Server** (`server/api/routes/sessions.ts`): the detail response's `session_meta`
+  row, now always present, carries `isRunning` from the session store. It is read both
+  before and after the file read, so a run that starts or ends mid-read still marks the
+  snapshot as possibly incomplete.
+- **Client** (`src/utils/session/catchUpGuard.ts`, pure):
+  - "Running" means the server's mid-run flag OR the client's own `isRunning`. The
+    client's flag only mirrors the session list and can lag, even for this tab's own
+    run.
+  - Current means the transcript has not changed since the fetch started, checked by
+    a shallow snapshot (each card's object, `message` and `data` references). Every
+    live mutator replaces one of these (append, `Object.assign`, slot replacement),
+    so no mutation site has to keep a counter. The tests drive the real mutators.
+  - `decideCatchUpAdoption`: `running`, then `stale`, then `not-richer`, else
+    `adopt`.
+- **Missed `session_finished`:** `refreshSessionStates` reports each session it flips
+  from running to stopped (`applySessionSummary`), and `App.vue` routes that to
+  `handleSessionFinished` itself (refresh, then mark read or unsubscribe).
+  - It ignores a failed fetch, which returns the cached list; a cached "stopped" is
+    not news, and applying it would hide the real stop later.
 
 ## Decision (#3294's "to decide")
 

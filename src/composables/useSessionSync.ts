@@ -29,10 +29,14 @@ export interface SessionSyncOptions {
    *  running has finished — i.e. its `session_finished` event was missed, so
    *  the post-run transcript refresh never happened. */
   onSessionStopped?: (sessionId: string) => void;
+  /** True when the last `fetchSessions` failed and returned its cached list.
+   *  A cached list is not news: applying it could report a stop that never
+   *  happened, and then hide the real one when it arrives. */
+  lastFetchFailed?: () => boolean;
 }
 
 export function useSessionSync(opts: SessionSyncOptions) {
-  const { sessionMap, currentSessionId, fetchSessions, onCurrentSessionDeleted, onSessionDeleted, onSessionStopped } = opts;
+  const { sessionMap, currentSessionId, fetchSessions, onCurrentSessionDeleted, onSessionDeleted, onSessionStopped, lastFetchFailed } = opts;
   const { subscribe } = usePubSub();
 
   // Monotonic sequence token — protects sessionMap from stale overwrites when
@@ -53,7 +57,7 @@ export function useSessionSync(opts: SessionSyncOptions) {
       console.warn("[session-sync] failed to fetch sessions:", err);
       return;
     }
-    if (myToken !== refreshToken) return;
+    if (myToken !== refreshToken || lastFetchFailed?.()) return;
     for (const summary of summaries) {
       const live = sessionMap.get(summary.id);
       if (!live) continue;

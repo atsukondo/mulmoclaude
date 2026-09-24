@@ -17,7 +17,7 @@ import { apiGet } from "../utils/api";
 import { API_ROUTES } from "../config/apiRoutes";
 import { createEmptySession } from "../utils/session/sessionFactory";
 import { buildLoadedSession, parseSessionEntries } from "../utils/session/sessionEntries";
-import { decideCatchUpAdoption, transcriptRevision } from "../utils/session/catchUpGuard";
+import { captureTranscript, decideCatchUpAdoption, snapshotTakenMidRun } from "../utils/session/catchUpGuard";
 import { adoptServerTranscript } from "../utils/session/adoptTranscript";
 import {
   resolveNewSessionRoleId,
@@ -166,12 +166,18 @@ async function loadSession(ctx: LifecycleCtx, sessionId: string): Promise<void> 
 async function refreshSessionTranscript(ctx: LifecycleCtx, sessionId: string): Promise<void> {
   const session = ctx.sessionMap.get(sessionId);
   if (!session || session.isRunning) return;
-  const revisionAtFetch = transcriptRevision(session.toolResults);
+  const snapshotAtFetch = captureTranscript(session.toolResults);
   const response = await apiGet<SessionEntry[]>(API_ROUTES.sessions.detail.replace(":id", encodeURIComponent(sessionId)));
   if (!response.ok) return;
   const summary = ctx.sessions.value.find((entry) => entry.id === sessionId);
   const serverResults = parseSessionEntries(response.data, summary?.origin);
-  const decision = decideCatchUpAdoption({ isRunning: session.isRunning, revisionAtFetch, clientResults: session.toolResults, serverResults });
+  const decision = decideCatchUpAdoption({
+    clientRunning: session.isRunning,
+    snapshotMidRun: snapshotTakenMidRun(response.data),
+    snapshotAtFetch,
+    clientResults: session.toolResults,
+    serverResults,
+  });
   if (decision === "adopt") {
     const adopted = adoptServerTranscript(session, serverResults, Date.now());
     session.toolResults = adopted.toolResults;

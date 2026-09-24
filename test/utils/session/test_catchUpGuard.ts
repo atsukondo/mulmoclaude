@@ -1,86 +1,123 @@
 // #3294 / #3295. A catch-up snapshot may replace the transcript only when it
-// is complete (no run in progress) and current (nothing changed during the fetch).
+// is complete (no run in progress, by either side's account) and current
+// (nothing changed while it was being fetched).
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { ToolResultComplete } from "gui-chat-protocol/vue";
-import { decideCatchUpAdoption, transcriptRevision } from "../../../src/utils/session/catchUpGuard.js";
+import type { SessionEntry } from "../../../src/types/session.js";
+import { EVENT_TYPES } from "../../../src/types/events.js";
+import {
+  captureTranscript,
+  decideCatchUpAdoption,
+  snapshotTakenMidRun,
+  transcriptChangedSince,
+  type CatchUpState,
+} from "../../../src/utils/session/catchUpGuard.js";
 import { makeErrorResult, makeTextResult } from "../../../src/utils/tools/result.js";
+import { appendToLastAssistantText, applyToolResultToSession, updateResult } from "../../../src/utils/session/sessionHelpers.js";
+import { createEmptySession } from "../../../src/utils/session/sessionFactory.js";
 
-const user = makeTextResult("hi", "user");
-const reply = makeTextResult("hello", "assistant");
-
-function richerServerCopy(): ToolResultComplete[] {
-  return [{ ...user, uuid: "u-server" }, { ...reply, uuid: "r-server" }, makeErrorResult("missed")];
+function chart(uuid: string, title: string): ToolResultComplete {
+  return { uuid, toolName: "presentChart", message: "chart", title, data: { series: [1] } };
 }
 
-describe("transcriptRevision", () => {
-  it("is stable while nothing changes", () => {
-    assert.equal(transcriptRevision([user, reply]), transcriptRevision([user, reply]));
+function richerServerCopy(): ToolResultComplete[] {
+  return [makeTextResult("hi", "user"), makeTextResult("hello", "assistant"), makeErrorResult("missed")];
+}
+
+function baseState(clientResults: ToolResultComplete[]): CatchUpState {
+  return { clientRunning: false, snapshotMidRun: false, snapshotAtFetch: captureTranscript(clientResults), clientResults, serverResults: richerServerCopy() };
+}
+
+describe("transcriptChangedSince — every live mutation path is seen", () => {
+  function sessionWith(results: ToolResultComplete[]) {
+    const session = createEmptySession("s1", "general");
+    session.toolResults = results;
+    return session;
+  }
+
+  it("is unchanged when nothing happened", () => {
+    const session = sessionWith([makeTextResult("hi", "user"), chart("c1", "Chart")]);
+    assert.equal(transcriptChangedSince(captureTranscript(session.toolResults), session.toolResults), false);
   });
 
-  it("changes when a card is added, replaced, or the streaming card grows", () => {
-    const base = transcriptRevision([user, reply]);
-    assert.notEqual(transcriptRevision([user, reply, makeErrorResult("x")]), base);
-    assert.notEqual(transcriptRevision([user, makeTextResult("hello", "assistant")]), base);
-    assert.notEqual(transcriptRevision([user, { ...reply, message: "hello there" }]), base);
+  it("sees a streamed delta appended to the last reply", () => {
+    const session = sessionWith([makeTextResult("hi", "user"), makeTextResult("hel", "assistant")]);
+    const snapshot = captureTranscript(session.toolResults);
+    assert.equal(appendToLastAssistantText(session, "lo"), true);
+    assert.equal(transcriptChangedSince(snapshot, session.toolResults), true);
   });
 
-  it("handles an empty transcript and a card with an empty message", () => {
-    assert.equal(transcriptRevision([]), ["0", "", "0"].join(":"));
-    const bare: ToolResultComplete = { uuid: "t", toolName: "presentChart", message: "", title: "Chart", data: {} };
-    assert.equal(transcriptRevision([bare]), "1:t:0");
+  it("sees an in-place update of a card that is not the last (updateResult)", () => {
+    const session = sessionWith([chart("c1", "Chart"), makeTextResult("after", "assistant")]);
+    const snapshot = captureTranscript(session.toolResults);
+    updateResult(session, { ...chart("c1", "Chart"), data: { series: [2] } });
+    assert.equal(transcriptChangedSince(snapshot, session.toolResults), true);
+  });
+
+  it("sees a card replaced in its slot (applyToolResultToSession)", () => {
+    const session = sessionWith([chart("c1", "Chart"), makeTextResult("after", "assistant")]);
+    const snapshot = captureTranscript(session.toolResults);
+    applyToolResultToSession(session, chart("c1", "Chart"));
+    assert.equal(transcriptChangedSince(snapshot, session.toolResults), true);
+  });
+
+  it("sees a card added or removed", () => {
+    const results = [makeTextResult("hi", "user")];
+    const snapshot = captureTranscript(results);
+    assert.equal(transcriptChangedSince(snapshot, [...results, makeErrorResult("x")]), true);
+    assert.equal(transcriptChangedSince(snapshot, []), true);
+  });
+
+  it("handles an empty transcript", () => {
+    assert.equal(transcriptChangedSince(captureTranscript([]), []), false);
+  });
+});
+
+describe("snapshotTakenMidRun", () => {
+  it("reads the server's flag off the session_meta row", () => {
+    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, isRunning: true } as SessionEntry]), true);
+    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, isRunning: false } as SessionEntry]), false);
+  });
+
+  it("treats a missing row, a missing flag or a non-boolean flag as not running", () => {
+    assert.equal(snapshotTakenMidRun([]), false);
+    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, roleId: "general" }]), false);
+    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, isRunning: "yes" } as unknown as SessionEntry]), false);
+    assert.equal(snapshotTakenMidRun([{ source: "user", type: EVENT_TYPES.text, message: "hi" }]), false);
   });
 });
 
 describe("decideCatchUpAdoption", () => {
   it("adopts a richer, current snapshot of a finished session", () => {
-    const clientResults = [user, reply];
-    const decision = decideCatchUpAdoption({
-      isRunning: false,
-      revisionAtFetch: transcriptRevision(clientResults),
-      clientResults,
-      serverResults: richerServerCopy(),
-    });
-    assert.equal(decision, "adopt");
+    assert.equal(decideCatchUpAdoption(baseState([makeTextResult("hi", "user")])), "adopt");
   });
 
-  it("never adopts while a run is in progress — the snapshot lacks the streaming text", () => {
-    const clientResults = [user, reply];
-    const decision = decideCatchUpAdoption({
-      isRunning: true,
-      revisionAtFetch: transcriptRevision(clientResults),
-      clientResults,
-      serverResults: richerServerCopy(),
-    });
-    assert.equal(decision, "running");
+  it("does not adopt while the client knows a run is in progress", () => {
+    assert.equal(decideCatchUpAdoption({ ...baseState([makeTextResult("hi", "user")]), clientRunning: true }), "running");
   });
 
-  it("rejects a snapshot overtaken by a live card that arrived during the fetch", () => {
-    const revisionAtFetch = transcriptRevision([user]);
-    const clientResults = [user, makeTextResult("live card", "assistant")];
-    assert.equal(decideCatchUpAdoption({ isRunning: false, revisionAtFetch, clientResults, serverResults: richerServerCopy() }), "stale");
+  it("does not adopt a snapshot the server took mid-run, even when the client has not heard the run started", () => {
+    assert.equal(decideCatchUpAdoption({ ...baseState([makeTextResult("hi", "user")]), snapshotMidRun: true }), "running");
   });
 
-  it("rejects a snapshot overtaken by streamed text that arrived during the fetch", () => {
-    const revisionAtFetch = transcriptRevision([user, reply]);
-    const clientResults = [user, { ...reply, message: "hello, and more" }];
-    assert.equal(decideCatchUpAdoption({ isRunning: false, revisionAtFetch, clientResults, serverResults: richerServerCopy() }), "stale");
+  it("rejects a snapshot overtaken by a live change during the fetch", () => {
+    const state = baseState([makeTextResult("hi", "user")]);
+    assert.equal(decideCatchUpAdoption({ ...state, clientResults: [...state.clientResults, makeTextResult("live", "assistant")] }), "stale");
   });
 
   it("keeps the client copy when the snapshot is not richer", () => {
-    const clientResults = [user, reply];
-    const decision = decideCatchUpAdoption({ isRunning: false, revisionAtFetch: transcriptRevision(clientResults), clientResults, serverResults: [user] });
-    assert.equal(decision, "not-richer");
+    const clientResults = [makeTextResult("hi", "user"), makeTextResult("hello", "assistant")];
+    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults: [makeTextResult("hi", "user")] }), "not-richer");
   });
 
-  it("checks running before staleness, so a live run is reported as running", () => {
-    const decision = decideCatchUpAdoption({ isRunning: true, revisionAtFetch: "stale", clientResults: [user], serverResults: richerServerCopy() });
-    assert.equal(decision, "running");
+  it("reports running before staleness", () => {
+    const state = baseState([makeTextResult("hi", "user")]);
+    assert.equal(decideCatchUpAdoption({ ...state, snapshotMidRun: true, clientResults: [] }), "running");
   });
 
   it("handles an empty client and an empty server", () => {
-    assert.equal(decideCatchUpAdoption({ isRunning: false, revisionAtFetch: transcriptRevision([]), clientResults: [], serverResults: [] }), "not-richer");
-    assert.equal(decideCatchUpAdoption({ isRunning: false, revisionAtFetch: transcriptRevision([]), clientResults: [], serverResults: [user] }), "adopt");
+    assert.equal(decideCatchUpAdoption({ ...baseState([]), serverResults: [] }), "not-richer");
   });
 });

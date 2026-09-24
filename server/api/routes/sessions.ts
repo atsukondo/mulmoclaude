@@ -376,6 +376,12 @@ async function parseSessionEntry(line: string): Promise<unknown> {
   return entry;
 }
 
+// Checked on both sides of the file read: a run that starts or ends while the
+// file is being read still marks the snapshot as possibly incomplete.
+function isSessionRunning(sessionId: string): boolean {
+  return getSession(sessionId)?.isRunning ?? false;
+}
+
 router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res: ApiResponse<unknown[]>) => {
   const { id: sessionId } = req.params;
   const sessionIdForLog = singleLineForLog(sessionId);
@@ -383,6 +389,7 @@ router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res
   log.info("sessions", "detail: start", { sessionId: sessionIdForLog });
   try {
     const meta = await readSessionMeta(chatDir, sessionId);
+    const runningBeforeRead = isSessionRunning(sessionId);
     const content = await readSessionJsonl(sessionId);
     if (!content) {
       log.warn("sessions", "detail: not found", { sessionId: sessionIdForLog });
@@ -390,8 +397,11 @@ router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res
       return;
     }
     const entries = (await Promise.all(content.split("\n").filter(Boolean).map(parseSessionEntry))).filter(Boolean);
-    // Prepend metadata as session_meta entry for the frontend
-    const result = meta ? [{ type: EVENT_TYPES.sessionMeta, ...meta }, ...entries] : entries;
+    // Prepend metadata as session_meta entry for the frontend. `isRunning`
+    // tells a catch-up whether this snapshot can be complete: while a run is in
+    // progress the text being streamed is not in the file yet.
+    const isRunning = runningBeforeRead || isSessionRunning(sessionId);
+    const result = [{ type: EVENT_TYPES.sessionMeta, ...(meta ?? {}), isRunning }, ...entries];
     log.info("sessions", "detail: ok", { sessionId: sessionIdForLog, entries: result.length });
     res.json(result);
   } catch (err) {
