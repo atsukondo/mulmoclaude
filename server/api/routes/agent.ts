@@ -714,7 +714,7 @@ interface BackgroundRunParams {
 // a different `toolUseId` (or a `claudeSessionId`, or a flush at
 // run-end) would otherwise leave `pendingSkill` set so a much-later
 // unrelated assistant text gets mis-tagged as `type: "skill"`.
-interface EventContext {
+export interface EventContext {
   chatSessionId: string;
   resultsFilePath: string;
   toolArgsCache: ReturnType<typeof createArgsCache>;
@@ -763,7 +763,7 @@ export async function applyResolvedModel(
   deps.publish(chatSessionId, { type: EVENT_TYPES.sessionMeta, resolvedModel: model });
 }
 
-async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContext): Promise<void> {
+export async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContext): Promise<void> {
   if (event.type === EVENT_TYPES.claudeSessionId) {
     await flushTextAccumulator(ctx);
     // claudeSessionId is a meta event — never part of a Skill→body
