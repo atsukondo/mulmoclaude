@@ -61,6 +61,14 @@ describe("isGenerateImageResult — what it refuses", () => {
     assert.equal(isGenerateImageResult({ message: "m", data: "images/a.png" }), false);
   });
 
+  // An empty path renders an empty image: the shape is right and the panel is
+  // still blank, which is the case this guard is for. "No image" is a body
+  // with no `data`, covered above.
+  it("refuses an empty imageData", () => {
+    assert.equal(isGenerateImageResult({ message: "m", data: { imageData: "" } }), false);
+    assert.equal(isGenerateImageResult({ message: "m", data: { imageData: "", prompt: "a cat" } }), false);
+  });
+
   it("refuses a prompt that is not a string", () => {
     assert.equal(isGenerateImageResult({ message: "m", data: { imageData: "images/a.png", prompt: 7 } }), false);
   });

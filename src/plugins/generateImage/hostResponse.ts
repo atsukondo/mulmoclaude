@@ -20,7 +20,11 @@ const isOptionalString = (value: unknown): value is string | undefined => value 
 
 const isOptionalBoolean = (value: unknown): value is boolean | undefined => value === undefined || typeof value === "boolean";
 
-const isImageToolData = (value: unknown): value is ImageToolData => isRecord(value) && typeof value.imageData === "string" && isOptionalString(value.prompt);
+// `imageData` is the path the view renders, so an empty one is the blank panel
+// this guard exists to prevent — the absent case is a body with no `data` at
+// all, which the route sends when the model returned no image.
+const isImageToolData = (value: unknown): value is ImageToolData =>
+  isRecord(value) && typeof value.imageData === "string" && value.imageData.length > 0 && isOptionalString(value.prompt);
 
 export const isGenerateImageResult = (value: unknown): value is ToolResult<ImageToolData, never> =>
   isRecord(value) &&
