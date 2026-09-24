@@ -793,7 +793,7 @@ export async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContex
   // Any non-text event marks the end of a text burst — flush so
   // jsonl order matches the live stream and crashes mid-run don't
   // lose already-streamed text.
-  if (event.type === EVENT_TYPES.error) return recordAgentError(ctx, event.message);
+  if (await recordIfError(ctx, event)) return;
   await flushTextAccumulator(ctx);
   if (event.type === EVENT_TYPES.toolCall) {
     updatePendingSkillOnToolCall(ctx, event);
@@ -874,6 +874,14 @@ async function recordAgentError(ctx: EventContext, message: string): Promise<voi
     log.warn("agent", "failed to flush text before recording an error", { chatSessionId: ctx.chatSessionId, error: String(flushErr) });
   });
   await appendErrorEntry(ctx.chatSessionId, message);
+}
+
+// Errors take `recordAgentError` instead of the shared flush below, so a failed
+// flush cannot throw before the error is kept. True when the event was one.
+async function recordIfError(ctx: EventContext, event: AgentStreamEvent): Promise<boolean> {
+  if (event.type !== EVENT_TYPES.error) return false;
+  await recordAgentError(ctx, event.message);
+  return true;
 }
 
 // A run that threw still has to tell the user — live and in the transcript.
