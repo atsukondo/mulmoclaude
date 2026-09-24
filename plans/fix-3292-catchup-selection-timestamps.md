@@ -14,12 +14,22 @@ so after adoption:
 
 `src/utils/session/adoptTranscript.ts` (pure):
 
-- `alignServerToClient`: an in-order greedy match between the two card lists. Cards match
-  when the uuid is the same (tool results keep theirs), or when they are the same text
-  kind and title and the server body starts with the client body (the truncated-stream
-  case, #2096). A server card with no match is one the client missed.
-- `adoptServerTranscript`: a matched card keeps the client's timestamp; a missed card
-  gets the adoption time. Selection rules:
+- **Card identity is exact**: the same uuid (tool results keep theirs), or the same
+  text kind and title with an identical body (a skill card's body is `data.body`,
+  not its description).
+- **Only the client's last card may match a longer server body**, because a dropped
+  frame can only truncate the card still streaming (#2096). When more than one
+  server card could continue it, it is left unmatched instead of guessed.
+- **`alignServerToClient` is the order-preserving alignment with the most matched
+  cards** (an LCS-style table, where an exact match outweighs a continuation). The
+  shared prefix is matched in lockstep first, so the table covers only the part
+  after the first difference.
+  - Client-only cards (a local error `App.vue` never persisted) are skipped without
+    stalling the rest.
+  - Past a size cap, the remainder is left unaligned (it gets adoption-time stamps)
+    rather than allocating an unbounded table.
+- **`adoptServerTranscript`**: a matched card keeps the client's timestamp, and a
+  recovered card gets the adoption time. Selection:
   - a user on the last card follows to the new last card;
   - any other selection is kept, on its new uuid;
   - a selection whose card is gone falls back to the last card.
@@ -36,5 +46,7 @@ so after adoption:
 
 ## Out of scope
 
-Client-only cards the server never persists (e.g. an attachment error pushed by
-`App.vue`) are still dropped when the server copy is adopted, as before.
+- Client-only cards are still dropped from the list on adoption, as before; the
+  server copy is the one kept.
+- Run state (`runStartIndex`, `assistantTextInterrupted`) during a mid-run adoption
+  is a separate issue: #3294.
