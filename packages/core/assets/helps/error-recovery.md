@@ -176,10 +176,16 @@ resends the message. If they authenticate with `ANTHROPIC_API_KEY` instead, chec
 key. Switching auth mode is not the fix — a fresh `/login` is.
 
 If `/login` succeeds and the error persists (typically `401 OAuth access token is
-invalid`), check whether `CLAUDE_CODE_OAUTH_TOKEN` is set in the environment MulmoClaude
-was started from (shell profile or `.env`). It overrides the stored login, and the
-spawned CLI inherits the server's environment — so the user must unset or replace it
-and **restart MulmoClaude**; a new terminal does not change the running server.
+invalid`), what to check depends on the sandbox:
+
+- **Sandbox off** — the spawned CLI inherits the server's environment, so a
+  `CLAUDE_CODE_OAUTH_TOKEN` set where MulmoClaude was started (shell profile or `.env`)
+  overrides the stored login. The user unsets or replaces it and **restarts
+  MulmoClaude**; a new terminal does not change the running server.
+- **Sandbox on** — the container gets only the variables MulmoClaude passes explicitly,
+  and that token is not one of them; it authenticates from the host's mounted
+  `~/.claude`. Do not chase the environment variable here — the host login is the one
+  that counts.
 
 You will usually be reading this AFTER the user re-logged in (a failing turn never
 reaches you); answer "why did that happen" with the cause above rather than
