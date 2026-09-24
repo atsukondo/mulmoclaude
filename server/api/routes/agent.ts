@@ -714,7 +714,7 @@ interface BackgroundRunParams {
 // a different `toolUseId` (or a `claudeSessionId`, or a flush at
 // run-end) would otherwise leave `pendingSkill` set so a much-later
 // unrelated assistant text gets mis-tagged as `type: "skill"`.
-interface EventContext {
+export interface EventContext {
   chatSessionId: string;
   resultsFilePath: string;
   toolArgsCache: ReturnType<typeof createArgsCache>;
@@ -763,7 +763,7 @@ export async function applyResolvedModel(
   deps.publish(chatSessionId, { type: EVENT_TYPES.sessionMeta, resolvedModel: model });
 }
 
-async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContext): Promise<void> {
+export async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContext): Promise<void> {
   if (event.type === EVENT_TYPES.claudeSessionId) {
     await flushTextAccumulator(ctx);
     // claudeSessionId is a meta event — never part of a Skill→body
@@ -793,6 +793,7 @@ async function handleAgentEvent(event: AgentStreamEvent, ctx: EventContext): Pro
   // Any non-text event marks the end of a text burst — flush so
   // jsonl order matches the live stream and crashes mid-run don't
   // lose already-streamed text.
+  if (await recordIfError(ctx, event)) return;
   await flushTextAccumulator(ctx);
   if (event.type === EVENT_TYPES.toolCall) {
     updatePendingSkillOnToolCall(ctx, event);
@@ -852,6 +853,43 @@ async function handleInjectedText(ctx: EventContext, message: string): Promise<v
   // (as plain text, the flag is already cleared) so jsonl order is preserved.
   await flushTextAccumulator(ctx);
   await writeSkillEntry(ctx, skill.skillName, message);
+}
+
+// Keep an agent error in the transcript so a failed turn still explains itself
+// after a reload. Best-effort: it is also called from the run's catch block,
+// where a second throw would escape the background run unhandled.
+async function appendErrorEntry(chatSessionId: string, message: string): Promise<void> {
+  try {
+    await appendSessionLine(chatSessionId, JSON.stringify({ source: "assistant", type: EVENT_TYPES.error, message }));
+  } catch (err) {
+    log.warn("agent", "failed to persist error entry", { chatSessionId, error: String(err) });
+  }
+}
+
+// Record an error in the transcript after the text streamed before it. The
+// flush keeps the file in live order, but its own failure must never swallow
+// the error it was only meant to precede — so it is logged, not thrown.
+async function recordAgentError(ctx: EventContext, message: string): Promise<void> {
+  await flushTextAccumulator(ctx).catch((flushErr: unknown) => {
+    log.warn("agent", "failed to flush text before recording an error", { chatSessionId: ctx.chatSessionId, error: String(flushErr) });
+  });
+  await appendErrorEntry(ctx.chatSessionId, message);
+}
+
+// Errors take `recordAgentError` instead of the shared flush below, so a failed
+// flush cannot throw before the error is kept. True when the event was one.
+async function recordIfError(ctx: EventContext, event: AgentStreamEvent): Promise<boolean> {
+  if (event.type !== EVENT_TYPES.error) return false;
+  await recordAgentError(ctx, event.message);
+  return true;
+}
+
+// A run that threw still has to tell the user — live and in the transcript.
+export async function reportRunFailure(ctx: EventContext, err: unknown): Promise<void> {
+  const message = String(err);
+  log.error("agent", "request failed", { chatSessionId: ctx.chatSessionId, error: message });
+  pushSessionEvent(ctx.chatSessionId, { type: EVENT_TYPES.error, message });
+  await recordAgentError(ctx, message);
 }
 
 // Write the accumulated streaming text chunks as one consolidated
@@ -1268,15 +1306,7 @@ async function runAgentInBackground(params: BackgroundRunParams): Promise<void> 
     });
   } catch (err) {
     didError = true;
-    await flushTextAccumulator(eventCtx);
-    log.error("agent", "request failed", {
-      chatSessionId,
-      error: String(err),
-    });
-    pushSessionEvent(chatSessionId, {
-      type: EVENT_TYPES.error,
-      message: String(err),
-    });
+    await reportRunFailure(eventCtx, err);
   } finally {
     await finalizeRun(chatSessionId, params.origin, didError, requestStartedAt, eventCtx.lastAssistantText);
   }
