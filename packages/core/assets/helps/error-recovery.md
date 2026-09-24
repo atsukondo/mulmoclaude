@@ -152,6 +152,33 @@ checked**. Open the body with a line saying the answer came from this lookup and
 is awaiting maintainer review — it is a draft, not documentation. Never edit
 `bug-report-faq.md` yourself.
 
+## "Failed to authenticate" — the Claude CLI's own login expired
+
+### Symptoms
+
+- `[Error] Failed to authenticate: OAuth session expired and could not be refreshed`
+- `[Error] Failed to authenticate. API Error: 401 …` / `Invalid API key`
+- Older versions: that text shown as a normal reply, then a separate `[Error] claude exited with code 1`
+- Every turn fails the same way until the user acts — failures come in bursts, not at random
+
+### Cause
+
+The `claude` CLI that MulmoClaude spawns could not authenticate with Anthropic, so it
+exited before running anything. This is the CLI's own login (`claude login`, stored in
+`~/.claude` / the macOS Keychain), not a MulmoClaude or Google account link. An OAuth
+(subscription) session goes stale when its silent refresh fails; nothing on the
+MulmoClaude side can refresh it.
+
+### Fix
+
+The user runs `claude /login` (or `claude login`) in a terminal **on the host**, then
+resends the message. If they authenticate with `ANTHROPIC_API_KEY` instead, check that
+key. Switching auth mode is not the fix — a fresh `/login` is.
+
+You will usually be reading this AFTER the user re-logged in (a failing turn never
+reaches you); answer "why did that happen" with the cause above rather than
+investigating MulmoClaude's settings.
+
 ## gh / git / SSH errors inside the sandbox
 
 ### Symptoms
