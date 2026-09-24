@@ -866,6 +866,19 @@ async function appendErrorEntry(chatSessionId: string, message: string): Promise
   }
 }
 
+// A run that threw still has to tell the user — live and in the transcript.
+// The text flush comes first so the file keeps live order, but its own failure
+// must not swallow the error it was only meant to precede.
+export async function reportRunFailure(ctx: EventContext, err: unknown): Promise<void> {
+  const message = String(err);
+  await flushTextAccumulator(ctx).catch((flushErr: unknown) => {
+    log.warn("agent", "failed to flush text before reporting a run failure", { chatSessionId: ctx.chatSessionId, error: String(flushErr) });
+  });
+  log.error("agent", "request failed", { chatSessionId: ctx.chatSessionId, error: message });
+  pushSessionEvent(ctx.chatSessionId, { type: EVENT_TYPES.error, message });
+  await appendErrorEntry(ctx.chatSessionId, message);
+}
+
 // Write the accumulated streaming text chunks as one consolidated
 // jsonl line. Called at the end of each agent run (success or error)
 // so the session transcript has exactly one assistant text entry
@@ -1280,16 +1293,7 @@ async function runAgentInBackground(params: BackgroundRunParams): Promise<void> 
     });
   } catch (err) {
     didError = true;
-    await flushTextAccumulator(eventCtx);
-    log.error("agent", "request failed", {
-      chatSessionId,
-      error: String(err),
-    });
-    pushSessionEvent(chatSessionId, {
-      type: EVENT_TYPES.error,
-      message: String(err),
-    });
-    await appendErrorEntry(chatSessionId, String(err));
+    await reportRunFailure(eventCtx, err);
   } finally {
     await finalizeRun(chatSessionId, params.origin, didError, requestStartedAt, eventCtx.lastAssistantText);
   }

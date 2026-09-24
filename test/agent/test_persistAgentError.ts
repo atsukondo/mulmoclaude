@@ -89,3 +89,24 @@ describe("handleAgentEvent — error persistence", () => {
     assert.deepEqual(await sessionLines(chatSessionId), []);
   });
 });
+
+describe("reportRunFailure — a run that threw", () => {
+  it("flushes streamed text, then persists the error", async () => {
+    const { chatSessionId, context } = newContext();
+    context.textAccumulator.push("half a reply");
+    await routes.reportRunFailure(context, new Error("spawn failed"));
+    assert.deepEqual(await sessionLines(chatSessionId), [
+      { source: "assistant", type: EVENT_TYPES.text, message: "half a reply" },
+      { source: "assistant", type: EVENT_TYPES.error, message: "Error: spawn failed" },
+    ]);
+  });
+
+  it("still reports when the text flush itself fails, instead of throwing", async () => {
+    const { context } = newContext();
+    // A directory where the session file should be makes every append fail.
+    context.chatSessionId = `blocked-${randomUUID()}`;
+    await mkdir(path.join(root, "conversations", "chat", `${context.chatSessionId}.jsonl`), { recursive: true });
+    context.textAccumulator.push("half a reply");
+    await assert.doesNotReject(routes.reportRunFailure(context, new Error("spawn failed")));
+  });
+});
