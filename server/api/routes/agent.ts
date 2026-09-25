@@ -598,7 +598,7 @@ export async function prepareRequestExtras(attachments: Attachment[] | undefined
       log.warn("agent", "attachment has no path after normalisation — dropping");
       continue;
     }
-    const resolved = await loadFromPath(att.path, att.mimeType);
+    const resolved = await loadFromPath(att.path);
     if (!resolved) continue;
     // Only emit the `[Attached file: …]` marker when the file exists —
     // otherwise the LLM gets told a bogus path exists (Codex review on
@@ -613,15 +613,20 @@ export async function prepareRequestExtras(attachments: Attachment[] | undefined
   };
 }
 
-async function loadFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | typeof FILE_ONLY | undefined> {
-  if (isAttachmentPath(value)) return loadAttachmentFromPath(value, declaredMimeType);
-  if (isImagePath(value)) return loadImageFromPath(value, declaredMimeType);
+async function loadFromPath(value: string): Promise<Attachment | typeof FILE_ONLY | undefined> {
+  if (isAttachmentPath(value)) return loadAttachmentFromPath(value);
+  if (isImagePath(value)) return loadImageFromPath(value);
   log.warn("agent", "attachment path is outside allowed roots — dropping", { path: value });
   return undefined;
 }
 
-async function loadAttachmentFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | typeof FILE_ONLY | undefined> {
-  const mimeType = declaredMimeType ?? inferMimeFromExtension(value);
+// The stored extension, not a caller's declared MIME, decides: it was chosen
+// from the MIME at save time, and trusting a declared one would let `.bin`
+// bytes be sent as text. Image paths are `.png` only (`isImagePath`).
+const IMAGE_PATH_MIME = "image/png";
+
+async function loadAttachmentFromPath(value: string): Promise<Attachment | typeof FILE_ONLY | undefined> {
+  const mimeType = inferMimeFromExtension(value);
   if (!mimeType) return (await attachmentExists(value)) ? FILE_ONLY : missingAttachment(value);
   try {
     const data = await loadAttachmentBase64(value);
@@ -637,10 +642,10 @@ function missingAttachment(value: string): undefined {
   return undefined;
 }
 
-async function loadImageFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | undefined> {
+async function loadImageFromPath(value: string): Promise<Attachment | undefined> {
   try {
     const data = await loadImageBase64(value);
-    return { mimeType: declaredMimeType ?? "image/png", data, path: value };
+    return { mimeType: IMAGE_PATH_MIME, data, path: value };
   } catch (err) {
     log.warn("agent", "failed to load selected-image bytes from path", { path: value, error: errorMessage(err) });
     return undefined;

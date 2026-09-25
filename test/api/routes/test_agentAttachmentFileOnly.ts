@@ -17,6 +17,7 @@ const PARTITION = "2026/09";
 const FILE_ONLY_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6071.mpp.bin`;
 const READABLE_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6072.csv`;
 const MISSING_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6073.mpp.bin`;
+const IMAGE_PATH = `artifacts/images/${PARTITION}/0a1b2c3d4e5f6074.png`;
 
 before(async () => {
   workspaceRoot = await mkdtemp(path.join(tmpdir(), "mulmoclaude-attachment-file-only-"));
@@ -29,6 +30,8 @@ before(async () => {
   await writeFile(path.join(workspaceRoot, FILE_ONLY_PATH), Buffer.from([0xd0, 0xcf, 0x11, 0xe0]));
   await writeFile(path.join(workspaceRoot, READABLE_PATH), "a,b\n1,2\n", "utf-8");
   await mkdir(path.join(attachmentsDir, "subdir.mpp"));
+  await mkdir(path.join(workspaceRoot, path.dirname(IMAGE_PATH)), { recursive: true });
+  await writeFile(path.join(workspaceRoot, IMAGE_PATH), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
 
   ({ prepareRequestExtras } = await import("../../../server/api/routes/agent.ts"));
   ({ saveAttachment } = await import("../../../server/utils/files/attachment-store.ts"));
@@ -77,12 +80,39 @@ describe("prepareRequestExtras — file-only attachments", () => {
   });
 });
 
+describe("prepareRequestExtras — the stored extension decides, not a declared MIME", () => {
+  it("a .bin file stays file-only whatever MIME the entry declares", async () => {
+    for (const mimeType of ["application/octet-stream", "text/plain", "application/pdf", "image/png"]) {
+      const out = await prepareRequestExtras([{ path: FILE_ONLY_PATH, mimeType }]);
+      assert.deepEqual(out.attachedFiles, [{ path: FILE_ONLY_PATH }], mimeType);
+      assert.equal(out.attachments, undefined, mimeType);
+    }
+  });
+
+  it("a readable file is loaded under its extension's MIME, not the declared one", async () => {
+    const out = await prepareRequestExtras([{ path: READABLE_PATH, mimeType: "application/pdf" }]);
+    assert.equal(out.attachments?.[0]?.mimeType, "text/csv");
+  });
+
+  it("a selected image is always image/png, whatever MIME the entry declares", async () => {
+    const out = await prepareRequestExtras([{ path: IMAGE_PATH, mimeType: "text/plain" }]);
+    assert.equal(out.attachments?.[0]?.mimeType, "image/png");
+  });
+});
+
 describe("saveAttachment — unknown MIME round trip", () => {
   it("keeps the original extension as a hint, ends in .bin, and is announced file-only", async () => {
     const saved = await saveAttachment(Buffer.from("mpp-bytes").toString("base64"), "application/octet-stream", "schedule.mpp");
     assert.ok(saved.relativePath.endsWith(".mpp.bin"), saved.relativePath);
     const out = await prepareRequestExtras([{ path: saved.relativePath }]);
     assert.deepEqual(out.attachedFiles, [{ path: saved.relativePath }]);
+    assert.equal(out.attachments, undefined);
+  });
+
+  it("a bridge-shaped entry (path + the saved MIME) is file-only too", async () => {
+    const saved = await saveAttachment(Buffer.from("mpp-bytes").toString("base64"), "application/octet-stream", "schedule.mpp");
+    const out = await prepareRequestExtras([{ path: saved.relativePath, mimeType: saved.mimeType, filename: "schedule.mpp" }]);
+    assert.deepEqual(out.attachedFiles, [{ path: saved.relativePath, filename: "schedule.mpp" }]);
     assert.equal(out.attachments, undefined);
   });
 
