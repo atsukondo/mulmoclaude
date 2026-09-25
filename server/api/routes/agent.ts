@@ -80,7 +80,8 @@ import { getBoundPort } from "../../workspace/serverPort.js";
 import type { Attachment } from "@mulmobridge/protocol";
 import type { StartChatParams as ChatServiceStartChatParams } from "@mulmobridge/chat-service";
 import { isImagePath, loadImageBase64 } from "../../utils/files/image-store.js";
-import { isAttachmentPath, loadAttachmentBase64, inferMimeFromExtension, saveAttachment } from "../../utils/files/attachment-store.js";
+import { isAttachmentPath, loadAttachmentBase64, attachmentExists, saveAttachment } from "../../utils/files/attachment-store.js";
+import { inferMimeFromExtension } from "../../utils/files/attachment-mime.js";
 
 const router = Router();
 // The port the server actually BOUND, read per-call rather than frozen at
@@ -546,7 +547,7 @@ async function persistInlineBytesAsPaths(attachments: Attachment[] | undefined):
       continue;
     }
     if (typeof att.data === "string" && att.data.length > 0 && typeof att.mimeType === "string" && att.mimeType.length > 0) {
-      const saved = await saveAttachment(att.data, att.mimeType);
+      const saved = await saveAttachment(att.data, att.mimeType, att.filename);
       // Carry `filename` across the rewrite. Bridges that know the
       // sender's filename already send it (Telegram documents pass
       // `doc.file_name`), and dropping it here is what kept the name
@@ -559,13 +560,16 @@ async function persistInlineBytesAsPaths(attachments: Attachment[] | undefined):
   return result.length > 0 ? result : undefined;
 }
 
+/** An existing attachment whose type cannot become a content block. */
+const FILE_ONLY = "file-only";
+
 /** Walk `attachments[]` once, loading bytes from disk for every
  *  path-bearing entry, and collect every path so the caller can emit
  *  one `[Attached file: <path>]` marker per file. Two path roots
  *  are accepted:
  *
  *    - `data/attachments/...` — paste/drop/file-picker uploads (any
- *      MIME type from the chat input's accept list) and the persisted
+ *      file type; unreadable ones are file-only) and the persisted
  *      form of bridge inline-bytes attachments. MIME is inferred from
  *      the extension chosen at save time.
  *    - `artifacts/images/...png` — generated / canvas / edited images
@@ -596,10 +600,11 @@ export async function prepareRequestExtras(attachments: Attachment[] | undefined
     }
     const resolved = await loadFromPath(att.path, att.mimeType);
     if (!resolved) continue;
-    // Only emit the `[Attached file: …]` marker when the file was
-    // actually loaded — otherwise the LLM gets told a bogus path
-    // exists (Codex review on PR #1084 follow-up to #1052).
-    result.push(resolved);
+    // Only emit the `[Attached file: …]` marker when the file exists —
+    // otherwise the LLM gets told a bogus path exists (Codex review on
+    // PR #1084 follow-up to #1052). A file-only entry has no bytes: the
+    // agent reaches it by path, and no content block is built for it.
+    if (resolved !== FILE_ONLY) result.push(resolved);
     attachedFiles.push({ path: att.path, ...(att.filename ? { filename: att.filename } : {}) });
   }
   return {
@@ -608,19 +613,16 @@ export async function prepareRequestExtras(attachments: Attachment[] | undefined
   };
 }
 
-async function loadFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | undefined> {
+async function loadFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | typeof FILE_ONLY | undefined> {
   if (isAttachmentPath(value)) return loadAttachmentFromPath(value, declaredMimeType);
   if (isImagePath(value)) return loadImageFromPath(value, declaredMimeType);
   log.warn("agent", "attachment path is outside allowed roots — dropping", { path: value });
   return undefined;
 }
 
-async function loadAttachmentFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | undefined> {
+async function loadAttachmentFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | typeof FILE_ONLY | undefined> {
   const mimeType = declaredMimeType ?? inferMimeFromExtension(value);
-  if (!mimeType) {
-    log.warn("agent", "attachment path has unknown extension — skipping bytes", { path: value });
-    return undefined;
-  }
+  if (!mimeType) return (await attachmentExists(value)) ? FILE_ONLY : missingAttachment(value);
   try {
     const data = await loadAttachmentBase64(value);
     return { mimeType, data, path: value };
@@ -628,6 +630,11 @@ async function loadAttachmentFromPath(value: string, declaredMimeType: string | 
     log.warn("agent", "failed to load attachment bytes from path", { path: value, error: errorMessage(err) });
     return undefined;
   }
+}
+
+function missingAttachment(value: string): undefined {
+  log.warn("agent", "attachment path does not exist — dropping", { path: value });
+  return undefined;
 }
 
 async function loadImageFromPath(value: string, declaredMimeType: string | undefined): Promise<Attachment | undefined> {
