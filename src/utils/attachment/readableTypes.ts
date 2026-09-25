@@ -2,7 +2,7 @@
 // MIME keys of server/utils/files/attachment-mime.ts (a test pins it): any
 // other type is stored as `.bin` and reaches the agent by path only.
 
-const READABLE_MIMES = new Set([
+export const READABLE_MIMES: ReadonlySet<string> = new Set([
   "image/png",
   "image/jpeg",
   "image/jpg",
