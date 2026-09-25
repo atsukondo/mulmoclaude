@@ -8,6 +8,10 @@ describe("isReadableAttachmentType", () => {
     assert.deepEqual([...READABLE_MIMES].sort(), knownAttachmentMimes().sort());
   });
 
+  for (const mime of knownAttachmentMimes()) {
+    it(`reads ${mime}`, () => assert.equal(isReadableAttachmentType(mime), true));
+  }
+
   for (const mime of [
     "",
     "application/octet-stream",
