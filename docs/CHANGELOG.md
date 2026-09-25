@@ -8,6 +8,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+### Fixed
+
+- **A form's `defaultValue` was never checked** (`@mulmoclaude/form-plugin@2.1.0`, #3298, refs #3287) — this plugin was copied from
+  `@mulmochat-plugin/form` and lost the whole `defaultValue` family on the way, plus the unknown-type check. Seven definitions it
+  ACCEPTED are refused upstream, and each of them renders a form the user can neither complete nor fix: a default that is not one
+  of the choices, a default of the wrong type, a default outside the range the same field declares (length, min/max, the date
+  window, the selection counts), and a field type the view cannot render, which arrived as an empty row. A form arrives from the
+  model, so this validation is the only thing between a bad definition and a form that looks filled in and submits a value its own
+  definition forbids. The rules are the upstream ones with one deliberate difference: a choice here may be `{ label, value? }`, so
+  membership is tested against the RESOLVED value — porting upstream's `choices.includes()` verbatim would have refused a correct
+  default. Three more holes came out of review: the view matches a choice by its value OR its label and takes the first hit, so a
+  default matching one choice's label while another owns it as a value opened the form on a selection submitting something else; a
+  date or time the input cannot parse (`2026-02-30`, `25:90`) is blanked by the browser, so the form opened empty while still
+  claiming a default; and a repeated checkbox default ticked one box while the count rules saw two and the submission emitted the
+  choice twice. `minDate` / `maxDate` are held to the same date rule. The upstream copy gained the one rule it lacked in
+  receptron/MulmoChatPluginForm#33, so both sides now validate the same set.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.1`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.3.0`, `@mulmoclaude/common@1.3.0`, `@mulmoclaude/core@5.5.0`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/shapescript-plugin@7.1.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+
 ## [1.22.0] - 2026-09-23
 
 **Plugins stop shipping private copies of three and mermaid, a custom view can no longer pick the role its chat runs in, and a refused Google deletion no longer hides a successful push.**
