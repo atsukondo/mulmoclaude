@@ -137,30 +137,49 @@ describe("snapshotMayBeMidRun", () => {
 });
 
 describe("the session store's run generation", () => {
-  it("advances once per accepted run, so a run inside a read is detectable", () => {
+  function createSession(sessionId: string) {
     const now = new Date().toISOString();
-    const session = store.getOrCreateSession("gen-1", {
-      roleId: "general",
-      resultsFilePath: path.join(tmpRoot, "results.jsonl"),
-      startedAt: now,
-      updatedAt: now,
-    });
-    assert.equal(session.runGeneration, 0);
+    return store.getOrCreateSession(sessionId, { roleId: "general", resultsFilePath: path.join(tmpRoot, "results.jsonl"), startedAt: now, updatedAt: now });
+  }
+
+  it("moves on every accepted run and not on a rejected one", () => {
+    const session = createSession("gen-1");
     assert.equal(
       store.beginRun("gen-1", () => {}),
       true,
     );
+    const first = session.runGeneration;
     store.endRun("gen-1");
     assert.equal(
       store.beginRun("gen-1", () => {}),
       true,
     );
-    assert.equal(session.runGeneration, 2);
+    const second = session.runGeneration;
+    assert.ok(second > first);
     assert.equal(
       store.beginRun("gen-1", () => {}),
       false,
-      "a rejected begin must not advance it",
+      "a rejected begin must not move it",
     );
-    assert.equal(session.runGeneration, 2);
+    assert.equal(session.runGeneration, second);
+  });
+
+  it("never repeats for a session evicted and recreated during a read", () => {
+    const original = createSession("gen-2");
+    assert.equal(
+      store.beginRun("gen-2", () => {}),
+      true,
+    );
+    store.endRun("gen-2");
+    const beforeRead = { isRunning: original.isRunning, runGeneration: original.runGeneration };
+    store.evictSession("gen-2");
+    assert.equal(store.getSession("gen-2"), undefined);
+    const recreated = createSession("gen-2");
+    assert.equal(
+      store.beginRun("gen-2", () => {}),
+      true,
+    );
+    store.endRun("gen-2");
+    assert.notEqual(recreated.runGeneration, beforeRead.runGeneration);
   });
 });

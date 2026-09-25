@@ -1018,7 +1018,7 @@ async function handleRecoveredStop(sessionId: string): Promise<void> {
   const decision = await refreshSessionTranscript(sessionId);
   if (currentSessionId.value === sessionId) {
     if (holdsWholeTurn(decision)) markSessionRead(sessionId);
-  } else if (!hasPendingGenerations(sessionId)) {
+  } else if (decision !== "running" && !hasPendingGenerations(sessionId)) {
     unsubscribeSession(sessionId);
   }
 }

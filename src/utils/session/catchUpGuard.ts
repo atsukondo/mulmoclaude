@@ -15,24 +15,36 @@ import type { SessionEntry } from "../../types/session";
 import { EVENT_TYPES } from "../../types/events";
 import { isRecord } from "../types";
 import { shouldAdoptServerTranscript } from "./sessionEntries";
+import { clientHoldsServerCards } from "./adoptTranscript";
 
-/** What the transcript looked like when the fetch started, held by reference.
- *  Every live change replaces a card, a card's `data`, or its `message` string
- *  (appending, `Object.assign`, slot replacement), so comparing those
- *  references catches it without every mutation site keeping a counter. */
+/** What the transcript looked like when the fetch started: each card, and each
+ *  of its own property values, held by reference. Every live change replaces a
+ *  card, or assigns one of its properties (a streamed `message`, `data` or any
+ *  other field through `Object.assign`), so comparing them catches it without
+ *  listing fields or having every mutation site keep a counter. */
 export interface TranscriptSnapshot {
   cards: ToolResultComplete[];
-  messages: (string | undefined)[];
-  datas: unknown[];
+  values: unknown[][];
+}
+
+function propertyValues(card: ToolResultComplete): unknown[] {
+  if (!isRecord(card)) return [];
+  return Object.keys(card)
+    .sort()
+    .flatMap((key): unknown[] => [key, card[key]]);
 }
 
 export function captureTranscript(toolResults: readonly ToolResultComplete[]): TranscriptSnapshot {
-  return { cards: [...toolResults], messages: toolResults.map((card) => card.message), datas: toolResults.map((card) => card.data) };
+  return { cards: [...toolResults], values: toolResults.map(propertyValues) };
+}
+
+function sameValues(before: unknown[] | undefined, after: unknown[]): boolean {
+  return before !== undefined && before.length === after.length && after.every((value, index) => value === before[index]);
 }
 
 export function transcriptChangedSince(snapshot: TranscriptSnapshot, toolResults: readonly ToolResultComplete[]): boolean {
   if (snapshot.cards.length !== toolResults.length) return true;
-  return toolResults.some((card, index) => card !== snapshot.cards[index] || card.message !== snapshot.messages[index] || card.data !== snapshot.datas[index]);
+  return toolResults.some((card, index) => card !== snapshot.cards[index] || !sameValues(snapshot.values[index], propertyValues(card)));
 }
 
 /** The server marks a snapshot taken during a run on its `session_meta` row.
@@ -42,7 +54,7 @@ export function snapshotTakenMidRun(entries: readonly SessionEntry[]): boolean {
   return isRecord(meta) && meta.isRunning === true;
 }
 
-export type CatchUpDecision = "adopt" | "running" | "stale" | "not-richer";
+export type CatchUpDecision = "adopt" | "running" | "stale" | "up-to-date" | "not-richer";
 
 export interface CatchUpState {
   clientRunning: boolean;
@@ -55,13 +67,15 @@ export interface CatchUpState {
 export function decideCatchUpAdoption(state: CatchUpState): CatchUpDecision {
   if (state.clientRunning || state.snapshotMidRun) return "running";
   if (transcriptChangedSince(state.snapshotAtFetch, state.clientResults)) return "stale";
-  return shouldAdoptServerTranscript(state.serverResults, state.clientResults) ? "adopt" : "not-richer";
+  if (shouldAdoptServerTranscript(state.serverResults, state.clientResults)) return "adopt";
+  return clientHoldsServerCards(state.clientResults, state.serverResults) ? "up-to-date" : "not-richer";
 }
 
 /** After a refresh, does the client verifiably hold everything the server has?
  *  Only then may a stop that was never announced by `session_finished` mark the
- *  session read — otherwise the finished turn could be cleared unseen. `null`
- *  means the refresh did not get as far as deciding. */
+ *  session read — otherwise the finished turn could be cleared unseen. A
+ *  snapshot that is merely not richer proves nothing (equal counts can hide
+ *  different content); `null` means the refresh did not get as far as deciding. */
 export function holdsWholeTurn(decision: CatchUpDecision | null): boolean {
-  return decision === "adopt" || decision === "not-richer";
+  return decision === "adopt" || decision === "up-to-date";
 }

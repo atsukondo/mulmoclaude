@@ -132,6 +132,19 @@ export function alignServerToClient(clientResults: readonly ToolResultComplete[]
   return serverToClient;
 }
 
+/** Every server card has an exact, in-order counterpart on the client — the
+ *  client already shows everything the server has. A truncated tail does not
+ *  count: its continuation is on the server, not on screen. */
+export function clientHoldsServerCards(clientResults: readonly ToolResultComplete[], serverResults: readonly ToolResultComplete[]): boolean {
+  let clientIndex = 0;
+  return serverResults.every((serverCard) => {
+    const offset = clientResults.slice(clientIndex).findIndex((clientCard) => isSameCard(clientCard, serverCard));
+    if (offset === -1) return false;
+    clientIndex += offset + 1;
+    return true;
+  });
+}
+
 /** Where the selection lands: a user parked on the last card keeps following
  *  the conversation; any other choice is kept, on its new uuid; a selection
  *  whose card is gone falls back to the last card. */

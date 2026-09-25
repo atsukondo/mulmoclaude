@@ -31,8 +31,10 @@ export interface ServerSession {
   chatSessionId: string;
   roleId: string;
   isRunning: boolean;
-  /** Bumped by every `beginRun`. Sampled around a transcript read, a change
-   *  means a whole run started (and maybe ended) during the read. */
+  /** Set by every `beginRun` from one process-wide counter. Sampled around a
+   *  transcript read, a change means a whole run started (and maybe ended)
+   *  during the read. Process-wide rather than per session, so a session that
+   *  is evicted and recreated mid-read can never repeat a number. */
   runGeneration: number;
   hasUnread: boolean;
   statusMessage: string;
@@ -87,6 +89,7 @@ const EVICTION_CHECK_INTERVAL_MS = 5 * ONE_MINUTE_MS;
 // ── Store ──────────────────────────────────────────────────────
 
 const store = new Map<string, ServerSession>();
+let lastRunGeneration = 0;
 /**
  * Parallel pending-generation tracking for sessions that aren't in the
  * in-memory store. The MulmoScript view can be opened on a session
@@ -193,7 +196,8 @@ export function beginRun(chatSessionId: string, abortRun: () => void): boolean {
   if (!session) return false;
   if (session.isRunning) return false;
   session.isRunning = true;
-  session.runGeneration += 1;
+  lastRunGeneration += 1;
+  session.runGeneration = lastRunGeneration;
   session.statusMessage = "";
   session.toolCallHistory = [];
   session.abortRun = abortRun;

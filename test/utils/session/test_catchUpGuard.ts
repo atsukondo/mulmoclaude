@@ -64,6 +64,15 @@ describe("transcriptChangedSince — every live mutation path is seen", () => {
     assert.equal(transcriptChangedSince(snapshot, session.toolResults), true);
   });
 
+  it("sees any other field assigned onto the same card (e.g. a new title)", () => {
+    const session = sessionWith([chart("c1", "Chart"), makeTextResult("after", "assistant")]);
+    const snapshot = captureTranscript(session.toolResults);
+    const [existing] = session.toolResults;
+    assert.ok(existing);
+    updateResult(session, { ...existing, title: "Renamed" });
+    assert.equal(transcriptChangedSince(snapshot, session.toolResults), true);
+  });
+
   it("sees a card added or removed", () => {
     const results = [makeTextResult("hi", "user")];
     const snapshot = captureTranscript(results);
@@ -108,9 +117,15 @@ describe("decideCatchUpAdoption", () => {
     assert.equal(decideCatchUpAdoption({ ...state, clientResults: [...state.clientResults, makeTextResult("live", "assistant")] }), "stale");
   });
 
-  it("keeps the client copy when the snapshot is not richer", () => {
+  it("reports up-to-date when the client already shows every server card", () => {
     const clientResults = [makeTextResult("hi", "user"), makeTextResult("hello", "assistant")];
-    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults: [makeTextResult("hi", "user")] }), "not-richer");
+    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults: [makeTextResult("hi", "user")] }), "up-to-date");
+  });
+
+  it("reports not-richer — not up-to-date — when counts match but content differs", () => {
+    const clientResults = [makeTextResult("hi", "user"), makeErrorResult("local only, and long enough to outweigh")];
+    const serverResults = [makeTextResult("hi", "user"), makeTextResult("the reply", "assistant")];
+    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults }), "not-richer");
   });
 
   it("reports running before staleness", () => {
@@ -119,14 +134,15 @@ describe("decideCatchUpAdoption", () => {
   });
 
   it("handles an empty client and an empty server", () => {
-    assert.equal(decideCatchUpAdoption({ ...baseState([]), serverResults: [] }), "not-richer");
+    assert.equal(decideCatchUpAdoption({ ...baseState([]), serverResults: [] }), "up-to-date");
   });
 });
 
 describe("holdsWholeTurn", () => {
   it("is true only when the client verifiably has everything the server has", () => {
     assert.equal(holdsWholeTurn("adopt"), true);
-    assert.equal(holdsWholeTurn("not-richer"), true);
+    assert.equal(holdsWholeTurn("up-to-date"), true);
+    assert.equal(holdsWholeTurn("not-richer"), false);
     assert.equal(holdsWholeTurn("running"), false);
     assert.equal(holdsWholeTurn("stale"), false);
     assert.equal(holdsWholeTurn(null), false);
