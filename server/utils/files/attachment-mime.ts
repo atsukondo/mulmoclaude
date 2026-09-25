@@ -91,14 +91,17 @@ export function inferMimeFromExtension(filename: string): string | undefined {
 }
 
 /** Extension to store an attachment under. An unknown MIME keeps the
- *  original filename's extension so a user tool can still recognise the
- *  file — but never a known one, which would make the workspace treat
- *  the bytes as a type the MIME never claimed (e.g. octet-stream saved
- *  as `.html`). */
+ *  original extension as a hint (`<id>.mpp.bin`) but always ends in
+ *  `.bin`, so nothing that dispatches on the final extension (HTML
+ *  preview, raw-file MIME table) ever treats the bytes as something the
+ *  MIME never claimed. */
 export function storedExtensionFor(mimeType: string, filename: string | undefined): string {
   const fromMime = extensionForMime(mimeType);
   if (fromMime !== FALLBACK_EXTENSION || !filename) return fromMime;
   const original = path.extname(filename).toLowerCase();
-  if (!SAFE_EXTENSION.test(original) || EXT_MIME[original]) return FALLBACK_EXTENSION;
-  return original;
+  return SAFE_EXTENSION.test(original) ? `${original}${FALLBACK_EXTENSION}` : FALLBACK_EXTENSION;
+}
+
+export function knownAttachmentMimes(): string[] {
+  return Object.keys(MIME_EXT);
 }

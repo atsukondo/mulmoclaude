@@ -1,9 +1,19 @@
-// Attachment types whose content is inlined for the model (see
-// server/agent/attachmentConverter.ts). Any other type is still attached,
-// but as a file only: stored in the workspace and handed to the agent by path.
+// Attachment types whose content is inlined for the model. Must equal the
+// MIME keys of server/utils/files/attachment-mime.ts (a test pins it): any
+// other type is stored as `.bin` and reaches the agent by path only.
 
-const READABLE_MIME_PREFIXES = ["image/", "text/"];
-const READABLE_MIME_EXACT = new Set([
+const READABLE_MIMES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "image/heic",
+  "image/heif",
+  "image/tiff",
+  "image/bmp",
+  "image/avif",
   "application/pdf",
   "application/json",
   "application/xml",
@@ -12,8 +22,15 @@ const READABLE_MIME_EXACT = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+  "text/csv",
+  "text/html",
+  "text/markdown",
+  "text/xml",
+  "text/yaml",
+  "text/x-yaml",
 ]);
 
 export function isReadableAttachmentType(mime: string): boolean {
-  return READABLE_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix)) || READABLE_MIME_EXACT.has(mime);
+  return READABLE_MIMES.has(mime);
 }

@@ -575,7 +575,7 @@ Users can paste or drop files into the chat input. The server converts non-nativ
 | PPTX                                                 | libreoffice → PDF    | `type: "document"` | LibreOffice     | Docker sandbox or native install |
 | anything else                                        | none — file only     | none               | —               | All                              |
 
-**File-only attachments**: a type not in the table is still accepted. It is stored under `data/attachments/` with its original extension (`storedExtensionFor` in `server/utils/files/attachment-mime.ts`; unknown MIME only, and never a known extension) and announced to the agent by its `[Attached file: …]` marker, with no content block. The chat-input chip says the content can't be read.
+**File-only attachments**: a type not in the table is still accepted. It is stored under `data/attachments/` as `<id>.<original ext>.bin` (`storedExtensionFor` in `server/utils/files/attachment-mime.ts` — always ending in `.bin`, so no extension-dispatching route treats it as HTML etc.) and announced to the agent by its `[Attached file: …]` marker, with no content block. The chat-input chip says the content can't be read.
 
 **PPTX conversion path**: the server process runs on the host (macOS/Linux), but LibreOffice lives inside the Docker sandbox image. `convertPptxToPdf()` in `server/agent/attachmentConverter.ts` tries native `libreoffice` first; if not found, falls back to `docker run --rm -v tmpdir:/data mulmoclaude-sandbox libreoffice --headless --convert-to pdf`. Without either, the user sees a text hint suggesting PDF or image export.
 

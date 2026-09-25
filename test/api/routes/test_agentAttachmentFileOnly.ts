@@ -14,9 +14,9 @@ let prepareRequestExtras: typeof import("../../../server/api/routes/agent.ts").p
 let saveAttachment: typeof import("../../../server/utils/files/attachment-store.ts").saveAttachment;
 
 const PARTITION = "2026/09";
-const FILE_ONLY_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6071.mpp`;
+const FILE_ONLY_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6071.mpp.bin`;
 const READABLE_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6072.csv`;
-const MISSING_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6073.mpp`;
+const MISSING_PATH = `data/attachments/${PARTITION}/0a1b2c3d4e5f6073.mpp.bin`;
 
 before(async () => {
   workspaceRoot = await mkdtemp(path.join(tmpdir(), "mulmoclaude-attachment-file-only-"));
@@ -78,9 +78,9 @@ describe("prepareRequestExtras — file-only attachments", () => {
 });
 
 describe("saveAttachment — unknown MIME round trip", () => {
-  it("stores under the original extension and is then announced file-only", async () => {
+  it("keeps the original extension as a hint, ends in .bin, and is announced file-only", async () => {
     const saved = await saveAttachment(Buffer.from("mpp-bytes").toString("base64"), "application/octet-stream", "schedule.mpp");
-    assert.equal(path.posix.extname(saved.relativePath), ".mpp");
+    assert.ok(saved.relativePath.endsWith(".mpp.bin"), saved.relativePath);
     const out = await prepareRequestExtras([{ path: saved.relativePath }]);
     assert.deepEqual(out.attachedFiles, [{ path: saved.relativePath }]);
     assert.equal(out.attachments, undefined);
