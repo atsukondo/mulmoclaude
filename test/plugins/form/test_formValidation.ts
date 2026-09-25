@@ -130,6 +130,12 @@ describe("presentForm — defaultValue on a checkbox", () => {
     );
   });
 
+  // CodeRabbit on #3298: the view ticks by index, so a repeat is one tick, two
+  // against the count rules, and two entries in what is submitted.
+  it("refuses a default that repeats a selection", async () => {
+    assert.match(await refusalFor([{ id: "a", type: "checkbox", label: "A", choices: ["x", "y"], defaultValue: ["x", "x"] }]), /must not repeat a selection/);
+  });
+
   it("refuses a default outside the selection counts", async () => {
     assert.match(
       await refusalFor([{ id: "a", type: "checkbox", label: "A", choices: ["x", "y"], minSelections: 2, defaultValue: ["x"] }]),

@@ -133,6 +133,11 @@ function validateChoiceDefault(field: RadioField | DropdownField): void {
 function validateCheckboxDefault(field: CheckboxField): void {
   const { defaultValue, id, choices, minSelections, maxSelections } = field;
   if (!Array.isArray(defaultValue)) throw new Error(`Field '${id}': defaultValue must be an array`);
+  // The view ticks a box by index, so a repeat shows as one tick while the count
+  // rules see two and the submission emits the choice twice.
+  if (new Set(defaultValue).size !== defaultValue.length) {
+    throw new Error(`Field '${id}': defaultValue must not repeat a selection`);
+  }
   for (const value of defaultValue) {
     if (viewMatchIndex(choices, value) === -1) throw new Error(`Field '${id}': defaultValue contains '${value}' which is not in choices`);
     requireSelectableChoice(id, choices, value);
