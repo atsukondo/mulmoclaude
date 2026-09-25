@@ -54,8 +54,12 @@ function validateRangeField(field: FormField): void {
   if (field.type === "number" && field.min !== undefined && field.max !== undefined && field.min > field.max) {
     throw new Error(`Field '${field.id}': min cannot be greater than max`);
   }
-  if (field.type === "date" && field.minDate && field.maxDate && field.minDate > field.maxDate) {
-    throw new Error(`Field '${field.id}': minDate cannot be after maxDate`);
+  if (field.type === "date") {
+    if (field.minDate !== undefined) requireIsoDate(field.id, "minDate", field.minDate);
+    if (field.maxDate !== undefined) requireIsoDate(field.id, "maxDate", field.maxDate);
+    if (field.minDate && field.maxDate && field.minDate > field.maxDate) {
+      throw new Error(`Field '${field.id}': minDate cannot be after maxDate`);
+    }
   }
   if (field.type === "checkbox") validateCheckboxRange(field);
 }
@@ -69,8 +73,49 @@ function validateRangeField(field: FormField): void {
 //
 // The membership test resolves each choice first: a choice here may be a string
 // or `{ label, value? }`, which upstream's `choices.includes()` would refuse.
-const choiceValues = (choices: RadioField["choices"]): string[] =>
-  choices.map((choice) => (typeof choice === "string" ? choice : (choice.value ?? choice.label)));
+const choiceValue = (choice: RadioField["choices"][number]): string => (typeof choice === "string" ? choice : (choice.value ?? choice.label));
+
+const choiceLabel = (choice: RadioField["choices"][number]): string => (typeof choice === "string" ? choice : choice.label);
+
+/** The choice the VIEW would select for `wanted`, or -1. It matches a choice by
+ *  its value OR its label and takes the first hit (`matchChoice` in View.vue), so
+ *  the validator has to ask the same question — a default the view cannot select
+ *  is not a default, and one it selects by LABEL submits that choice's value. */
+const viewMatchIndex = (choices: RadioField["choices"], wanted: string): number =>
+  choices.findIndex((choice) => choiceValue(choice) === wanted || choiceLabel(choice) === wanted);
+
+/** Refuses a default the view would answer with something else: either nothing
+ *  matches, or the match is by label while that choice submits a different value.
+ *  Without this the form opens with a selection the definition did not ask for. */
+function requireSelectableChoice(id: string, choices: RadioField["choices"], wanted: string): void {
+  const index = viewMatchIndex(choices, wanted);
+  if (index === -1) throw new Error(`Field '${id}': defaultValue '${wanted}' is not in choices`);
+  const selected = choices[index];
+  if (selected === undefined) throw new Error(`Field '${id}': defaultValue '${wanted}' is not in choices`);
+  const submitted = choiceValue(selected);
+  if (submitted !== wanted) {
+    throw new Error(`Field '${id}': defaultValue '${wanted}' matches the label of a choice that submits '${submitted}'`);
+  }
+}
+
+/** A date the `date` input can hold: `YYYY-MM-DD`, and a day that exists. A
+ *  string the input cannot parse is blanked by the browser, so the form opens
+ *  empty while the definition still claims a default. */
+function requireIsoDate(id: string, field: string, value: string): void {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) throw new Error(`Field '${id}': ${field} must be a date in YYYY-MM-DD form`);
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const real = date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  if (!real) throw new Error(`Field '${id}': ${field} '${value}' is not a real date`);
+}
+
+/** A time the `time` input can hold: `HH:MM`, optionally with seconds. */
+function requireTimeOfDay(id: string, value: string): void {
+  if (!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(value)) {
+    throw new Error(`Field '${id}': defaultValue must be a time in HH:MM form`);
+  }
+}
 
 function validateTextDefault(field: TextField | TextareaField): void {
   const { defaultValue, id, minLength, maxLength } = field;
@@ -82,15 +127,15 @@ function validateTextDefault(field: TextField | TextareaField): void {
 function validateChoiceDefault(field: RadioField | DropdownField): void {
   const { defaultValue, id, choices } = field;
   if (typeof defaultValue !== "string") throw new Error(`Field '${id}': defaultValue must be a string`);
-  if (!choiceValues(choices).includes(defaultValue)) throw new Error(`Field '${id}': defaultValue '${defaultValue}' is not in choices`);
+  requireSelectableChoice(id, choices, defaultValue);
 }
 
 function validateCheckboxDefault(field: CheckboxField): void {
   const { defaultValue, id, choices, minSelections, maxSelections } = field;
   if (!Array.isArray(defaultValue)) throw new Error(`Field '${id}': defaultValue must be an array`);
-  const values = choiceValues(choices);
   for (const value of defaultValue) {
-    if (!values.includes(value)) throw new Error(`Field '${id}': defaultValue contains '${value}' which is not in choices`);
+    if (viewMatchIndex(choices, value) === -1) throw new Error(`Field '${id}': defaultValue contains '${value}' which is not in choices`);
+    requireSelectableChoice(id, choices, value);
   }
   if (minSelections !== undefined && defaultValue.length < minSelections)
     throw new Error(`Field '${id}': defaultValue has fewer selections than minSelections`);
@@ -107,12 +152,14 @@ function validateNumberDefault(field: NumberField): void {
 function validateDateDefault(field: DateField): void {
   const { defaultValue, id, minDate, maxDate } = field;
   if (typeof defaultValue !== "string") throw new Error(`Field '${id}': defaultValue must be a string (ISO date format)`);
+  requireIsoDate(id, "defaultValue", defaultValue);
   if (minDate !== undefined && defaultValue < minDate) throw new Error(`Field '${id}': defaultValue is before minDate`);
   if (maxDate !== undefined && defaultValue > maxDate) throw new Error(`Field '${id}': defaultValue is after maxDate`);
 }
 
 function validateTimeDefault(field: TimeField): void {
   if (typeof field.defaultValue !== "string") throw new Error(`Field '${field.id}': defaultValue must be a string`);
+  requireTimeOfDay(field.id, field.defaultValue);
 }
 
 function validateDefaultValue(field: FormField): void {

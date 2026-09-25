@@ -182,6 +182,61 @@ describe("presentForm — defaultValue on a number, date or time", () => {
   });
 });
 
+// CodeRabbit on #3298: the view matches a default against a choice's value OR its
+// label and takes the FIRST hit, so a validator that only looks at values accepts
+// a default the view answers with a different choice — the form opens on a
+// selection the definition did not ask for.
+describe("presentForm — a default the view would answer with something else", () => {
+  it("accepts a default that matches a choice's label when that choice submits the same text", async () => {
+    assert.ok(
+      await accepts([{ id: "a", type: "dropdown", label: "A", choices: [{ label: "Blue" }, { label: "Red" }], defaultValue: "Blue" }]),
+      "refused a valid form",
+    );
+  });
+
+  it("refuses a default that matches one choice's label while another choice owns it as a value", async () => {
+    const choices = [
+      { label: "w", value: "x" },
+      { label: "Other", value: "w" },
+    ];
+    assert.match(await refusalFor([{ id: "a", type: "radio", label: "A", choices, defaultValue: "w" }]), /matches the label of a choice that submits 'x'/);
+  });
+
+  it("refuses the same conflict inside a checkbox default", async () => {
+    const choices = [
+      { label: "w", value: "x" },
+      { label: "Other", value: "w" },
+    ];
+    assert.match(await refusalFor([{ id: "a", type: "checkbox", label: "A", choices, defaultValue: ["w"] }]), /matches the label of a choice that submits 'x'/);
+  });
+});
+
+// The browser blanks a value its input cannot parse, so a form with an
+// unparseable default opens empty while the definition still claims one.
+describe("presentForm — a date or time the input cannot hold", () => {
+  it("accepts a real date and a well-formed time", async () => {
+    assert.ok(await accepts([{ id: "a", type: "date", label: "A", defaultValue: "2026-02-28" }]), "refused a real date");
+    assert.ok(await accepts([{ id: "b", type: "time", label: "B", defaultValue: "23:59" }]), "refused a valid time");
+    assert.ok(await accepts([{ id: "c", type: "time", label: "C", defaultValue: "08:05:30" }]), "refused a valid time with seconds");
+  });
+
+  it("refuses a date that is not YYYY-MM-DD, and a day that does not exist", async () => {
+    assert.match(await refusalFor([{ id: "a", type: "date", label: "A", defaultValue: "06/06/2026" }]), /must be a date in YYYY-MM-DD form/);
+    assert.match(await refusalFor([{ id: "a", type: "date", label: "A", defaultValue: "2026-02-30" }]), /is not a real date/);
+    assert.match(await refusalFor([{ id: "a", type: "date", label: "A", defaultValue: "2026-13-01" }]), /is not a real date/);
+  });
+
+  it("refuses a bound that is not a real date either", async () => {
+    assert.match(await refusalFor([{ id: "a", type: "date", label: "A", minDate: "2026-02-30" }]), /minDate '2026-02-30' is not a real date/);
+    assert.match(await refusalFor([{ id: "a", type: "date", label: "A", maxDate: "tomorrow" }]), /maxDate must be a date in YYYY-MM-DD form/);
+  });
+
+  it("refuses a time outside the clock", async () => {
+    assert.match(await refusalFor([{ id: "a", type: "time", label: "A", defaultValue: "25:90" }]), /must be a time in HH:MM form/);
+    assert.match(await refusalFor([{ id: "a", type: "time", label: "A", defaultValue: "9:30" }]), /must be a time in HH:MM form/);
+  });
+});
+
 describe("presentForm — the result the model and the view receive", () => {
   it("carries the same payload as data and as jsonData", async () => {
     const result = await executeForm(context, { title: "T", fields: [{ id: "a", type: "text", label: "A" }] } as FormArgs);
