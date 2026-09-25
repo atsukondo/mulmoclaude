@@ -397,11 +397,13 @@ router.get(API_ROUTES.sessions.detail, async (req: Request<SessionIdParams>, res
       return;
     }
     const entries = (await Promise.all(content.split("\n").filter(Boolean).map(parseSessionEntry))).filter(Boolean);
-    // Prepend metadata as session_meta entry for the frontend. `isRunning`
-    // tells a catch-up whether this snapshot can be complete: while a run is in
-    // progress the text being streamed is not in the file yet.
-    const isRunning = snapshotMayBeMidRun(runBeforeRead, sampleRunState(sessionId));
-    const result = [{ type: EVENT_TYPES.sessionMeta, ...(meta ?? {}), isRunning }, ...entries];
+    // Prepend metadata as session_meta entry for the frontend, with two run
+    // facts a catch-up needs: `isRunning` is whether a run is live now, and
+    // `snapshotMayBeIncomplete` is whether one was live at any point of the read
+    // — while a run is in progress the text being streamed is not in the file.
+    const runAfterRead = sampleRunState(sessionId);
+    const runFacts = { isRunning: runAfterRead.isRunning, snapshotMayBeIncomplete: snapshotMayBeMidRun(runBeforeRead, runAfterRead) };
+    const result = [{ type: EVENT_TYPES.sessionMeta, ...(meta ?? {}), ...runFacts }, ...entries];
     log.info("sessions", "detail: ok", { sessionId: sessionIdForLog, entries: result.length });
     res.json(result);
   } catch (err) {

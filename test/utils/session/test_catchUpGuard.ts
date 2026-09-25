@@ -10,8 +10,8 @@ import { EVENT_TYPES } from "../../../src/types/events.js";
 import {
   captureTranscript,
   decideCatchUpAdoption,
-  holdsWholeTurn,
-  snapshotTakenMidRun,
+  serverReportsRunning,
+  snapshotMayBeIncomplete,
   transcriptChangedSince,
   type CatchUpState,
 } from "../../../src/utils/session/catchUpGuard.js";
@@ -28,7 +28,13 @@ function richerServerCopy(): ToolResultComplete[] {
 }
 
 function baseState(clientResults: ToolResultComplete[]): CatchUpState {
-  return { clientRunning: false, snapshotMidRun: false, snapshotAtFetch: captureTranscript(clientResults), clientResults, serverResults: richerServerCopy() };
+  return {
+    clientRunning: false,
+    snapshotIncomplete: false,
+    snapshotAtFetch: captureTranscript(clientResults),
+    clientResults,
+    serverResults: richerServerCopy(),
+  };
 }
 
 describe("transcriptChangedSince — every live mutation path is seen", () => {
@@ -85,17 +91,26 @@ describe("transcriptChangedSince — every live mutation path is seen", () => {
   });
 });
 
-describe("snapshotTakenMidRun", () => {
-  it("reads the server's flag off the session_meta row", () => {
-    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, isRunning: true } as SessionEntry]), true);
-    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, isRunning: false } as SessionEntry]), false);
+describe("snapshot run facts", () => {
+  const meta = (fields: Record<string, unknown>): SessionEntry => ({ type: EVENT_TYPES.sessionMeta, ...fields }) as SessionEntry;
+
+  it("reads each fact off the session_meta row independently", () => {
+    assert.equal(snapshotMayBeIncomplete([meta({ snapshotMayBeIncomplete: true, isRunning: false })]), true);
+    assert.equal(serverReportsRunning([meta({ snapshotMayBeIncomplete: true, isRunning: false })]), false);
+    assert.equal(serverReportsRunning([meta({ snapshotMayBeIncomplete: true, isRunning: true })]), true);
+    assert.equal(snapshotMayBeIncomplete([meta({ snapshotMayBeIncomplete: false, isRunning: false })]), false);
   });
 
-  it("treats a missing row, a missing flag or a non-boolean flag as not running", () => {
-    assert.equal(snapshotTakenMidRun([]), false);
-    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, roleId: "general" }]), false);
-    assert.equal(snapshotTakenMidRun([{ type: EVENT_TYPES.sessionMeta, isRunning: "yes" } as unknown as SessionEntry]), false);
-    assert.equal(snapshotTakenMidRun([{ source: "user", type: EVENT_TYPES.text, message: "hi" }]), false);
+  it("treats a missing row, missing flags or non-boolean flags as complete and not running", () => {
+    [
+      [],
+      [meta({ roleId: "general" })],
+      [meta({ snapshotMayBeIncomplete: "yes", isRunning: 1 })],
+      [{ source: "user", type: EVENT_TYPES.text, message: "hi" }],
+    ].forEach((entries) => {
+      assert.equal(snapshotMayBeIncomplete(entries as SessionEntry[]), false);
+      assert.equal(serverReportsRunning(entries as SessionEntry[]), false);
+    });
   });
 });
 
@@ -108,8 +123,8 @@ describe("decideCatchUpAdoption", () => {
     assert.equal(decideCatchUpAdoption({ ...baseState([makeTextResult("hi", "user")]), clientRunning: true }), "running");
   });
 
-  it("does not adopt a snapshot the server took mid-run, even when the client has not heard the run started", () => {
-    assert.equal(decideCatchUpAdoption({ ...baseState([makeTextResult("hi", "user")]), snapshotMidRun: true }), "running");
+  it("does not adopt a snapshot the server says may be incomplete, even when the client has not heard of the run", () => {
+    assert.equal(decideCatchUpAdoption({ ...baseState([makeTextResult("hi", "user")]), snapshotIncomplete: true }), "running");
   });
 
   it("rejects a snapshot overtaken by a live change during the fetch", () => {
@@ -117,34 +132,17 @@ describe("decideCatchUpAdoption", () => {
     assert.equal(decideCatchUpAdoption({ ...state, clientResults: [...state.clientResults, makeTextResult("live", "assistant")] }), "stale");
   });
 
-  it("reports up-to-date when the client already shows every server card", () => {
+  it("keeps the client copy when the snapshot is not richer", () => {
     const clientResults = [makeTextResult("hi", "user"), makeTextResult("hello", "assistant")];
-    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults: [makeTextResult("hi", "user")] }), "up-to-date");
-  });
-
-  it("reports not-richer — not up-to-date — when counts match but content differs", () => {
-    const clientResults = [makeTextResult("hi", "user"), makeErrorResult("local only, and long enough to outweigh")];
-    const serverResults = [makeTextResult("hi", "user"), makeTextResult("the reply", "assistant")];
-    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults }), "not-richer");
+    assert.equal(decideCatchUpAdoption({ ...baseState(clientResults), serverResults: [makeTextResult("hi", "user")] }), "not-richer");
   });
 
   it("reports running before staleness", () => {
     const state = baseState([makeTextResult("hi", "user")]);
-    assert.equal(decideCatchUpAdoption({ ...state, snapshotMidRun: true, clientResults: [] }), "running");
+    assert.equal(decideCatchUpAdoption({ ...state, snapshotIncomplete: true, clientResults: [] }), "running");
   });
 
   it("handles an empty client and an empty server", () => {
-    assert.equal(decideCatchUpAdoption({ ...baseState([]), serverResults: [] }), "up-to-date");
-  });
-});
-
-describe("holdsWholeTurn", () => {
-  it("is true only when the client verifiably has everything the server has", () => {
-    assert.equal(holdsWholeTurn("adopt"), true);
-    assert.equal(holdsWholeTurn("up-to-date"), true);
-    assert.equal(holdsWholeTurn("not-richer"), false);
-    assert.equal(holdsWholeTurn("running"), false);
-    assert.equal(holdsWholeTurn("stale"), false);
-    assert.equal(holdsWholeTurn(null), false);
+    assert.equal(decideCatchUpAdoption({ ...baseState([]), serverResults: [] }), "not-richer");
   });
 });

@@ -15,7 +15,6 @@ import type { SessionEntry } from "../../types/session";
 import { EVENT_TYPES } from "../../types/events";
 import { isRecord } from "../types";
 import { shouldAdoptServerTranscript } from "./sessionEntries";
-import { clientHoldsServerCards } from "./adoptTranscript";
 
 /** What the transcript looked like when the fetch started: each card, and each
  *  of its own property values, held by reference. Every live change replaces a
@@ -47,35 +46,37 @@ export function transcriptChangedSince(snapshot: TranscriptSnapshot, toolResults
   return toolResults.some((card, index) => card !== snapshot.cards[index] || !sameValues(snapshot.values[index], propertyValues(card)));
 }
 
-/** The server marks a snapshot taken during a run on its `session_meta` row.
- *  A response without the flag (an older server) counts as not running. */
-export function snapshotTakenMidRun(entries: readonly SessionEntry[]): boolean {
-  const meta = entries.find((entry) => entry.type === EVENT_TYPES.sessionMeta);
+function sessionMetaRow(entries: readonly SessionEntry[]): SessionEntry | undefined {
+  return entries.find((entry) => entry.type === EVENT_TYPES.sessionMeta);
+}
+
+/** The server marks a snapshot that a run may have been writing to while it was
+ *  read. A response without the flag (an older server) counts as complete. */
+export function snapshotMayBeIncomplete(entries: readonly SessionEntry[]): boolean {
+  const meta = sessionMetaRow(entries);
+  return isRecord(meta) && meta.snapshotMayBeIncomplete === true;
+}
+
+/** Whether the server reported a run live as the snapshot was taken — the one
+ *  run fact safe to copy into the client's mirror (an incomplete snapshot may
+ *  come from a run that has already ended). */
+export function serverReportsRunning(entries: readonly SessionEntry[]): boolean {
+  const meta = sessionMetaRow(entries);
   return isRecord(meta) && meta.isRunning === true;
 }
 
-export type CatchUpDecision = "adopt" | "running" | "stale" | "up-to-date" | "not-richer";
+export type CatchUpDecision = "adopt" | "running" | "stale" | "not-richer";
 
 export interface CatchUpState {
   clientRunning: boolean;
-  snapshotMidRun: boolean;
+  snapshotIncomplete: boolean;
   snapshotAtFetch: TranscriptSnapshot;
   clientResults: readonly ToolResultComplete[];
   serverResults: readonly ToolResultComplete[];
 }
 
 export function decideCatchUpAdoption(state: CatchUpState): CatchUpDecision {
-  if (state.clientRunning || state.snapshotMidRun) return "running";
+  if (state.clientRunning || state.snapshotIncomplete) return "running";
   if (transcriptChangedSince(state.snapshotAtFetch, state.clientResults)) return "stale";
-  if (shouldAdoptServerTranscript(state.serverResults, state.clientResults)) return "adopt";
-  return clientHoldsServerCards(state.clientResults, state.serverResults) ? "up-to-date" : "not-richer";
-}
-
-/** After a refresh, does the client verifiably hold everything the server has?
- *  Only then may a stop that was never announced by `session_finished` mark the
- *  session read — otherwise the finished turn could be cleared unseen. A
- *  snapshot that is merely not richer proves nothing (equal counts can hide
- *  different content); `null` means the refresh did not get as far as deciding. */
-export function holdsWholeTurn(decision: CatchUpDecision | null): boolean {
-  return decision === "adopt" || decision === "up-to-date";
+  return shouldAdoptServerTranscript(state.serverResults, state.clientResults) ? "adopt" : "not-richer";
 }

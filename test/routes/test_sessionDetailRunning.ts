@@ -47,6 +47,11 @@ async function fetchDetail(sessionId: string): Promise<unknown[]> {
   return body;
 }
 
+function runFacts(meta: unknown): Record<string, unknown> {
+  const row = meta as Record<string, unknown>;
+  return { type: row.type, isRunning: row.isRunning, snapshotMayBeIncomplete: row.snapshotMayBeIncomplete };
+}
+
 async function writeSession(sessionId: string, withMeta: boolean): Promise<void> {
   if (withMeta) await writeFile(path.join(chatDir, `${sessionId}.json`), JSON.stringify({ roleId: "general", startedAt: new Date().toISOString() }));
   await writeFile(path.join(chatDir, `${sessionId}.jsonl`), `${JSON.stringify({ source: "user", type: "text", message: "hi" })}\n`);
@@ -90,7 +95,7 @@ after(async () => {
   await rm(tmpRoot, { recursive: true, force: true });
 });
 
-describe("GET /api/sessions/:id — isRunning on the snapshot", () => {
+describe("GET /api/sessions/:id — run facts on the snapshot", () => {
   it("reports a run in progress", async () => {
     await writeSession("running-1", true);
     startRun("running-1");
@@ -106,13 +111,13 @@ describe("GET /api/sessions/:id — isRunning on the snapshot", () => {
     startRun("ended-1");
     store.endRun("ended-1");
     const [meta] = await fetchDetail("ended-1");
-    assert.equal((meta as { isRunning: boolean }).isRunning, false);
+    assert.deepEqual(runFacts(meta), { type: "session_meta", isRunning: false, snapshotMayBeIncomplete: false });
   });
 
   it("reports no run for a session the store has never seen", async () => {
     await writeSession("cold-1", true);
     const [meta, first] = await fetchDetail("cold-1");
-    assert.equal((meta as { isRunning: boolean }).isRunning, false);
+    assert.deepEqual(runFacts(meta), { type: "session_meta", isRunning: false, snapshotMayBeIncomplete: false });
     assert.deepEqual(first, { source: "user", type: "text", message: "hi" });
   });
 
@@ -120,7 +125,7 @@ describe("GET /api/sessions/:id — isRunning on the snapshot", () => {
     await writeSession("no-meta-1", false);
     startRun("no-meta-1");
     const [meta, first] = await fetchDetail("no-meta-1");
-    assert.deepEqual(meta, { type: "session_meta", isRunning: true });
+    assert.deepEqual(meta, { type: "session_meta", isRunning: true, snapshotMayBeIncomplete: true });
     assert.deepEqual(first, { source: "user", type: "text", message: "hi" });
   });
 });

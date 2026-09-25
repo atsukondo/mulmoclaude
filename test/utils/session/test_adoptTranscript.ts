@@ -4,7 +4,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { ToolResultComplete } from "gui-chat-protocol/vue";
-import { adoptServerTranscript, alignServerToClient, clientHoldsServerCards, type TranscriptView } from "../../../src/utils/session/adoptTranscript.js";
+import { adoptServerTranscript, alignServerToClient, type TranscriptView } from "../../../src/utils/session/adoptTranscript.js";
 import { makeErrorResult, makeSkillResult, makeTextResult } from "../../../src/utils/tools/result.js";
 
 const NOW_MS = 9_000;
@@ -260,21 +260,5 @@ describe("adoptServerTranscript — generated transcripts", () => {
         .filter((card) => card.title === "Error")
         .forEach((card) => assert.equal(adopted.resultTimestamps.get(card.uuid), NOW_MS, `recovered card gets adoption time (${context})`));
     });
-  });
-});
-
-describe("clientHoldsServerCards", () => {
-  const user = makeTextResult("hi", "user");
-  const reply = makeTextResult("hello", "assistant");
-
-  it("is true when every server card is on the client, in order, extra client cards allowed", () => {
-    assert.equal(clientHoldsServerCards([user, makeErrorResult("local"), reply], [reparsed(user), reparsed(reply)]), true);
-    assert.equal(clientHoldsServerCards([], []), true);
-  });
-
-  it("is false when a server card is missing, out of order, or only a truncated prefix", () => {
-    assert.equal(clientHoldsServerCards([user], [reparsed(user), reparsed(reply)]), false);
-    assert.equal(clientHoldsServerCards([reply, user], [reparsed(user), reparsed(reply)]), false);
-    assert.equal(clientHoldsServerCards([user, makeTextResult("hel", "assistant")], [reparsed(user), reparsed(reply)]), false);
   });
 });

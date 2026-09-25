@@ -393,7 +393,6 @@ import { applyAgentEvent, type AgentEventContext } from "./utils/agent/eventDisp
 import { parseSseEvent } from "./utils/agent/parseSseEvent";
 import { pushErrorMessage, beginUserTurn, updateResult, applyToolResultToSession } from "./utils/session/sessionHelpers";
 import { resolveRequestedRoleId } from "./utils/session/roleSelection";
-import { holdsWholeTurn } from "./utils/session/catchUpGuard";
 import { parseCollectionSlashSeed, makeSyntheticCollectionResult, hasRealCollectionResult } from "./utils/collections/presentSeed";
 import { mergeBufferedIntoDraft } from "./utils/chat/buffer";
 import { createInFlightShare } from "./utils/inFlightShare";
@@ -1011,16 +1010,14 @@ function handleSessionFinished(sessionId: string): void {
   }
 }
 
-// A stop the session list found rather than `session_finished` announced: the
-// finished turn may not be on screen yet, so the session is marked read only
-// once the refreshed transcript verifiably holds it.
+// A stop the session list found rather than `session_finished` announced. The
+// finished turn may not be on screen yet, so unlike `handleSessionFinished` this
+// never marks the session read — opening the session does that, once the user
+// can see it.
 async function handleRecoveredStop(sessionId: string): Promise<void> {
   const decision = await refreshSessionTranscript(sessionId);
-  if (currentSessionId.value === sessionId) {
-    if (holdsWholeTurn(decision)) markSessionRead(sessionId);
-  } else if (decision !== "running" && !hasPendingGenerations(sessionId)) {
-    unsubscribeSession(sessionId);
-  }
+  if (currentSessionId.value === sessionId || decision === "running") return;
+  if (!hasPendingGenerations(sessionId)) unsubscribeSession(sessionId);
 }
 
 // After the client silently loses events, this pulls fresh state from the
