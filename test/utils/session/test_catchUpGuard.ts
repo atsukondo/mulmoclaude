@@ -10,7 +10,6 @@ import { EVENT_TYPES } from "../../../src/types/events.js";
 import {
   captureTranscript,
   decideCatchUpAdoption,
-  serverReportsRunning,
   snapshotMayBeIncomplete,
   transcriptChangedSince,
   type CatchUpState,
@@ -91,26 +90,20 @@ describe("transcriptChangedSince — every live mutation path is seen", () => {
   });
 });
 
-describe("snapshot run facts", () => {
+describe("snapshotMayBeIncomplete", () => {
   const meta = (fields: Record<string, unknown>): SessionEntry => ({ type: EVENT_TYPES.sessionMeta, ...fields }) as SessionEntry;
 
-  it("reads each fact off the session_meta row independently", () => {
+  it("reads the server's flag off the session_meta row, independent of isRunning", () => {
     assert.equal(snapshotMayBeIncomplete([meta({ snapshotMayBeIncomplete: true, isRunning: false })]), true);
-    assert.equal(serverReportsRunning([meta({ snapshotMayBeIncomplete: true, isRunning: false })]), false);
-    assert.equal(serverReportsRunning([meta({ snapshotMayBeIncomplete: true, isRunning: true })]), true);
-    assert.equal(snapshotMayBeIncomplete([meta({ snapshotMayBeIncomplete: false, isRunning: false })]), false);
+    assert.equal(snapshotMayBeIncomplete([meta({ snapshotMayBeIncomplete: false, isRunning: true })]), false);
   });
 
-  it("treats a missing row, missing flags or non-boolean flags as complete and not running", () => {
-    [
-      [],
-      [meta({ roleId: "general" })],
-      [meta({ snapshotMayBeIncomplete: "yes", isRunning: 1 })],
-      [{ source: "user", type: EVENT_TYPES.text, message: "hi" }],
-    ].forEach((entries) => {
-      assert.equal(snapshotMayBeIncomplete(entries as SessionEntry[]), false);
-      assert.equal(serverReportsRunning(entries as SessionEntry[]), false);
-    });
+  it("treats a missing row, a missing flag or a non-boolean flag as complete", () => {
+    [[], [meta({ roleId: "general" })], [meta({ snapshotMayBeIncomplete: "yes" })], [{ source: "user", type: EVENT_TYPES.text, message: "hi" }]].forEach(
+      (entries) => {
+        assert.equal(snapshotMayBeIncomplete(entries as SessionEntry[]), false);
+      },
+    );
   });
 });
 

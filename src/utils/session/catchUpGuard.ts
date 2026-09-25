@@ -57,14 +57,6 @@ export function snapshotMayBeIncomplete(entries: readonly SessionEntry[]): boole
   return isRecord(meta) && meta.snapshotMayBeIncomplete === true;
 }
 
-/** Whether the server reported a run live as the snapshot was taken — the one
- *  run fact safe to copy into the client's mirror (an incomplete snapshot may
- *  come from a run that has already ended). */
-export function serverReportsRunning(entries: readonly SessionEntry[]): boolean {
-  const meta = sessionMetaRow(entries);
-  return isRecord(meta) && meta.isRunning === true;
-}
-
 export type CatchUpDecision = "adopt" | "running" | "stale" | "not-richer";
 
 export interface CatchUpState {

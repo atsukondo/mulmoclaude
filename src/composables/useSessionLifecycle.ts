@@ -17,7 +17,7 @@ import { apiGet } from "../utils/api";
 import { API_ROUTES } from "../config/apiRoutes";
 import { createEmptySession } from "../utils/session/sessionFactory";
 import { buildLoadedSession, parseSessionEntries } from "../utils/session/sessionEntries";
-import { captureTranscript, decideCatchUpAdoption, serverReportsRunning, snapshotMayBeIncomplete, type CatchUpDecision } from "../utils/session/catchUpGuard";
+import { captureTranscript, decideCatchUpAdoption, snapshotMayBeIncomplete, type CatchUpDecision } from "../utils/session/catchUpGuard";
 import { adoptServerTranscript } from "../utils/session/adoptTranscript";
 import {
   resolveNewSessionRoleId,
@@ -172,9 +172,6 @@ async function refreshSessionTranscript(ctx: LifecycleCtx, sessionId: string): P
   if (!response.ok) return null;
   const summary = ctx.sessions.value.find((entry) => entry.id === sessionId);
   const serverResults = parseSessionEntries(response.data, summary?.origin);
-  // The server's word beats the client's mirror, which can miss a run starting;
-  // marking it running here is what lets a later state refresh notice the stop.
-  if (serverReportsRunning(response.data)) session.isRunning = true;
   const decision = decideCatchUpAdoption({
     clientRunning: session.isRunning,
     snapshotIncomplete: snapshotMayBeIncomplete(response.data),
