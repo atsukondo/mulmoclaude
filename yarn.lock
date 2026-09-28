@@ -6366,10 +6366,10 @@ groq-sdk@^0.30.0:
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-gui-chat-protocol@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/gui-chat-protocol/-/gui-chat-protocol-2.0.0.tgz#96f0f0a115c92f8567b68b9c74a53514e1f3253f"
-  integrity sha512-E02kPSXKH2bX4WAp6TuMjSx4Ftzr2n8XEQtPhZxRCKCBO9ss3Qkx4G5xWeZ6bVUCZtyhB+N8V8Jlv+YRPQJQ9w==
+gui-chat-protocol@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/gui-chat-protocol/-/gui-chat-protocol-2.1.0.tgz#648c1e8f4fb795d07ba8406cfad88cb97c291b38"
+  integrity sha512-r/T7PuTxILnNlVRJGhHEY04axsm8W44ZDQUjYB97mHMRvBJER25ChU378oftPKDgJEM6eYUwN/MEXsSf+UOEug==
 
 hachure-fill@^0.5.2:
   version "0.5.2"

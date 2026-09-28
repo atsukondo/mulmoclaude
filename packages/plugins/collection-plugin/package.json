@@ -43,7 +43,7 @@
   "peerDependencies": {
     "@mulmoclaude/core": "^5.7.1",
     "echarts": "^6.0.0",
-    "gui-chat-protocol": "^2.0.0",
+    "gui-chat-protocol": "^2.1.0",
     "vue": "^3.5.0",
     "vue-i18n": "^11.4.4"
   },
@@ -53,7 +53,7 @@
     "@types/node": "^26.6.3",
     "@vitejs/plugin-vue": "^6.0.9",
     "echarts": "^6.1.0",
-    "gui-chat-protocol": "^2.0.0",
+    "gui-chat-protocol": "^2.1.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",

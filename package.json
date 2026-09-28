@@ -1,7 +1,7 @@
 {
   "name": "mulmoclaude-monorepo",
   "private": true,
-  "version": "1.26.1",
+  "version": "1.26.2",
   "type": "module",
   "author": "snakajima",
   "license": "MIT",
@@ -124,7 +124,7 @@
     "fast-xml-parser": "^5.11.1",
     "firebase": "^12.19.0",
     "graphai": "^2.0.18",
-    "gui-chat-protocol": "^2.0.0",
+    "gui-chat-protocol": "^2.1.0",
     "heic-convert": "^2.1.0",
     "heic2any": "^0.0.4",
     "highlight.js": "^11.12.0",
