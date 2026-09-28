@@ -237,7 +237,7 @@
   "peerDependencies": {
     "@receptron/task-scheduler": "^1.0.3",
     "firebase": "^12.0.0",
-    "gui-chat-protocol": "^2.0.0",
+    "gui-chat-protocol": "^2.1.0",
     "vue": "^3.5.0",
     "vue-i18n": "^11.4.4"
   },
@@ -255,7 +255,7 @@
   "devDependencies": {
     "@receptron/task-scheduler": "^1.0.3",
     "@types/node": "^26.6.3",
-    "gui-chat-protocol": "^2.0.0",
+    "gui-chat-protocol": "^2.1.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
