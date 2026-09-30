@@ -1375,6 +1375,11 @@
   resolved "https://registry.yarnpkg.com/@gui-chat-plugin/camera/-/camera-2.0.0.tgz#4bf523a3f7f4916646512a88b3f36acda150959a"
   integrity sha512-ZuGjKRRj56B5PCxYec68pb3PdFVJc0aWTjQvFCG2aE+E6+7GGskpb5x6ywrqEe+CiHByhVeIdllL087khOGGcw==
 
+"@gui-chat-plugin/common@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@gui-chat-plugin/common/-/common-0.1.0.tgz#96d8a7a1cf1a2a806bbc2ee5ba296b69a59b0350"
+  integrity sha512-OF+/XxKWBU50ijjygO+QrMsJjKn+2b1jtA7ouerBJThFT6sR1ZSwJDp+wj6FKBMXY8pPveJcXCBDQHl/qILmrg==
+
 "@gui-chat-plugin/google-map@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@gui-chat-plugin/google-map/-/google-map-2.0.0.tgz#9609f994ec686cd6f10f442877d771cc72b97bb3"
@@ -6365,10 +6370,10 @@ groq-sdk@^0.30.0:
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-gui-chat-protocol@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/gui-chat-protocol/-/gui-chat-protocol-2.1.0.tgz#648c1e8f4fb795d07ba8406cfad88cb97c291b38"
-  integrity sha512-r/T7PuTxILnNlVRJGhHEY04axsm8W44ZDQUjYB97mHMRvBJER25ChU378oftPKDgJEM6eYUwN/MEXsSf+UOEug==
+gui-chat-protocol@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/gui-chat-protocol/-/gui-chat-protocol-2.3.0.tgz#6f2fa8e63be1207650e240b9781c928e05324606"
+  integrity sha512-Fr8QRbTzn2IVH+IWN3NZQt38lHP2TfS+ObtY1t1wTNJQnkWK6owND59V9gNascWeFegzkjHN5Af+L1Ny52682Q==
 
 hachure-fill@^0.5.2:
   version "0.5.2"
