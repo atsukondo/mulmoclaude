@@ -47,14 +47,14 @@
     "three-mesh-bvh": "0.9.15"
   },
   "peerDependencies": {
-    "@mulmoclaude/core": "^5.7.1",
-    "gui-chat-protocol": "^2.0.0",
+    "@mulmoclaude/core": "^5.8.0",
+    "gui-chat-protocol": "^2.3.0",
     "puppeteer": "^25.0.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@mulmoclaude/core": "^5.7.1",
+    "@mulmoclaude/core": "^5.8.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.3",
     "@types/three": "^0.186.0",
@@ -64,7 +64,7 @@
     "eslint": "^10.11.0",
     "eslint-plugin-vue": "^10.11.1",
     "globals": "^17.12.0",
-    "gui-chat-protocol": "^2.0.0",
+    "gui-chat-protocol": "^2.3.0",
     "puppeteer": "^25.12.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
