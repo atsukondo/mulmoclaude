@@ -21,7 +21,7 @@
     "sandbox-entrypoint.sh"
   ],
   "dependencies": {
-    "@google/genai": "^2.24.0",
+    "@google/genai": "^2.25.0",
     "@gui-chat-plugin/browse": "^2.0.0",
     "@gui-chat-plugin/camera": "^2.0.0",
     "@gui-chat-plugin/google-map": "^2.0.0",
@@ -67,12 +67,12 @@
     "node-html-parser": "^9.0.4",
     "puppeteer": "^25.11.0",
     "sharp": "^0.35.4",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
+    "socket.io": "^4.8.4",
+    "socket.io-client": "^4.8.4",
     "tsx": "^4.23.15",
     "uuid": "^14.0.2",
     "which": "^6",
-    "ws": "^8.21.3",
+    "ws": "^8.22.0",
     "zod": "^4.6.5"
   },
   "optionalDependencies": {
