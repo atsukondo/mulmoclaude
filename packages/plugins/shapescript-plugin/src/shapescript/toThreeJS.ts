@@ -269,7 +269,6 @@ const MAX_LOGS = 200;
 /** Same bound for distinct warnings; they are deduplicated first. */
 const MAX_WARNINGS = 200;
 
-/** Signed volume of an indexed or unindexed triangle geometry. */
 /** One geometry from freshly built parts, disposing the parts it merged. */
 function mergeOwnedParts(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
   if (parts.length === 1) return parts[0]!;
@@ -278,6 +277,7 @@ function mergeOwnedParts(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
   return geometry;
 }
 
+/** Signed volume of an indexed or unindexed triangle geometry. */
 function signedVolume(geometry: THREE.BufferGeometry): number {
   const position = geometry.getAttribute("position");
   const index = geometry.getIndex();
