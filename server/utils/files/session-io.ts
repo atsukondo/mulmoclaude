@@ -3,7 +3,7 @@ import path from "node:path";
 import { WORKSPACE_DIRS, workspacePath } from "../../workspace/paths.js";
 import { isChatModel, type ChatModel } from "../../../src/config/models.js";
 import { readTextUnder, writeTextUnder, resolvePath, ensureWorkspaceDir } from "./workspace-io.js";
-import { isRecord } from "../types.js";
+import { isOptionalBoolean, isOptionalString, isRecord } from "../types.js";
 import { isSessionOrigin, type SessionOrigin } from "../../../src/types/session.js";
 import { isSafeSessionId } from "./sessionId.js";
 import { log } from "../../system/logger/index.js";
@@ -80,8 +80,6 @@ function dropUnknownChatModel(value: unknown): unknown {
   const { chatModel: __unknown, ...rest } = value;
   return rest;
 }
-const isOptionalString = (value: unknown): boolean => value === undefined || typeof value === "string";
-const isOptionalBoolean = (value: unknown): boolean => value === undefined || typeof value === "boolean";
 
 // Checks every field `SessionMeta` declares. The trailing index signature
 // accepts anything, so the extra keys older builds may have written ride
