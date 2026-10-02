@@ -8,7 +8,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+## [1.26.3] - 2026-10-02
+
+**MCP servers no longer drop out after many turns, and accounting preview cards say what happened.**
+
 ### Highlights
+
+#### stdio MCP servers stop leaking a port per turn (#3357, PR #3363)
+
+A stdio MCP server runs behind a small stdio→HTTP shim. Closing it signalled only the `npx` wrapper, while the port is
+held by a grandchild process, so one port could stay bound per turn until the probe range ran out and every turn
+dropped the server. The shim now leads its own process group; closing it ends the whole group (SIGTERM, then SIGKILL
+after a grace period), and every live shim group is ended when the server exits. Shims orphaned by an earlier version
+are not reaped: restart once.
+
+#### Accounting preview cards say what happened (#3228, PR #3351)
+
+The preview cards for `upsertAccount`, `voidEntry` and `setOpeningBalances` read only `Accounting · <book>`. They now
+show the account code and name, the reversing entry's date, or the opening balances' as-of date (and whether existing
+ones were replaced), in all 8 languages.
 
 #### Artifact path helpers come from `@gui-chat-plugin/common` and `gui-chat-protocol` 2.3.0
 
