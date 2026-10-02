@@ -113,8 +113,13 @@ export function createShimCloser(child: ChildProcess, graceMs: number = SHIM_KIL
     isClosed = true;
     signalProcessGroup(pid, "SIGTERM");
     setTimeout(() => {
-      signalProcessGroup(pid, "SIGKILL");
-      if (pid !== undefined) liveShimGroups.delete(pid);
+      if (pid === undefined) return;
+      // Kept on failure so the exit hook retries it.
+      if (signalProcessGroup(pid, "SIGKILL") === "failed") {
+        log.warn("mcp-shim", "could not kill stdio→http shim process group — its port may stay bound", { pid });
+        return;
+      }
+      liveShimGroups.delete(pid);
     }, graceMs).unref();
   };
 }

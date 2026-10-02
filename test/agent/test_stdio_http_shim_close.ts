@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { createShimCloser, killAllShimGroups } from "../../server/agent/stdioHttpShim.js";
 
@@ -22,10 +22,13 @@ function spawnTree(script: string = PLAIN_TREE): Promise<{ child: ChildProcess; 
   });
 }
 
+// A zombie still answers kill(pid, 0) until it is reaped, but it has exited.
 function isAlive(pid: number): boolean {
   try {
-    process.kill(pid, 0);
-    return true;
+    const state = execFileSync("ps", ["-o", "stat=", "-p", String(pid)])
+      .toString()
+      .trim();
+    return state !== "" && !state.startsWith("Z");
   } catch {
     return false;
   }
