@@ -19,6 +19,8 @@ The same two predicates were hand-copied across tiers. jscpd flagged one pair (#
 
 ## Release consequence
 
-`core`, `accounting-plugin` and the launcher now import exports that `@mulmoclaude/common@1.3.0` (npm latest) lacks.
-Before any of them is published next, `@mulmoclaude/common` must ship a minor and every declared range must be
-swept to it (publish order: common → core → plugins → launcher).
+New exports on `@mulmoclaude/common` trip the publish smoke's `drift` stage unless the version moves, so this
+PR bumps common `1.3.0 → 1.4.0` (minor: additive) and sweeps every declared `@mulmoclaude/common` range to
+`^1.4.0`. The launcher's own `version` is untouched. The bump is the acknowledgement; drift reports it as
+pending publish. `@mulmoclaude/common@1.4.0` must be published (with its tag) before `core`,
+`accounting-plugin` or the launcher is next published.
