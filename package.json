@@ -103,6 +103,7 @@
     "@gui-chat-plugin/camera": "^2.0.0",
     "@gui-chat-plugin/google-map": "^2.0.0",
     "@gui-chat-plugin/mindmap": "^2.0.0",
+    "@gui-chat-plugin/shapescript": "^8.2.1",
     "@marp-team/marp-core": "^4.4.0",
     "@mulmobridge/client": "^1.4.0",
     "@mulmobridge/telegram": "^1.2.0",
