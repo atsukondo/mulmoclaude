@@ -8,6 +8,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+### Highlights
+
+#### ShapeScript comes from `@gui-chat-plugin/shapescript` 8.2.1, with a printable STL export
+
+The ShapeScript plugin now lives in gui-chat-plugins, shared with MulmoTerminal, and MulmoClaude installs it from npm
+instead of keeping its own copy (`packages/plugins/shapescript-plugin` is removed). Three things change for users:
+
+- A new MCP tool, **`exportShapeScriptStl`**, writes a model as one watertight solid for a 3D printer: every top-level
+  part merged, in millimetres (`unitScale`: mm per unit), Z up, resting on Z = 0. It answers the file's path and a
+  printability report: size, parts merged and skipped, bodies, volume, non-manifold edges, and warnings for parts that
+  only touch or have nothing to print. It is granted wherever `presentShapeScript` is.
+- ShapeScript's CSG (`union`, `difference`, `intersection`, `xor`, `stencil`) runs through **manifold** in the server and
+  the browser, so a model is built the same way wherever it is shown or exported. Results are watertight and keep each
+  operand's colour, it is 2-3x faster on the shipped models, and a lattice inside a `union` now previews instead of
+  hitting the time limit. The page loads manifold's WebAssembly (about 210 KB gzipped) without delaying first paint; a
+  View built before it arrives, and every View if it fails to load, uses three-bvh-csg as before.
+- `renderShapeScript` no longer fails with "Navigating frame was detached" on large models such as a 20 x 20 x 20
+  lattice: the render page now receives the scene in parts.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.8.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+
 ## [1.26.3] - 2026-10-02
 
 **MCP servers no longer drop out after many turns, and accounting preview cards say what happened.**
