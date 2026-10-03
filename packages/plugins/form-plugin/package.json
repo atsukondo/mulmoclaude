@@ -41,11 +41,11 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.4",
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "@vitejs/plugin-vue": "^6.0.9",
-    "eslint": "^10.11.0",
+    "eslint": "^10.12.0",
     "eslint-plugin-vue": "^10.11.1",
     "globals": "^17.13.0",
     "gui-chat-protocol": "^2.3.0",
@@ -54,7 +54,7 @@
     "vite": "^8.3.2",
     "vue": "^3.5.43",
     "vue-eslint-parser": "^10.4.0",
-    "vue-tsc": "^3.3.11"
+    "vue-tsc": "^3.3.12"
   },
   "license": "MIT",
   "homepage": "https://github.com/receptron/mulmoclaude/tree/main/packages/plugins/form-plugin#readme",

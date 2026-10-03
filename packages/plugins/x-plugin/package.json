@@ -31,11 +31,11 @@
   },
   "devDependencies": {
     "@mulmoclaude/common": "^1.4.0",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.4",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vite": "^8.3.2",
-    "vite-plugin-dts": "^5.1.1"
+    "vite-plugin-dts": "^5.1.2"
   },
   "license": "MIT",
   "homepage": "https://github.com/receptron/mulmoclaude/tree/main/packages/plugins/x-plugin#readme",
