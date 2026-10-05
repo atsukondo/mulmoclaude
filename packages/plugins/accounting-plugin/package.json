@@ -63,7 +63,7 @@
     "@mulmoclaude/core": "^5.8.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.4",
     "@vitejs/plugin-vue": "^6.0.9",
     "express": "^5.2.1",
     "gui-chat-protocol": "^2.3.0",
@@ -72,8 +72,8 @@
     "typescript": "^6.0.3",
     "vite": "^8.3.2",
     "vue": "^3.5.43",
-    "vue-i18n": "^11.4.12",
-    "vue-tsc": "^3.3.11"
+    "vue-i18n": "^11.4.13",
+    "vue-tsc": "^3.3.12"
   },
   "license": "MIT",
   "homepage": "https://github.com/receptron/mulmoclaude/tree/main/packages/plugins/accounting-plugin#readme",

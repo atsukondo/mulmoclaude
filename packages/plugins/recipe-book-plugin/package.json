@@ -36,9 +36,9 @@
     "@vitejs/plugin-vue": "^6.0.9",
     "typescript": "^6.0.3",
     "vite": "^8.3.2",
-    "vite-plugin-dts": "^5.1.1",
+    "vite-plugin-dts": "^5.1.2",
     "vue": "^3.5.43",
-    "vue-tsc": "^3.3.11",
+    "vue-tsc": "^3.3.12",
     "zod": "^4.6.5"
   },
   "license": "MIT",
