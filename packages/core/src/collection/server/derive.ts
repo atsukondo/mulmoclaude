@@ -66,7 +66,7 @@ function projectBacklinks(
   enriched: CollectionItem,
   linked: Record<string, LinkedTarget>,
 ): CollectionItem[] {
-  const source = linked[field.from];
+  const source = ownProp(linked, field.from);
   if (!source) return [];
   const selfId = fieldText(enriched[schema.primaryKey]);
   return backlinkRows(field, selfId, Object.values(source.byId)).map((row) => projectBacklinkRow(row, field.display, source.schema.primaryKey));
@@ -105,7 +105,7 @@ function projectRollups(schema: CollectionSchema, record: CollectionItem, linked
   for (const [key, field] of Object.entries(schema.fields)) {
     if (field.type !== "rollup") continue;
     if (out === record) out = { ...record };
-    const source = linked[field.from];
+    const source = ownProp(linked, field.from);
     const selfId = fieldText(record[schema.primaryKey]);
     out[key] = source ? rollupValue(field, selfId, Object.values(source.byId)) : null;
   }

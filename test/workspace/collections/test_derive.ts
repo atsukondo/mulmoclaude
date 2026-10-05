@@ -551,6 +551,25 @@ describe("enrichItems — `fields` narrows the linked loads without changing the
     }
   });
 
+  it("a backlinks / rollup source named like a prototype key is absent, not inherited", async () => {
+    writeSkill("stock-quotes", {
+      ...quotesSchema,
+      fields: {
+        ...quotesSchema.fields,
+        holders: { type: "backlinks", label: "Holders", from: "constructor", via: "ticker", display: ["shares"] },
+        held: { type: "rollup", label: "Held", from: "constructor", via: "ticker", op: "count" },
+      },
+    });
+    const collection = await loadCollection("stock-quotes", opts());
+    assert.ok(collection);
+    const items = [{ symbol: "aapl", price: 200 }];
+    const [stored] = await enrichItems(collection, items, opts(), ["price"]);
+    assert.equal(stored?.price, 200);
+    const [full] = await enrichItems(collection, items, opts());
+    assert.deepEqual(full?.holders, []);
+    assert.equal(full?.held, null);
+  });
+
   it("a stored-only projection never reads a linked collection", async () => {
     writeSkill("stock-quotes", quotesSchema);
     writeSkill("profile", profileSchema);
