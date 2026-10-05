@@ -297,7 +297,7 @@ async function handleGetItems(collection: LoadedCollection, args: GetItemsArgs, 
   if (!ids && !fields && items.length > MAX_UNSELECTIVE_ITEMS) {
     return `manageCollection: refused — '${collection.slug}' has ${items.length} records, over the unselective limit of ${MAX_UNSELECTIVE_ITEMS}. Pass \`ids\` for specific records or \`fields\` to project only the columns you need.`;
   }
-  const enriched = await enrichItems(collection, items, deps);
+  const enriched = await enrichItems(collection, items, deps, fields);
   const projected = fields ? enriched.map((item) => projectFields(item, fields, collection.schema.primaryKey)) : enriched;
   // The warning scan reads every record file, so don't pay it on a
   // selective read that found everything it asked for — only a full
