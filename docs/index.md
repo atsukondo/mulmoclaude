@@ -20,9 +20,9 @@ MulmoClaude's **collections** turn a sentence like *"a reading list with a Read 
 into a working app — a table, a calendar, a kanban board, reminders — with no code. Reshape it
 later just by asking: *"add a priority field."*
 
-> **はじめての方へ** — Node.js や Claude Code の準備がまだなら、まず [はじめての準備](setup/) から。
+> **はじめての方へ** — Mac で MulmoClaude を使い始めるまで（Node.js・Claude Code・Docker Desktop・MulmoClaude のインストール）は [セットアップ手順](setup/) へ。
 >
-> **New here?** If Node.js and Claude Code aren't installed yet, start with [First-time setup](setup/) (Japanese).
+> **New here?** To get MulmoClaude running on a Mac (installing Node.js, Claude Code, Docker Desktop and MulmoClaude), see the [setup guide](setup/) (Japanese).
 
 [日本語ガイドを読む](guide/ja/){: .btn .btn-purple .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Read the English guide](guide/en/){: .btn .fs-5 .mb-4 .mb-md-0 }

@@ -10,7 +10,7 @@
 
 📖 **用户指南: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
-🛠️ **首次准备（Node.js / Claude Code，日语）: [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+🛠️ **Mac 安装指南（日语）: [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
 
 **一个了解你的一切、全天候陪伴在你身边的 AI 助手，在任何地方都买不到。你无法购买 —— 只能亲手培育。MulmoClaude 就是在你自己的电脑上培育专属 AI 助手的工具。**
 
