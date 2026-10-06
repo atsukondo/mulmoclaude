@@ -52,7 +52,18 @@ before. No bundled plugin uses it yet.
 A new built-in role with only the form and collection display tools (plus the tools every role gets), so each turn sends
 a much smaller system prompt than General. For documents, slides, images or HTML it suggests switching to General.
 
-Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+#### MulmoScript: Remotion beats (#3379, PR #3382) — `@mulmoclaude/mulmoscript-plugin@5.1.0`, released 2026-10-06
+
+`presentMulmoScript` now tells the agent about mulmocast 2.13.0's `image: { type: "remotion", prompt, fps? }` beat
+(fps 1–60, default 30) and the script-level `remotionParams.brief`. It is opt-in: the agent uses it only when the user
+asks for Remotion or has the optional remotion packages installed, since the host does not ship them and generation
+fails without them. The View now shows a remotion beat's rendered clip, and a beat whose kind changed (for example from
+`moviePrompt` to `remotion`) no longer shows the clip left over from its old kind. The plugin's peer floors rise to
+`mulmocast` / `@mulmocast/types` `^2.13.0`, `@mulmoclaude/core` `^5.10.1`, `@mulmoclaude/common` `^1.4.0` and
+`gui-chat-protocol` `^2.3.0`. Also in this release: same-file duplicates folded in the plugin's server code (PR #3361,
+no behaviour change).
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.1.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.26.3] - 2026-10-02
 
