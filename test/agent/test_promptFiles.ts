@@ -13,6 +13,8 @@ import { getActiveToolDescriptors } from "../../server/agent/activeTools.ts";
 import { agentPromptFilesDir, syncHostPromptFiles } from "../../server/agent/promptFiles.ts";
 import { BUILT_IN_PROMPT_FILE_SOURCES } from "../../server/agent/plugin-names.ts";
 import { BUILT_IN_SERVER_BINDINGS } from "../../src/plugins/server.ts";
+import { mcpTools, MCP_TOOL_PROMPT_FILE_SOURCES } from "../../server/agent/mcp-tools/index.ts";
+import { manageCollection } from "../../server/agent/mcp-tools/manageCollection.ts";
 import { readPromptSplit } from "@mulmoclaude/core/prompt-files";
 import { isRecord } from "../../server/utils/types.ts";
 import { TOOL_DEFINITION as MULMOSCRIPT_DEFINITION } from "@mulmoclaude/mulmoscript-plugin";
@@ -142,5 +144,20 @@ describe("plugin prompt files in MulmoClaude", () => {
   it("every built-in binding whose definition declares a split names its package (or the split is silently ignored)", () => {
     const missing = BUILT_IN_SERVER_BINDINGS.filter((binding) => readPromptSplit(binding.def) && !binding.packageName).map((binding) => binding.def.name);
     assert.deepEqual(missing, []);
+  });
+
+  it("every MCP tool that declares a split names its package (or the split is silently ignored)", () => {
+    const missing = mcpTools.filter((tool) => readPromptSplit(tool) && !tool.packageName).map((tool) => tool.definition.name);
+    assert.deepEqual(missing, []);
+  });
+
+  it("manageCollection's compact text reaches every role's prompt, with its file on disk at the told path", () => {
+    syncHostPromptFiles(MCP_TOOL_PROMPT_FILE_SOURCES, workspace);
+    const toldPath = "config/helps/plugins/@mulmoclaude/core/manageCollection.md";
+    const anyRole: Role = { id: "test", name: "Test", icon: "star", prompt: "", availablePlugins: [] };
+    const section = buildPluginPromptSections(anyRole).join("\n");
+    assert.ok(section.includes(toldPath));
+    assert.equal(section.includes(manageCollection.prompt), false);
+    assert.equal(readFileSync(path.resolve(workspace, toldPath), "utf-8"), manageCollection.prompt);
   });
 });

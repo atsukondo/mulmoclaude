@@ -103,7 +103,7 @@ export function getActiveToolDescriptors(role: Role): ActiveToolDescriptor[] {
       name: toolName,
       fullName: fullNameFor(toolName),
       description: tool.definition.description,
-      prompt: tool.prompt,
+      prompt: toolPromptFor(tool, tool.packageName),
       // pure MCP tools dispatch internally — no external endpoint
       source: "static-mcp",
     });

@@ -8,6 +8,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+### Highlights
+
+#### `manageCollection` sends a short summary instead of its full guidance (#3369)
+
+`manageCollection` is offered to every role, so its guidance was in every system prompt. The entry now keeps what decides
+whether and how to call it — and the rule that a partial upsert erases omitted fields — and points the agent at
+`config/helps/plugins/@mulmoclaude/core/manageCollection.md` before writing or deleting records. MulmoTerminal still
+uses the full text.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.11.0`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.2.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.2.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+
 ## [1.27.0] - 2026-10-06
 
 **Bridge replies no longer carry the CLI's compaction summary or continuation prompt, the base and plugin prompts get much shorter, ShapeScript exports printable STL, MulmoScript learns Remotion beats, and a lighter Simple role arrives.**
