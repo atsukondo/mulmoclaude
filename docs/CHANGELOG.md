@@ -8,6 +8,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-07
+
+**`manageCollection`'s guidance — part of every role's system prompt — shrinks to a short summary backed by a prompt file, completing the system-prompt diet that began in 1.27.0.**
+
 ### Highlights
 
 #### `manageCollection` sends a short summary instead of its full guidance (#3369)
