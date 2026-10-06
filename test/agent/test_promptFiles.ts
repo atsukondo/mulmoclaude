@@ -75,6 +75,14 @@ describe("plugin prompt files in MulmoClaude", () => {
     assert.equal(section.includes("FULL PROMPT TEXT"), false);
   });
 
+  it("falls back to the full prompt when a written file is deleted after startup", () => {
+    registerRuntimePlugins(new Set(), [runtimePlugin(splitDefinition)]);
+    syncHostPromptFiles([{ packageName: PACKAGE, definition: splitDefinition }], workspace);
+    assert.match(promptOf() ?? "", /config\/helps\/plugins/);
+    rmSync(path.join(workspace, "config", "helps", "plugins", "@example", "split-plugin", "guide.md"));
+    assert.equal(promptOf(), "FULL PROMPT TEXT");
+  });
+
   it("keeps the full prompt when the files were not written", () => {
     registerRuntimePlugins(new Set(), [runtimePlugin(splitDefinition)]);
     assert.equal(promptOf(), "FULL PROMPT TEXT");

@@ -29,8 +29,7 @@
 import type { Role } from "../../src/config/roles.js";
 import { mcpTools, isMcpToolEnabled } from "./mcp-tools/index.js";
 import { PLUGIN_DEFS, PLUGIN_PACKAGE_BY_TOOL, TOOL_ENDPOINTS } from "./plugin-names.js";
-import { renderToolPrompt } from "@mulmoclaude/core/prompt-files";
-import { agentPromptFilesDir } from "./promptFiles.js";
+import { toolPromptFor } from "./promptFiles.js";
 import { getRuntimePlugins } from "../plugins/runtime-registry.js";
 
 /** The MCP server id the parent registers via `--mcp-config` (see
@@ -86,7 +85,7 @@ export function getActiveToolDescriptors(role: Role): ActiveToolDescriptor[] {
       name: def.name,
       fullName: fullNameFor(def.name),
       description: def.description,
-      prompt: renderToolPrompt(def, agentPromptFilesDir(PLUGIN_PACKAGE_BY_TOOL.get(def.name))),
+      prompt: toolPromptFor(def, PLUGIN_PACKAGE_BY_TOOL.get(def.name)),
       endpoint: TOOL_ENDPOINTS[def.name],
       source: "static-gui",
     });
@@ -129,7 +128,7 @@ export function getActiveToolDescriptors(role: Role): ActiveToolDescriptor[] {
       name: def.name,
       fullName: fullNameFor(def.name),
       description: def.description,
-      prompt: renderToolPrompt(def, agentPromptFilesDir(plugin.name)),
+      prompt: toolPromptFor(def, plugin.name),
       endpoint: `/api/plugins/runtime/${encodeURIComponent(plugin.name)}/dispatch`,
       source: "runtime",
     });
