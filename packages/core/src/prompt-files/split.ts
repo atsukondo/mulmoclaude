@@ -40,12 +40,34 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every((entry) => typeof entry === "string");
 }
 
-const FILE_REFERENCE = /\{\{promptFilesDir\}\}\/([A-Za-z0-9._/-]+)/g;
+/** Characters that end a file reference in prose: whitespace and the
+ *  punctuation that wraps or follows a path (`…/guide.md`, (…/guide.md)). */
+const REFERENCE_TERMINATORS = new Set([" ", "\t", "\n", "\r", "`", "'", '"', ")", "]", ">", ",", ";", ":"]);
 
-/** The files the compact text points at, trailing sentence punctuation
- *  dropped (`…/guide.md.` names `guide.md`). */
-export function referencedPromptFiles(compact: string): string[] {
-  return [...compact.matchAll(FILE_REFERENCE)].map((match) => (match[1] ?? "").replace(/\.+$/, ""));
+function trimTrailingDots(token: string): string {
+  let end = token.length;
+  while (end > 0 && token[end - 1] === ".") end -= 1;
+  return token.slice(0, end);
+}
+
+/** The text after one placeholder up to where the reference ends. */
+function referenceToken(afterPlaceholder: string): string {
+  const chars = [...afterPlaceholder];
+  const end = chars.findIndex((char) => REFERENCE_TERMINATORS.has(char));
+  return trimTrailingDots(chars.slice(0, end === -1 ? chars.length : end).join(""));
+}
+
+/** The files the compact text points at (`{{promptFilesDir}}/<name>`),
+ *  sentence-ending dots dropped. A bare `{{promptFilesDir}}` names the
+ *  directory itself and contributes nothing. Null when a reference is not a
+ *  safe file name — the agent would be sent to a path that cannot exist. */
+export function referencedPromptFiles(compact: string): string[] | null {
+  const references = compact
+    .split(PROMPT_FILES_DIR_PLACEHOLDER)
+    .slice(1)
+    .filter((afterPlaceholder) => afterPlaceholder.startsWith("/"))
+    .map((afterPlaceholder) => referenceToken(afterPlaceholder.slice(1)));
+  return references.every(isSafePromptFileName) ? references : null;
 }
 
 /** The split a definition declares, or null when it declares none — or one
@@ -59,7 +81,8 @@ export function readPromptSplit(definition: unknown): PromptSplit | null {
   if (!isStringRecord(promptFiles)) return null;
   const names = Object.keys(promptFiles);
   if (names.length === 0 || !names.every(isSafePromptFileName)) return null;
-  if (!referencedPromptFiles(promptCompact).every((name) => Object.hasOwn(promptFiles, name))) return null;
+  const references = referencedPromptFiles(promptCompact);
+  if (!references?.every((name) => Object.hasOwn(promptFiles, name))) return null;
   return { compact: promptCompact, files: promptFiles };
 }
 

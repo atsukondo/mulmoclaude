@@ -71,6 +71,8 @@ describe("readPromptSplit", () => {
       splitDef({}),
       { ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/missing.md first.` },
       { ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md and ${PROMPT_FILES_DIR_PLACEHOLDER}/other.md.` },
+      { ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md☃ first.` },
+      { ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/☃.md first.` },
     ];
     for (const definition of cases) assert.equal(readPromptSplit(definition), null, JSON.stringify(definition));
   });
@@ -80,8 +82,30 @@ describe("referencedPromptFiles", () => {
   it("lists every referenced file, sentence punctuation dropped", () => {
     assert.deepEqual(referencedPromptFiles(`See ${PROMPT_FILES_DIR_PLACEHOLDER}/a.md, then ${PROMPT_FILES_DIR_PLACEHOLDER}/dir/b.md.`), ["a.md", "dir/b.md"]);
   });
-  it("is empty when nothing is referenced", () => {
+  it("is empty when nothing is referenced, and a bare directory reference adds nothing", () => {
     assert.deepEqual(referencedPromptFiles("no files here"), []);
+    assert.deepEqual(referencedPromptFiles(`Files live in ${PROMPT_FILES_DIR_PLACEHOLDER}.`), []);
+  });
+  it("ends a reference at whitespace or wrapping punctuation", () => {
+    assert.deepEqual(referencedPromptFiles(`Read \`${PROMPT_FILES_DIR_PLACEHOLDER}/a.md\` (or ${PROMPT_FILES_DIR_PLACEHOLDER}/b.md), then go`), [
+      "a.md",
+      "b.md",
+    ]);
+  });
+  it("is null when a reference is not a safe file name", () => {
+    for (const compact of [
+      `${PROMPT_FILES_DIR_PLACEHOLDER}/☃.md`,
+      `${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md☃`,
+      `${PROMPT_FILES_DIR_PLACEHOLDER}/../x.md`,
+      `${PROMPT_FILES_DIR_PLACEHOLDER}/ `,
+    ]) {
+      assert.equal(referencedPromptFiles(compact), null, compact);
+    }
+  });
+  it("does not backtrack on a long run of dots", () => {
+    const started = performance.now();
+    assert.equal(referencedPromptFiles(`${PROMPT_FILES_DIR_PLACEHOLDER}/${".".repeat(50_000)}!`), null);
+    assert.ok(performance.now() - started < 1000);
   });
   it("accepts a compact text that names only declared files, ending a sentence", () => {
     assert.ok(readPromptSplit({ ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md.` }));
