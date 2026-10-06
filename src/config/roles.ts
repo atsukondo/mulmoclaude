@@ -468,6 +468,7 @@ export const BUILTIN_ROLES = ROLES;
 // updating this map fails the test.
 export const BUILTIN_ROLE_IDS = {
   general: "general",
+  simple: "simple",
   personal: "personal",
   office: "office",
   guide: "guide",
