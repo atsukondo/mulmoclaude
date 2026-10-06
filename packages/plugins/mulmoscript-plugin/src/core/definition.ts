@@ -6,10 +6,10 @@ export const TOOL_NAME = "presentMulmoScript";
 // MulmoClaude (host built-in shim re-exports this) and MulmoTerminal.
 // (Extracted byte-identical from the host definition; evolves here with the
 // package version.)
-export const TOOL_DEFINITION: ToolDefinition = {
-  type: "function",
-  name: TOOL_NAME,
-  description: `Save and present a MulmoScript story or presentation as a visual storyboard in the canvas.
+
+/** The full usage reference: the MCP tool description, and also the prompt
+ *  file a host that supports the split writes for the agent to Read. */
+const SCRIPT_REFERENCE = `Save and present a MulmoScript story or presentation as a visual storyboard in the canvas.
 
 Provide EXACTLY ONE of \`script\` or \`filePath\`:
 
@@ -92,7 +92,29 @@ Beat visual options (choose one per beat):
 - "image": { "type": "html_tailwind", "html": "...", "script"?: "..." }  ← PREFER for rich layouts, animations, custom visuals
 - "image": { "type": "remotion", "prompt": "...", "fps"?: 30 }  → Claude Code writes and renders a Remotion animation from the scene description in "prompt" ("fps" is optional, 1–60, default 30). ONLY use when the user asks for Remotion or is known to have the optional remotion packages installed — without them generation fails. Slow and costly (several Claude calls per scene). Cannot be combined with "moviePrompt" on the same beat. Keep the look consistent across remotion beats with a top-level "remotionParams": { "brief": "palette, type, mood" }.
 
-IMPORTANT: "imagePrompt" and "moviePrompt" are plain string fields on the beat, NOT nested under "image".`,
+IMPORTANT: "imagePrompt" and "moviePrompt" are plain string fields on the beat, NOT nested under "image".`;
+
+const REFERENCE_FILE = "presentMulmoScript.md";
+
+/** Injected into the system prompt instead of the full reference by a host that
+ *  supports `promptCompact` / `promptFiles` (`@mulmoclaude/core/prompt-files`). */
+const PROMPT_COMPACT = [
+  "Save and present a MulmoScript story or presentation as a storyboard in the canvas.",
+  "Pass exactly one of `script` (a new presentation) or `filePath` (re-display an existing one; add `beatIndex` + `beat` to replace one beat — prefer that over re-sending the whole script).",
+  "Set `autoGenerateMovie` only when the user has asked for the movie — it is expensive.",
+  "Before writing or editing a script, Read {{promptFilesDir}}/" + REFERENCE_FILE + " for the required structure, provider rules and beat types.",
+].join(" ");
+
+/** `ToolDefinition` plus the optional prompt split; hosts that do not know it
+ *  ignore the extra fields and keep using `description`. */
+type ToolDefinitionWithPromptFiles = ToolDefinition & { promptCompact: string; promptFiles: Record<string, string> };
+
+export const TOOL_DEFINITION: ToolDefinitionWithPromptFiles = {
+  type: "function",
+  name: TOOL_NAME,
+  description: SCRIPT_REFERENCE,
+  promptCompact: PROMPT_COMPACT,
+  promptFiles: { [REFERENCE_FILE]: SCRIPT_REFERENCE },
   parameters: {
     type: "object",
     properties: {

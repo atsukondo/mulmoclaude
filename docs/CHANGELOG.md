@@ -52,7 +52,14 @@ before. No bundled plugin uses it yet.
 A new built-in role with only the form and collection display tools (plus the tools every role gets), so each turn sends
 a much smaller system prompt than General. For documents, slides, images or HTML it suggests switching to General.
 
-Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+#### `presentMulmoScript` sends a short summary instead of its full reference (#3369)
+
+The MulmoScript tool's system-prompt entry is now a few sentences that point the agent at
+`config/helps/plugins/@mulmoclaude/mulmoscript-plugin/presentMulmoScript.md`, written at startup with the full reference
+(structure, provider rules, beat types). The tool's MCP description is unchanged, so MulmoTerminal and a model loading
+the tool see the full text as before.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.2.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.26.3] - 2026-10-02
 
