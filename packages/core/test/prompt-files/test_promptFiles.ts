@@ -3,7 +3,7 @@
 // the split can't be honoured), and how the files land on disk.
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -12,14 +12,18 @@ import {
   isSafePromptFileName,
   promptFilesSubdir,
   readPromptSplit,
+  referencedPromptFiles,
   renderToolPrompt,
   syncPromptFiles,
 } from "../../src/prompt-files/index.ts";
 
+// A junction needs no admin rights on Windows; lstat reports it as a symlink.
+const DIR_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
+
 const splitDef = (files: Record<string, string> = { "guide.md": "# Guide" }) => ({
   name: "presentThing",
   prompt: "FULL PROMPT",
-  promptCompact: `Short. Read ${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md first.`,
+  promptCompact: `Short. Read ${PROMPT_FILES_DIR_PLACEHOLDER}/${Object.keys(files)[0] ?? "guide.md"} first.`,
   promptFiles: files,
 });
 
@@ -64,8 +68,23 @@ describe("readPromptSplit", () => {
       { ...splitDef(), promptFiles: ["guide.md"] },
       { ...splitDef(), promptFiles: { "guide.md": 1 } },
       splitDef({ "../escape.md": "x" }),
+      splitDef({}),
+      { ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/missing.md first.` },
+      { ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md and ${PROMPT_FILES_DIR_PLACEHOLDER}/other.md.` },
     ];
     for (const definition of cases) assert.equal(readPromptSplit(definition), null, JSON.stringify(definition));
+  });
+});
+
+describe("referencedPromptFiles", () => {
+  it("lists every referenced file, sentence punctuation dropped", () => {
+    assert.deepEqual(referencedPromptFiles(`See ${PROMPT_FILES_DIR_PLACEHOLDER}/a.md, then ${PROMPT_FILES_DIR_PLACEHOLDER}/dir/b.md.`), ["a.md", "dir/b.md"]);
+  });
+  it("is empty when nothing is referenced", () => {
+    assert.deepEqual(referencedPromptFiles("no files here"), []);
+  });
+  it("accepts a compact text that names only declared files, ending a sentence", () => {
+    assert.ok(readPromptSplit({ ...splitDef(), promptCompact: `Read ${PROMPT_FILES_DIR_PLACEHOLDER}/guide.md.` }));
   });
 });
 
@@ -74,7 +93,7 @@ describe("renderToolPrompt", () => {
     assert.equal(renderToolPrompt(splitDef(), "config/helps/plugins/x"), "Short. Read config/helps/plugins/x/guide.md first.");
   });
   it("replaces every placeholder", () => {
-    const definition = { ...splitDef(), promptCompact: `${PROMPT_FILES_DIR_PLACEHOLDER}/a ${PROMPT_FILES_DIR_PLACEHOLDER}/b` };
+    const definition = { ...splitDef({ a: "A", b: "B" }), promptCompact: `${PROMPT_FILES_DIR_PLACEHOLDER}/a ${PROMPT_FILES_DIR_PLACEHOLDER}/b` };
     assert.equal(renderToolPrompt(definition, "/abs/dir"), "/abs/dir/a /abs/dir/b");
   });
   it("falls back to the full prompt when the files were not written", () => {
@@ -154,11 +173,33 @@ describe("syncPromptFiles", () => {
     assert.deepEqual(readdirSync(root), []);
   });
 
-  it("an empty file set replaces the previous files with an empty directory", () => {
+  it("an empty file set is not a split: nothing is written and previous files stay", () => {
     syncPromptFiles(root, [{ packageName: "pkg", definition: splitDef({ "old.md": "OLD" }) }]);
     const result = syncPromptFiles(root, [{ packageName: "pkg", definition: splitDef({}) }]);
-    assert.ok(result.written.has("pkg"));
-    assert.deepEqual(readdirSync(path.join(root, "pkg")), []);
+    assert.equal(result.written.has("pkg"), false);
+    assert.equal(readFileSync(path.join(root, "pkg", "old.md"), "utf-8"), "OLD");
+  });
+
+  it("refuses to write through a symlinked root or scope directory, leaving its target untouched", () => {
+    const outside = mkdtempSync(path.join(tmpdir(), "prompt-files-outside-"));
+    try {
+      mkdirSync(path.join(outside, "victim"));
+      writeFileSync(path.join(outside, "victim", "keep.txt"), "KEEP");
+      symlinkSync(outside, path.join(root, "@scope"), DIR_LINK_TYPE);
+      const scoped = syncPromptFiles(root, [{ packageName: "@scope/victim", definition: splitDef() }]);
+      assert.equal(scoped.written.size, 0);
+      assert.match(scoped.problems[0]?.problem ?? "", /symlink/);
+      assert.equal(readFileSync(path.join(outside, "victim", "keep.txt"), "utf-8"), "KEEP");
+      assert.deepEqual(readdirSync(outside), ["victim"]);
+
+      const linkedRoot = path.join(root, "linked-root");
+      symlinkSync(outside, linkedRoot, DIR_LINK_TYPE);
+      const viaRoot = syncPromptFiles(linkedRoot, [{ packageName: "victim", definition: splitDef() }]);
+      assert.equal(viaRoot.written.size, 0);
+      assert.equal(readFileSync(path.join(outside, "victim", "keep.txt"), "utf-8"), "KEEP");
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
   });
 
   it("keeps the previous files when writing the new set fails partway", () => {

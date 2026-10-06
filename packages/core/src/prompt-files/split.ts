@@ -40,14 +40,26 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every((entry) => typeof entry === "string");
 }
 
-/** The split a definition declares, or null when it declares none (or a
- *  malformed one — the host then injects the full `prompt`). */
+const FILE_REFERENCE = /\{\{promptFilesDir\}\}\/([A-Za-z0-9._/-]+)/g;
+
+/** The files the compact text points at, trailing sentence punctuation
+ *  dropped (`…/guide.md.` names `guide.md`). */
+export function referencedPromptFiles(compact: string): string[] {
+  return [...compact.matchAll(FILE_REFERENCE)].map((match) => (match[1] ?? "").replace(/\.+$/, ""));
+}
+
+/** The split a definition declares, or null when it declares none — or one
+ *  that would leave the agent pointed at a missing file: no files, an unsafe
+ *  name, or a reference in the compact text to a file it does not declare.
+ *  The host then injects the full `prompt`. */
 export function readPromptSplit(definition: unknown): PromptSplit | null {
   if (!isRecord(definition)) return null;
   const { promptCompact, promptFiles } = definition;
   if (typeof promptCompact !== "string" || promptCompact.trim().length === 0) return null;
   if (!isStringRecord(promptFiles)) return null;
-  if (!Object.keys(promptFiles).every(isSafePromptFileName)) return null;
+  const names = Object.keys(promptFiles);
+  if (names.length === 0 || !names.every(isSafePromptFileName)) return null;
+  if (!referencedPromptFiles(promptCompact).every((name) => Object.hasOwn(promptFiles, name))) return null;
   return { compact: promptCompact, files: promptFiles };
 }
 

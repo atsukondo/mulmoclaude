@@ -3,7 +3,7 @@
 // every instance, and one with a different plugin set must not delete the
 // others' files.
 
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { promptFilesSubdir, readPromptSplit } from "./split";
@@ -70,9 +70,21 @@ function swapIn(staging: string, target: string): void {
   rmSync(backup, { recursive: true, force: true });
 }
 
+/** Refuse when the root or a scope directory is a symlink: the swap renames
+ *  and deletes `<scope>/<name>`, which through a link pointing outside the
+ *  root would hit an unrelated directory. */
+function assertNoSymlinkedParent(root: string, subdir: string): void {
+  const segments = subdir.split("/").slice(0, -1);
+  const parents = segments.map((_, index) => path.join(root, ...segments.slice(0, index + 1)));
+  for (const parent of [root, ...parents]) {
+    if (existsSync(parent) && lstatSync(parent).isSymbolicLink()) throw new Error(`${parent} is a symlink`);
+  }
+}
+
 /** Write into a fresh sibling directory, then swap it in, so a reader never
  *  sees a half-written package. */
 function writePackageDir(root: string, subdir: string, files: Readonly<Record<string, string>>): void {
+  assertNoSymlinkedParent(root, subdir);
   const target = path.join(root, ...subdir.split("/"));
   const staging = `${target}.tmp-${randomUUID()}`;
   try {
