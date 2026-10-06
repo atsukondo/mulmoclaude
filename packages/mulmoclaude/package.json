@@ -43,7 +43,7 @@
     "@mulmoclaude/form-plugin": "^2.1.0",
     "@mulmoclaude/google-plugin": "^4.1.0",
     "@mulmoclaude/html-plugin": "^5.0.1",
-    "@mulmoclaude/markdown-plugin": "^5.1.0",
+    "@mulmoclaude/markdown-plugin": "^5.2.0",
     "@mulmoclaude/markdown-utils": "^3.0.1",
     "@mulmoclaude/mulmoscript-plugin": "^5.2.0",
     "@mulmoclaude/spotify-plugin": "^2.0.2",

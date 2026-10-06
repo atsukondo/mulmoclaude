@@ -70,7 +70,13 @@ The MulmoScript tool's system-prompt entry is now a few sentences that point the
 (structure, provider rules, beat types). The tool's MCP description is unchanged, so MulmoTerminal and a model loading
 the tool see the full text as before.
 
-Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.2.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+#### `presentDocument` sends a short summary; the Marp details move to a prompt file (#3369)
+
+The document tool's system-prompt entry now keeps only when to use it, `markdown` vs `path`, and the image-placeholder
+format, and points the agent at `config/helps/plugins/@mulmoclaude/markdown-plugin/presentDocument.md` (the full guide,
+including the Marp slide-deck rules). `prompt` itself is unchanged, so hosts that don't support the split behave as before.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.2.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.2.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.26.3] - 2026-10-02
 
