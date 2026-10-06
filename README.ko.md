@@ -10,6 +10,8 @@
 
 📖 **사용자 가이드: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
+🛠️ **처음 준비하기 (Node.js / Claude Code, 일본어): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+
 **당신에 대해 모든 것을 알고 하루 24시간 곁에서 도와주는 AI 어시스턴트는 어디에서도 팔지 않습니다. 살 수는 없습니다 — 오직 직접 키울 수 있을 뿐입니다. MulmoClaude는 나만의 AI 어시스턴트를 자신의 컴퓨터 위에서 키우기 위한 도구입니다.**
 
 어시스턴트의 실체는 AI 모델이 아닙니다 — 모델은 엔진에 불과합니다. 어시스턴트의 가치를 결정하는 것은 당신에 대해 얼마나 알고 있는가입니다: 당신의 대화, 일정, 메모, 데이터, 그리고 사용하는 앱들. 그토록 중요한 것을 특정 서비스 제공자에게 맡겨서는 안 됩니다 — 오래 쓸수록 떠나기가 어려워지기 때문입니다. MulmoClaude는 오픈소스이며 로컬에서 실행되므로, 어시스턴트가 축적하는 모든 것 — 기억, 데이터, 앱이 워크스페이스 안의 일반 파일로 남아, 당신 자신의 손 안에 있습니다.
