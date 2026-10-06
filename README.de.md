@@ -200,6 +200,7 @@ Jede Rolle gibt Claude eine andere Persona, eine andere Werkzeugauswahl und eine
 | Rolle               | Was sie tut                                                                |
 | ------------------- | -------------------------------------------------------------------------- |
 | **General**         | Allzweck-Assistent — Todos, Scheduler, Wiki, Dokumente, Mindmaps           |
+| **Simple** | Für leichte Gespräche — kleiner System-Prompt, nur Formulare und Collections |
 | **Office**          | Dokumente, Tabellen, Formulare, Präsentationen, Daten-Dashboards           |
 | **Guide & Planner** | Reiseführer, Rezeptbücher, Reiseplaner mit reichhaltiger visueller Ausgabe |
 | **Artist**          | Bildgenerierung, Bildbearbeitung, generative Kunst mit p5.js               |

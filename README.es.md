@@ -198,6 +198,7 @@ Cada rol le da a Claude una persona diferente, una paleta de herramientas distin
 | Rol                 | Qué hace                                                                                    |
 | ------------------- | ------------------------------------------------------------------------------------------- |
 | **General**         | Asistente de propósito general — pendientes, planificador, wiki, documentos, mapas mentales |
+| **Simple** | Para conversación ligera — prompt de sistema pequeño, solo formularios y colecciones |
 | **Office**          | Documentos, hojas de cálculo, formularios, presentaciones, paneles de datos                 |
 | **Guide & Planner** | Guías de viaje, libros de recetas, planificadores de viajes con resultados visuales ricos   |
 | **Artist**          | Generación de imágenes, edición de imágenes, arte generativo con p5.js                      |

@@ -239,6 +239,7 @@ Each role gives Claude a different persona, tool palette, and focus area:
 | Role                | What it does                                                         |
 | ------------------- | -------------------------------------------------------------------- |
 | **General**         | All-purpose assistant — todos, scheduler, wiki, documents, mind maps |
+| **Simple** | Light conversation — a small system prompt, with forms and collections only |
 | **Office**          | Documents, spreadsheets, forms, presentations, data dashboards       |
 | **Guide & Planner** | Travel guides, recipe books, trip planners with rich visual output   |
 | **Artist**          | Image generation, image editing, generative art with p5.js           |

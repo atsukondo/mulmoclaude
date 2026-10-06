@@ -47,7 +47,12 @@ A plugin's tool definition may now declare `promptCompact` (injected into the sy
 `prompt` stays the full text, so plugins that don't declare the split, and hosts that don't support it, behave exactly as
 before. No bundled plugin uses it yet.
 
-Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.0`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+#### A **Simple** role for light conversation (#3369)
+
+A new built-in role with only the form and collection display tools (plus the tools every role gets), so each turn sends
+a much smaller system prompt than General. For documents, slides, images or HTML it suggests switching to General.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.10.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.1.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.0.1`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
 ## [1.26.3] - 2026-10-02
 
