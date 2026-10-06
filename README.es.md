@@ -8,6 +8,8 @@
 
 [English](README.md) · [日本語](README.ja.md) · [简体中文](README.zh.md) · [한국어](README.ko.md) · **Español** · [Português (BR)](README.pt-BR.md) · [Français](README.fr.md) · [Deutsch](README.de.md)
 
+📖 **Guía de usuario: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
+
 **Un asistente de IA que lo sabe todo sobre ti y te acompaña las 24 horas del día no se vende en ninguna parte. No puedes comprarlo — solo puedes cultivarlo. MulmoClaude es una herramienta para cultivar tu propio asistente de IA, en tu propio ordenador.**
 
 La sustancia de un asistente no es el modelo de IA — el modelo es solo el motor. Lo que hace valioso a un asistente es cuánto sabe sobre ti: tus conversaciones, tu calendario, tus notas, tus datos y las aplicaciones que usas. Algo tan importante no debería confiarse a ningún proveedor de servicios — cuanto más tiempo lo uses, más difícil se vuelve marcharse. MulmoClaude es de código abierto y se ejecuta localmente, así que todo lo que tu asistente acumula — recuerdos, datos, aplicaciones — permanece en tus propias manos, como archivos planos en tu workspace.
