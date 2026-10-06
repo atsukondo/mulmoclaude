@@ -41,6 +41,13 @@ export function mcpEndpoint(meta: PluginMeta): string {
   return url;
 }
 
+/** The binding for one built-in definition: its dispatch URL from META, and
+ *  the package name when META declares one (prompt-file plugins only). */
+export function mcpBinding(def: ToolDefinition, meta: PluginMeta): ServerPluginBinding {
+  const binding = { def, endpoint: mcpEndpoint(meta) };
+  return meta.packageName ? { ...binding, packageName: meta.packageName } : binding;
+}
+
 /** `API_ROUTES` is an intersection of literal-typed records, so it carries no
  *  index signature and a namespace known only at runtime cannot be used to
  *  subscript it. Walk the entries instead and read back only the one field this
