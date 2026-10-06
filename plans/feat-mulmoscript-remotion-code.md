@@ -10,7 +10,7 @@
 - mulmocast の `REMOTION_COMPONENT_GUIDE` を参照ファイル `remotion-component-guide.md` として渡す（写さず import する）。
   `promptCompact` には「`code` を書く前にこのファイルを読む」だけ。ツールの `description` は参照ファイルを順に連結したもの
   （分割を知らないホストや ToolSearch で読み込んだモデルにも全部見える）。
-- `mulmocast` / `@mulmocast/types` の下限を上げる。
+- `mulmocast` / `@mulmocast/types` の下限を `^2.15.0` に上げる（ルート・launcher・プラグインの peer）。
 
 ## ガイドの取り込み元
 
@@ -19,7 +19,7 @@
 MulmoClaude の `vite build` にそれらが入ることを確認した。
 
 そこで mulmocast 側にガイドだけの入口 `mulmocast/remotion/guide` を足した（receptron/mulmocast-cli#1606 / #1607）。
-このプラグインはそれを import し、mulmocast の下限はその入口を含む版にする。
+このプラグインはそれを import し、mulmocast / `@mulmocast/types` の下限をその入口を含む `^2.15.0` にする。
 
 - `vite.config.ts` の external を `/^mulmocast(\/|$)/` にして、サブパスもバンドルしない。
 - `test/test_browserSafeCore.ts`: `src/core/` が mulmocast から読んでよいのは `mulmocast/remotion/guide` だけ。
