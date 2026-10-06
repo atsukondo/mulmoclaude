@@ -9,6 +9,7 @@ Under the hood it uses the Claude Code Agent SDK as its LLM core. Claude has ful
 ## Roles
 
 - **General** — Everyday assistant: task management, scheduling, wiki, mind maps, and general Q&A.
+- **Simple** — Light conversation with a small system prompt: forms and collections only; switch to General for documents, slides, images or HTML.
 - **Office** — Creates documents, spreadsheets, presentations, and MulmoScript slideshows.
 - **Guide & Planner** — Collects your needs via a form, then produces a rich illustrated guide or plan. Works for recipes, travel itineraries, fitness programs, event planning, study guides, DIY projects, and more.
 - **Artist** — Generates and edits images, opens a drawing canvas, and creates 3D scenes.

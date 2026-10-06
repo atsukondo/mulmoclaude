@@ -315,7 +315,7 @@ const skills = await discoverSkills({ workspaceRoot: workspacePath });
 
 **何**: agent ペルソナ。`prompt` (system prompt 断片) + `availablePlugins` (静的 plugin gate) + `queries` (おすすめクエリ) のパッケージ。
 
-**例 (built-in)**: `general`, `office`, `guide`, `artist`, `tutor`, `storyteller`, `settings`, `accounting`, `cookingCoach`, `debug`
+**例 (built-in)**: `general`, `simple`, `office`, `guide`, `artist`, `tutor`, `storyteller`, `settings`, `accounting`, `cookingCoach`, `debug`
 
 **追加 (user-defined)**: MulmoClaude の Settings → Roles から `manageRoles` 経由、または `<workspace>/config/roles/<id>.json` を直接置く
 

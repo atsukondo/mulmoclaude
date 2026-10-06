@@ -198,7 +198,7 @@ cp ~/.claude/.mcp.json ~/mulmoclaude/config/mcp.json
 MulmoClaude は session 開始時に **role (ペルソナ)** を選ぶ仕組み。
 Claude Code には role の概念がないので、ここが一番違う。
 
-組み込み role: `general`, `office`, `guide`, `artist`, `tutor`, `storyteller`, `accounting`, `cookingCoach`, ...
+組み込み role: `general`, `simple`, `office`, `guide`, `artist`, `tutor`, `storyteller`, `accounting`, `cookingCoach`, ...
 カスタム role は Settings → Roles から作成可能 (`manageRoles` プラグイン)。
 
 詳細は [`docs/extension-mechanisms.md`](extension-mechanisms.md) の §3.6 (Role)。

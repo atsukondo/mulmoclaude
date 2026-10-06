@@ -201,6 +201,7 @@ Chaque rôle donne à Claude une personnalité différente, une palette d'outils
 | Rôle                | Description                                                                                   |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | **General**         | Assistant polyvalent — tâches, planificateur, wiki, documents, cartes mentales                |
+| **Simple** | Pour la conversation légère — petit prompt système, formulaires et collections uniquement |
 | **Office**          | Documents, feuilles de calcul, formulaires, présentations, tableaux de bord de données        |
 | **Guide & Planner** | Guides de voyage, livres de recettes, planificateurs de voyage avec une sortie visuelle riche |
 | **Artist**          | Génération d'images, édition d'images, art génératif avec p5.js                               |

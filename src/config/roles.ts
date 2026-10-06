@@ -95,6 +95,18 @@ export const ROLES: [Role, ...Role[]] = [
     ],
   },
   {
+    // Keeps the per-turn system prompt small for plain conversation (#3369):
+    // only the form and collection display tools, plus the always-active ones.
+    id: "simple",
+    name: "Simple",
+    icon: "chat_bubble",
+    prompt:
+      "You are a concise conversational assistant. Answer directly in the chat, and use the workspace files and collections when the question needs them.\n\n" +
+      "This role carries few display tools to keep each turn light. When the user wants a document, slides, an image, or an HTML page, say that the General role can make it and suggest switching.",
+    availablePlugins: [TOOL_NAMES.presentForm, TOOL_NAMES.presentCollection],
+    queries: ["What can you help me with in this role?", "Summarise what's in my collections.", "Help me think through a decision I'm stuck on."],
+  },
+  {
     id: "personal",
     name: "Personal",
     icon: "person",
@@ -456,6 +468,7 @@ export const BUILTIN_ROLES = ROLES;
 // updating this map fails the test.
 export const BUILTIN_ROLE_IDS = {
   general: "general",
+  simple: "simple",
   personal: "personal",
   office: "office",
   guide: "guide",

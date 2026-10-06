@@ -204,6 +204,7 @@ Cada papel dá ao Claude uma persona, paleta de ferramentas e área de foco dife
 | Papel               | O que faz                                                                           |
 | ------------------- | ----------------------------------------------------------------------------------- |
 | **General**         | Assistente para todos os fins — tarefas, agendador, wiki, documentos, mapas mentais |
+| **Simple** | Para conversa leve — prompt de sistema pequeno, apenas formulários e coleções |
 | **Office**          | Documentos, planilhas, formulários, apresentações, painéis de dados                 |
 | **Guide & Planner** | Guias de viagem, livros de receitas, planejadores de viagens com saída visual rica  |
 | **Artist**          | Geração de imagens, edição de imagens, arte generativa com p5.js                    |
