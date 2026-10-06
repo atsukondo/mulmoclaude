@@ -12,6 +12,9 @@ import type { Role } from "../../src/config/roles.ts";
 import { getActiveToolDescriptors } from "../../server/agent/activeTools.ts";
 import { agentPromptFilesDir, syncHostPromptFiles } from "../../server/agent/promptFiles.ts";
 import { BUILT_IN_PROMPT_FILE_SOURCES } from "../../server/agent/plugin-names.ts";
+import { BUILT_IN_SERVER_BINDINGS } from "../../src/plugins/server.ts";
+import { readPromptSplit } from "@mulmoclaude/core/prompt-files";
+import { isRecord } from "../../server/utils/types.ts";
 import { TOOL_DEFINITION as MULMOSCRIPT_DEFINITION } from "@mulmoclaude/mulmoscript-plugin";
 import { buildPluginPromptSections } from "../../server/agent/prompt.ts";
 import { registerRuntimePlugins, _resetRuntimeRegistryForTest } from "../../server/plugins/runtime-registry.ts";
@@ -117,5 +120,27 @@ describe("plugin prompt files in MulmoClaude", () => {
     assert.ok(section.includes(toldPath));
     assert.equal(section.includes(MULMOSCRIPT_DEFINITION.description), false);
     assert.equal(readFileSync(path.resolve(workspace, toldPath), "utf-8"), MULMOSCRIPT_DEFINITION.description);
+  });
+
+  it("every built-in that declares a split gets its compact text injected and every file it names on disk", () => {
+    syncHostPromptFiles(BUILT_IN_PROMPT_FILE_SOURCES, workspace);
+    assert.ok(BUILT_IN_PROMPT_FILE_SOURCES.length > 0);
+    for (const { packageName, definition } of BUILT_IN_PROMPT_FILE_SOURCES) {
+      const split = readPromptSplit(definition);
+      assert.ok(split, packageName);
+      const agentDir = agentPromptFilesDir(packageName);
+      assert.ok(agentDir, packageName);
+      for (const [name, content] of Object.entries(split.files)) {
+        assert.equal(readFileSync(path.resolve(workspace, agentDir, name), "utf-8"), content, `${packageName}/${name}`);
+      }
+      const toolName = isRecord(definition) && typeof definition.name === "string" ? definition.name : "";
+      const builtInRole: Role = { id: "test", name: "Test", icon: "star", prompt: "", availablePlugins: [toolName] };
+      assert.ok(buildPluginPromptSections(builtInRole).join("\n").includes(agentDir), packageName);
+    }
+  });
+
+  it("every built-in binding whose definition declares a split names its package (or the split is silently ignored)", () => {
+    const missing = BUILT_IN_SERVER_BINDINGS.filter((binding) => readPromptSplit(binding.def) && !binding.packageName).map((binding) => binding.def.name);
+    assert.deepEqual(missing, []);
   });
 });
