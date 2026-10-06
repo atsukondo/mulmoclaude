@@ -44,7 +44,7 @@ If you are not sure, opening an issue first is always cheaper. Thanks for unders
 
 The `.github/workflows/pr_triage.yaml` workflow runs on every PR and enforces the rule above mechanically:
 
-- PRs from maintainers and allowlisted bots pass through untouched. The current allowlist is `isamu`, `snakajima`, `ystknsh`, `yuki0627`, `dependabot[bot]`, `coderabbitai[bot]`, `sourcery-ai[bot]`. To add a maintainer, edit the `MAINTAINERS` list in the workflow and the same list here, in the same commit.
+- PRs from maintainers and allowlisted bots pass through untouched. The current allowlist is `isamu`, `snakajima`, `ystknsh`, `yuki0627`, `michiof`, `dependabot[bot]`, `coderabbitai[bot]`, `sourcery-ai[bot]`. To add a maintainer, edit the `MAINTAINERS` list in the workflow and the same list here, in the same commit.
 - **Every other PR gets a templated comment linking back to this section and is closed. There is no small-diff exemption.** The comment asks for an issue instead — **its first three lines should be a compact summary of the problem and the proposed plan** so a maintainer can decide whether to engage at a glance.
 - The guard runs on PRs against **any** branch, not just `main`: a PR opened against a long-lived branch is exactly as unreviewable as one against `main`.
 - An event a maintainer triggered stands the automation down, so retitling an outside PR you have decided to keep does not re-close it.
