@@ -10,7 +10,7 @@
 
 📖 **Guía de usuario: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
-🛠️ **Preparación inicial (Node.js / Claude Code, en japonés): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+🛠️ **Guía de instalación para Mac (en japonés): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
 
 **Un asistente de IA que lo sabe todo sobre ti y te acompaña las 24 horas del día no se vende en ninguna parte. No puedes comprarlo — solo puedes cultivarlo. MulmoClaude es una herramienta para cultivar tu propio asistente de IA, en tu propio ordenador.**
 

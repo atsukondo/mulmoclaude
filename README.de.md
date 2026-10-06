@@ -10,7 +10,7 @@
 
 📖 **Benutzerhandbuch: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
-🛠️ **Ersteinrichtung (Node.js / Claude Code, auf Japanisch): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+🛠️ **Installationsanleitung für Mac (auf Japanisch): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
 
 **Einen KI-Assistenten, der alles über Sie weiß und Ihnen rund um die Uhr zur Seite steht, gibt es nirgendwo zu kaufen. Sie können keinen kaufen — Sie können nur einen großziehen. MulmoClaude ist ein Werkzeug, um Ihren eigenen KI-Assistenten großzuziehen — auf Ihrem eigenen Computer.**
 
