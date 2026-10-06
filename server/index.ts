@@ -104,7 +104,7 @@ import { resolveClientDir } from "./utils/clientDir.js";
 import { serverError } from "./utils/httpError.js";
 import { browserVisibleOrigin } from "./utils/forwardedOrigin.js";
 import { makeUuid } from "./utils/id.js";
-import { mcpToolsRouter, mcpTools, isMcpToolEnabled } from "./agent/mcp-tools/index.js";
+import { mcpToolsRouter, mcpTools, isMcpToolEnabled, MCP_TOOL_PROMPT_FILE_SOURCES } from "./agent/mcp-tools/index.js";
 import { preflightUserServers, logPreflightResult } from "./agent/mcpPreflight.js";
 import { loadMcpConfig, loadSettings } from "./system/config.js";
 import { getVoiceInputStatus, stopWhisperSidecar, warmupVoiceInput } from "./system/whisper/index.js";
@@ -1230,10 +1230,20 @@ async function loadRuntimePluginsFor(pubsub: IPubSub, taskManager: ITaskManager)
       collisions: result.collisions.length,
       oauthAliasCollisions: result.oauthAliasCollisions.length,
     });
-    syncHostPromptFiles([...BUILT_IN_PROMPT_FILE_SOURCES, ...result.registered.map((plugin) => ({ packageName: plugin.name, definition: plugin.definition }))]);
+    syncAllPromptFiles(result.registered);
   } catch (err) {
     log.error("plugins/runtime", "registry init failed; runtime plugins disabled this session", { error: String(err) });
   }
+}
+
+/** Write every prompt file this host serves: built-in plugins, host MCP tools,
+ *  and the runtime plugins that registered. */
+function syncAllPromptFiles(runtimePlugins: ReturnType<typeof registerRuntimePlugins>["registered"]): void {
+  syncHostPromptFiles([
+    ...BUILT_IN_PROMPT_FILE_SOURCES,
+    ...MCP_TOOL_PROMPT_FILE_SOURCES,
+    ...runtimePlugins.map((plugin) => ({ packageName: plugin.name, definition: plugin.definition })),
+  ]);
 }
 
 function initEventPublishers(pubsub: IPubSub): void {

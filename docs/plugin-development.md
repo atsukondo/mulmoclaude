@@ -143,6 +143,7 @@ export const TOOL_DEFINITION = {
 - `{{promptFilesDir}}` is the only way to refer to the directory. Each host replaces it with the path **its agent** can read: MulmoClaude uses `config/helps/plugins/<package>/` (workspace-relative — the agent's cwd is the workspace natively and in Docker); MulmoTerminal, whose agent starts in a project directory, uses an absolute path. Never write a literal path.
 - The directory is named after the npm package (`node_modules` layout), supplied by the host — a runtime plugin's package name, or `packageName` on a built-in binding — so two packages can never share one.
 - MulmoClaude's MCP tool description still carries the full `prompt`, so a tool loaded via `ToolSearch` sees everything either way.
+- Host MCP tools (`server/agent/mcp-tools/`) take the same `promptCompact` / `promptFiles` fields plus `packageName` on the `McpTool` object (see `manageCollection`).
 - Shared implementation: `@mulmoclaude/core/prompt-files` (`renderToolPrompt`, `syncPromptFiles`).
 
 ---
