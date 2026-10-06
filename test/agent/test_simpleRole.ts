@@ -35,6 +35,9 @@ describe("simple role", () => {
     const names = getActiveToolDescriptors(roleById("simple")).map((descriptor) => descriptor.name);
     assert.ok(names.includes(TOOL_NAMES.presentForm));
     assert.ok(names.includes(TOOL_NAMES.presentCollection));
+    // Kept on purpose: the always-active tools still apply to this role.
+    assert.ok(names.includes(TOOL_NAMES.manageCollection));
+    assert.ok(names.includes(TOOL_NAMES.spawnBackgroundChat));
   });
 
   it("does not carry the heavy display tools", () => {
