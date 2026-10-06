@@ -8,7 +8,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+## [1.27.0] - 2026-10-06
+
+**Bridge replies no longer carry the CLI's compaction summary or continuation prompt, the base and plugin prompts get much shorter, ShapeScript exports printable STL, MulmoScript learns Remotion beats, and a lighter Simple role arrives.**
+
 ### Highlights
+
+#### Bridge replies and the transcript no longer include CLI-injected context (#3376, PR #3392)
+
+In a long session the Claude CLI injects text of its own: the summary it writes after compacting the context ("This
+session is being continued from a previous conversation…") and the instruction it sends when a reply hits the output
+limit ("Output token limit hit. Resume directly…"). That text was treated as the assistant's reply, so it was posted to
+Discord and other bridges ahead of the real answer, shown in the chat, saved to the transcript and quoted in the Web Push
+notification. It is now kept out of all of them. The CLI still keeps it in its own session file.
 
 #### ShapeScript comes from `@gui-chat-plugin/shapescript` 8.2.1, with a printable STL export
 
