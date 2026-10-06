@@ -10,6 +10,8 @@
 
 📖 **用户指南: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
+🛠️ **首次准备（Node.js / Claude Code，日语）: [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+
 **一个了解你的一切、全天候陪伴在你身边的 AI 助手，在任何地方都买不到。你无法购买 —— 只能亲手培育。MulmoClaude 就是在你自己的电脑上培育专属 AI 助手的工具。**
 
 助手的实体并不是 AI 模型 —— 模型只是引擎。决定助手价值的，是它对你了解多少：你的对话、日程、笔记、数据，以及你使用的应用。如此重要的东西，不应托付给任何单一的服务提供商 —— 用得越久，就越难离开。MulmoClaude 是开源的，并在本地运行，因此助手积累的一切 —— 记忆、数据、应用 —— 都以普通文件的形式留在你自己的工作区中，掌握在你自己手里。

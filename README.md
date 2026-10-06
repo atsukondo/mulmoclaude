@@ -10,6 +10,8 @@
 
 📖 **User guide: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
+🛠️ **First-time setup (Node.js / Claude Code, Japanese): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+
 **An AI assistant that knows everything about you and supports you around the clock is not sold anywhere. You cannot buy one — you can only nurture one. MulmoClaude is a tool for nurturing your own AI assistant, on your own computer.**
 
 The substance of an assistant is not the AI model — the model is just the engine. What makes an assistant valuable is how much it knows about you: your conversations, your calendar, your notes, your data, and the apps you use. Something that important should not be entrusted to any single service provider — the longer you use it, the harder it becomes to leave. MulmoClaude is open source and runs locally, so everything your assistant accumulates — memories, data, apps — stays in your own hands, as plain files in your workspace.

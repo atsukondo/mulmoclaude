@@ -10,6 +10,8 @@
 
 📖 **Benutzerhandbuch: [https://receptron.github.io/mulmoclaude/](https://receptron.github.io/mulmoclaude/)**
 
+🛠️ **Ersteinrichtung (Node.js / Claude Code, auf Japanisch): [https://receptron.github.io/mulmoclaude/setup/](https://receptron.github.io/mulmoclaude/setup/)**
+
 **Einen KI-Assistenten, der alles über Sie weiß und Ihnen rund um die Uhr zur Seite steht, gibt es nirgendwo zu kaufen. Sie können keinen kaufen — Sie können nur einen großziehen. MulmoClaude ist ein Werkzeug, um Ihren eigenen KI-Assistenten großzuziehen — auf Ihrem eigenen Computer.**
 
 Die Substanz eines Assistenten ist nicht das KI-Modell — das Modell ist nur der Motor. Was einen Assistenten wertvoll macht, ist, wie viel er über Sie weiß: Ihre Gespräche, Ihren Kalender, Ihre Notizen, Ihre Daten und die Anwendungen, die Sie nutzen. Etwas so Wichtiges sollte keinem einzelnen Dienstanbieter anvertraut werden — je länger Sie ihn nutzen, desto schwerer wird der Abschied. MulmoClaude ist Open Source und läuft lokal, sodass alles, was Ihr Assistent ansammelt — Erinnerungen, Daten, Anwendungen — in Ihren eigenen Händen bleibt, als einfache Dateien in Ihrem Workspace.
