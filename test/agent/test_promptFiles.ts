@@ -11,6 +11,8 @@ import path from "node:path";
 import type { Role } from "../../src/config/roles.ts";
 import { getActiveToolDescriptors } from "../../server/agent/activeTools.ts";
 import { agentPromptFilesDir, syncHostPromptFiles } from "../../server/agent/promptFiles.ts";
+import { BUILT_IN_PROMPT_FILE_SOURCES } from "../../server/agent/plugin-names.ts";
+import { TOOL_DEFINITION as MULMOSCRIPT_DEFINITION } from "@mulmoclaude/mulmoscript-plugin";
 import { buildPluginPromptSections } from "../../server/agent/prompt.ts";
 import { registerRuntimePlugins, _resetRuntimeRegistryForTest } from "../../server/plugins/runtime-registry.ts";
 import type { RuntimePlugin } from "../../server/plugins/runtime-loader.ts";
@@ -73,6 +75,14 @@ describe("plugin prompt files in MulmoClaude", () => {
     assert.equal(section.includes("FULL PROMPT TEXT"), false);
   });
 
+  it("falls back to the full prompt when a written file is deleted after startup", () => {
+    registerRuntimePlugins(new Set(), [runtimePlugin(splitDefinition)]);
+    syncHostPromptFiles([{ packageName: PACKAGE, definition: splitDefinition }], workspace);
+    assert.match(promptOf() ?? "", /config\/helps\/plugins/);
+    rmSync(path.join(workspace, "config", "helps", "plugins", "@example", "split-plugin", "guide.md"));
+    assert.equal(promptOf(), "FULL PROMPT TEXT");
+  });
+
   it("keeps the full prompt when the files were not written", () => {
     registerRuntimePlugins(new Set(), [runtimePlugin(splitDefinition)]);
     assert.equal(promptOf(), "FULL PROMPT TEXT");
@@ -97,5 +107,15 @@ describe("plugin prompt files in MulmoClaude", () => {
     syncHostPromptFiles([{ packageName: PACKAGE, definition: plain }], workspace);
     assert.equal(agentPromptFilesDir(PACKAGE), null);
     assert.equal(promptOf(), "FULL PROMPT TEXT");
+  });
+
+  it("a built-in plugin's split reaches the system prompt, and the file it names holds the full reference", () => {
+    syncHostPromptFiles(BUILT_IN_PROMPT_FILE_SOURCES, workspace);
+    const mulmoRole: Role = { id: "test", name: "Test", icon: "star", prompt: "", availablePlugins: ["presentMulmoScript"] };
+    const section = buildPluginPromptSections(mulmoRole).join("\n");
+    const toldPath = "config/helps/plugins/@mulmoclaude/mulmoscript-plugin/presentMulmoScript.md";
+    assert.ok(section.includes(toldPath));
+    assert.equal(section.includes(MULMOSCRIPT_DEFINITION.description), false);
+    assert.equal(readFileSync(path.resolve(workspace, toldPath), "utf-8"), MULMOSCRIPT_DEFINITION.description);
   });
 });
