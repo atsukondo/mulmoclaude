@@ -33,6 +33,13 @@ A `getItems` call that asks only for stored fields (a list of dates, titles and 
 collection the schema links to. A `backlinks`, `rollup` or `embed` field reads only its own source, and a `derived` or
 `flag` field still reads all of them. The values returned are unchanged.
 
+#### A shorter base system prompt (#3369)
+
+The attached-file, image-reference and task-scheduling sections of the base system prompt now carry only the rules the
+agent must follow on every turn. The rest moved to `config/helps/attachments.md`, `image-references.md` and
+`scheduling.md`, which the agent reads when the situation comes up. The base prompt drops from about 11,500 characters
+to about 6,000.
+
 #### Plugins can keep long instructions in reference files (#3369)
 
 A plugin's tool definition may now declare `promptCompact` (injected into the system prompt) and `promptFiles`
