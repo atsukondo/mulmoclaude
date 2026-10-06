@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MulmoClaude のインストール</title>
+<link rel="stylesheet" href="manual.css">
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="mulmoclaude.css">
+</head>
+<body>
+<div class="wrap">
+<p class="back"><a href="./">← MulmoClaude セットアップ手順</a></p>
+<h1>MulmoClaude のインストール</h1>
+<div class="intro"><p>この手順書では、Mac に Docker Desktop と MulmoClaude を入れ、ブラウザで使い始めるまでを説明します。上から順に進めてください。目安は20〜30分です。</p>
+<p>先に<a href="claude-install.html">MulmoClaude を使う前の準備</a>を済ませてください。画面の図はすべてイメージで、実際の表示とは少し違うことがあります。</p></div>
+<ul class="toc"><li><a href="#docker">Docker Desktop を入れるか決める</a></li><li><a href="#step1">ステップ 1　Docker Desktop を入れる</a></li><li><a href="#step2">ステップ 2　MulmoClaude を起動する</a></li><li><a href="#step3">ステップ 3　アイコンから起動できるようにする</a></li><li><a href="#trouble">うまくいかないとき</a></li></ul>
+<section class="step" id="docker"><h2><span class="no"></span>Docker Desktop を入れるか決める</h2>
+<h4 class="minor">Claude Code が Mac でできること</h4>
+<p>Claude Code は、Bash（Mac を操作するツール）などを使って、あなたの Mac のファイルを読んだり書いたり、コマンドを実行したりできます。</p>
+<figure><div class="mk-can">
+  <div class="mk-scope-mac">
+    <b>あなたの Mac</b>
+    <span class="mk-scope-claude">Claude Code</span>
+    <div class="mk-can-arrows">↓↓↓</div>
+    <div class="mk-can-row">
+      <span class="mk-can-item"><b>📄</b>ファイルを読む<small>書類・メモ・設定など</small></span>
+      <span class="mk-can-item"><b>✏️</b>ファイルを書く・変える<small>新しく作る・書き換える</small></span>
+      <span class="mk-can-item"><b>⌨️</b>コマンドを実行する<small>Bash（Mac を操作するツール）</small></span>
+    </div>
+  </div>
+</div>
+<figcaption>Claude Code は Mac のファイルを読み書きし、コマンドを実行できます。</figcaption></figure>
+<h4 class="minor">Docker Desktop で変わること</h4>
+<p>Docker Desktop がないと、Claude Code はあなたのアカウントで開けるファイルすべてに手が届き、SSH の鍵や作業用フォルダの外に保存された認証情報（パスワードなど）も含まれます。MulmoClaude の公式の説明は、個人の PC で使う分には許容範囲としつつ、知っておくべきことだとしています。</p>
+<p>Docker Desktop があると、MulmoClaude は起動時に自動で見つけ、設定なしで Claude Code を「サンドボックス」という囲いの中で動かします。囲いの中の Claude Code が直接読み書きできるのは作業用フォルダ（<code>~/mulmoclaude</code>）と Claude Code 自身の設定（<code>~/.claude</code>）だけで、それ以外は見えず、作業用フォルダに書いたものは Mac の本物のファイルとして残ります。</p>
+<figure><div class="mk-mulmoclaude-scope">
+  <section>
+    <h4><span style="background:#fbece7;color:#b4472f">なし</span>Docker Desktop を入れていない</h4>
+    <div class="mk-scope-mac">
+      <b>あなたの Mac</b>
+      <span class="mk-scope-claude">Claude Code</span>
+      <div class="mk-scope-files">
+        <span class="mk-scope-f ok">📁 作業用フォルダ<i>✓</i></span>
+        <span class="mk-scope-f ok">📁 Claude Code の設定<i>✓</i></span>
+        <span class="mk-scope-f ok risk">📁 書類<i>✓</i></span>
+        <span class="mk-scope-f ok risk">📁 デスクトップ<i>✓</i></span>
+        <span class="mk-scope-f ok risk">🔑 鍵・パスワード<i>✓</i></span>
+        <span class="mk-scope-f ok risk">📁 そのほか<i>✓</i></span>
+      </div>
+    </div>
+    <span class="mk-scope-note">アカウントで開けるファイルすべてに手が届く</span>
+  </section>
+  <section>
+    <h4><span style="background:#e6f3eb;color:#217a4b">あり</span>Docker Desktop を入れている</h4>
+    <div class="mk-scope-mac">
+      <b>あなたの Mac</b>
+      <div class="mk-scope-sand">
+        <b>サンドボックス（囲い）</b>
+        <span class="mk-scope-claude">Claude Code</span>
+        <div class="mk-scope-files">
+          <span class="mk-scope-f ok">📁 作業用フォルダ<i>✓</i></span>
+          <span class="mk-scope-f ok">📁 Claude Code の設定<i>✓</i></span>
+        </div>
+      </div>
+      <div class="mk-scope-files">
+        <span class="mk-scope-f ng">📁 書類<i>✕</i></span>
+        <span class="mk-scope-f ng">📁 デスクトップ<i>✕</i></span>
+        <span class="mk-scope-f ng">🔑 鍵・パスワード<i>✕</i></span>
+        <span class="mk-scope-f ng">📁 そのほか<i>✕</i></span>
+      </div>
+    </div>
+    <span class="mk-scope-note">作業用フォルダと Claude Code の設定だけに届く。ほかは見えない</span>
+  </section>
+</div>
+<figcaption>Docker Desktop の有無で、Claude Code が直接触れられるファイルの範囲が変わります。</figcaption></figure>
+<h4 class="minor">どうするか</h4>
+<p>Docker Desktop を入れることをおすすめします。ステップ1へ進んでください。</p>
+<div class="note warn"><strong>注意</strong>Docker Desktop は個人・教育や小さな事業者（従業員250人未満、かつ年間売上1,000万ドル未満）では無料ですが、それより大きな会社で仕事に使う場合は有料契約が必要なので、会社の PC で利用する場合は管理者に確かめてください。</div>
+<details><summary>入れないと決めたとき</summary>
+<p>ステップ1を飛ばしてステップ2へ進んでください（MulmoClaude は動きますが、画面上部の鍵が黄色の開いた鍵になり、Docker 未検出を示します）。</p>
+</details></section>
+<section class="step" id="step1"><h2><span class="no">ステップ 1</span>Docker Desktop を入れる</h2>
+<p>ここでは、Claude Code をサンドボックスの中で動かすために、Docker Desktop をインストールします。</p>
+<div class="substep"><h3 class="sub"><span class="sn">1</span>Mac のチップを確かめる</h3><div class="sub-body">
+<p>画面左上のアップルメニューから「この Mac について」を開きます。「チップ」に Apple M1 などとあれば Apple シリコン、「プロセッサ」に Intel とあれば Intel です。</p>
+<figure><div class="mk-desk">
+  <div class="mk-auth" style="width:19rem">
+    <span class="mk-auth-icon" style="width:72px;height:48px;border-radius:6px">💻</span>
+    <strong style="font-size:1rem">MacBook Air</strong>
+    <span style="color:#666">13インチ, 2022</span>
+    <span class="mk-auth-gap"></span>
+    <span style="display:grid;grid-template-columns:auto 1fr;gap:.25rem .8rem;text-align:left;width:100%">
+      <span style="color:#666">チップ</span><span class="mk-mark">Apple M2</span>
+      <span style="color:#666">メモリ</span><span>16 GB</span>
+      <span style="color:#666">macOS</span><span>Tahoe 26.0</span>
+    </span>
+  </div>
+</div>
+</figure>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">2</span>ダウンロードする</h3><div class="sub-body">
+<p>ブラウザで <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">https://www.docker.com/products/docker-desktop/</a> を開き、「Download Docker Desktop」から、1-1 で確かめたチップに合う「Download for Mac - Apple Silicon」か「Download for Mac - Intel Chip」を選びます。<code>Docker.dmg</code> がダウンロードされます。</p>
+<figure><div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-url">docker.com/products/docker-desktop</span></div>
+  <div class="mk-page">
+    <span class="mk-page-title">Docker Desktop</span>
+    <span class="mk-btn mk-btn--dark">Download Docker Desktop ▾</span>
+    <span style="display:grid;gap:.3rem;border:1px solid #ddd;border-radius:6px;padding:.4rem;min-width:16rem;text-align:left">
+      <span class="mk-mark" style="padding:.2rem .5rem">Download for Mac - Apple Silicon</span>
+      <span style="padding:.2rem .5rem">Download for Mac - Intel Chip</span>
+      <span style="padding:.2rem .5rem;color:#999">Download for Windows …</span>
+    </span>
+    <span class="mk-page-sub">※ 実際のページの見た目とは異なります</span>
+  </div>
+</div>
+</figure>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">3</span>アプリケーションに入れる</h3><div class="sub-body">
+<p>ダウンロードフォルダの <code>Docker.dmg</code> をダブルクリックし、出てきた窓で Docker のアイコンを「Applications」フォルダへドラッグします。</p>
+<figure><div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-title">Docker</span></div>
+  <div class="mk-page" style="flex-direction:row;justify-content:center;gap:2.5rem;padding:2.2rem 1rem">
+    <span style="display:grid;justify-items:center;gap:.3rem"><b class="mk-icon mk-icon--lg mk-mark" style="width:64px;height:64px;background:#c9d1dc"></b>Docker</span>
+    <span style="font-size:2rem;color:#e8553a">➜</span>
+    <span style="display:grid;justify-items:center;gap:.3rem"><b class="mk-icon mk-icon--lg" style="width:64px;height:64px;font-size:2rem;background:#dfe6f0">📁</b>Applications</span>
+  </div>
+</div>
+</figure>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">4</span>Docker を起動する</h3><div class="sub-body">
+<p>command+スペースで検索窓を出し、「Docker」と打って return を押します。</p>
+<figure><div class="mk-desk">
+  <div class="mk-spot">
+    <div class="mk-spot-q">Docker</div>
+    <div class="mk-spot-hit mk-mark"><span class="mk-icon"></span>Docker<span class="mk-spot-kind">アプリケーション</span></div>
+  </div>
+</div>
+</figure>
+<details><summary>開いてもよいか聞かれたとき</summary>
+<p>インターネットから入れたアプリなので確認が出ます。「開く」を押してください。</p>
+<figure><div class="mk-desk">
+  <div class="mk-auth">
+    <span class="mk-auth-icon"></span>
+    <strong>“Docker”はインターネットからダウンロードされたアプリケーションです。開いてもよろしいですか?</strong>
+    <span style="color:#666;font-size:.75rem">このファイルは今日 Safari によってダウンロードされました。</span>
+    <span class="mk-auth-gap"></span>
+    <span class="mk-btn mk-btn--primary mk-mark">開く</span>
+    <span class="mk-btn">キャンセル</span>
+  </div>
+</div>
+</figure>
+</details>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">5</span>利用規約に同意する</h3><div class="sub-body">
+<p>「Docker Subscription Service Agreement」が出たら「Accept」を押します。</p>
+<figure><div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-title">Docker Desktop</span></div>
+  <div class="mk-dialog" style="gap:.7rem;padding:1.4rem 1.6rem">
+    <strong style="font-size:1rem">Docker Subscription Service Agreement</strong>
+    <span style="display:grid;gap:.45rem;margin:.2rem 0"><i style="height:.55rem;background:#d9dce1;border-radius:3px;width:96%"></i><i style="height:.55rem;background:#d9dce1;border-radius:3px;width:88%"></i><i style="height:.55rem;background:#d9dce1;border-radius:3px;width:92%"></i><i style="height:.55rem;background:#d9dce1;border-radius:3px;width:60%"></i></span>
+    <div class="mk-btns" style="margin-top:.4rem"><span class="mk-btn">Close</span><span class="mk-btn mk-btn--primary mk-mark">Accept</span></div>
+  </div>
+</div>
+</figure>
+<details><summary>サインインやアンケートの画面が出たとき</summary>
+<p>サインインしなくても使えます。「Skip」を押して進んでください。</p>
+</details>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">6</span>起動が終わるのを待つ</h3><div class="sub-body">
+<p>画面上のメニューバーにあるクジラのアイコンは、動いている間は起動中です。動きが止まるまで待ちます。</p>
+<figure><div style="border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.2)">
+  <div style="display:flex;align-items:center;gap:1rem;justify-content:flex-end;background:#e9ecf0;padding:.35rem .9rem;font-size:.82rem;color:#222">
+    <span class="mk-mark" style="display:inline-block;width:1.1em;height:.9em;border-radius:3px;background:#3a3f47;vertical-align:-.1em"></span><span>🔋</span><span>Wi‑Fi</span><span>10月7日(水) 10:24</span>
+  </div>
+  <div style="display:flex;justify-content:flex-end;padding:.4rem 3.5rem 1.6rem;background:#9aa6b6">
+    <div style="background:#f5f6f8;border-radius:8px;padding:.5rem .8rem;font-size:.82rem;color:#222;box-shadow:0 6px 18px rgba(0,0,0,.2);line-height:1.8">
+      <span style="color:#1e7a4c">●</span> Docker Desktop is running<br><span style="color:#888">Dashboard …</span>
+    </div>
+  </div>
+</div>
+</figure>
+<div class="note ok"><strong>確認</strong>クジラのアイコンが止まっていれば、ステップ1は完了です。</div>
+</div></div></section>
+<section class="step" id="step2"><h2><span class="no">ステップ 2</span>MulmoClaude を起動する</h2>
+<div class="substep"><h3 class="sub"><span class="sn">1</span>起動のコマンドを貼る</h3><div class="sub-body">
+<p>ターミナルに次のコマンドを貼って return を押します。初めてのときは「Need to install the following packages:」「Ok to proceed? (y)」と聞かれます。</p>
+<div class="cmd"><pre>npx mulmoclaude@latest</pre><button type="button">コピー</button></div>
+<figure><div class="mk-co">
+<div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-title">yourname — -zsh</span></div>
+  <div class="mk-term"><span class="mk-prompt">yourname@MacBook-Air ~ %</span> <span class="mk-typed">npx mulmoclaude@latest</span>
+Need to install the following packages:
+mulmoclaude@1.26.3
+<span class="mk-hl">Ok to proceed? (y) <span class="mk-cursor"></span><span class="mk-co-lead"></span></span><span class="mk-pin">1</span><span class="mk-co-note">y を押して return</span></div>
+</div>
+<ol class="mk-pins"><li><span class="mk-pin">1</span>y を押して return</li></ol>
+</div>
+</figure>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">2</span>y を押して return</h3><div class="sub-body">
+<p><code>y</code> を押して return を押します。必要なもののダウンロードと、初回は Docker の準備に数分かかります。</p>
+<figure><div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-title">yourname — -zsh</span></div>
+  <div class="mk-term"><span class="mk-prompt">yourname@MacBook-Air ~ %</span> <span class="mk-typed">npx mulmoclaude@latest</span>
+<span class="mk-sel">[mulmoclaude]</span> Claude Code CLI ✓
+<span class="mk-sel">[mulmoclaude]</span> Starting MulmoClaude on port 3001...
+<span class="mk-dim">… Building sandbox image (first time only, may take a minute)...</span>
+
+<span class="mk-ok">──────────────────────────────────────────────────</span>
+<span class="mk-hl"><span class="mk-ok">  ✓ MulmoClaude is ready</span></span>
+<span class="mk-ok">  → http://localhost:3001</span>
+<span class="mk-ok">  Press Ctrl+C to stop.</span>
+<span class="mk-ok">──────────────────────────────────────────────────</span></div>
+</div>
+</figure>
+<div class="note ok"><strong>確認</strong>「✓ MulmoClaude is ready」が出れば起動完了です。</div>
+<div class="note warn"><strong>注意</strong>このターミナルの窓を閉じると MulmoClaude も止まるので、使っている間は開いたままにしてください。</div>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">3</span>ブラウザで開く</h3><div class="sub-body">
+<p>起動すると、ブラウザで MulmoClaude（http://localhost:3001）が自動で開きます。</p>
+<figure><div class="mk-win mk-mc-wrap">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-url">localhost:3001</span></div>
+  <div class="mk-mc">
+    <div class="mk-mc-top"><span class="mk-mc-logo"></span><b class="mk-mc-title">MulmoClaude</b><span class="mk-mi">lock</span><span class="mk-mi">notifications</span><span class="mk-mi">phonelink</span><span class="mk-mi">today</span><span class="mk-mi">settings</span><span class="mk-mc-launch"><span class="mk-mi mk-on">forum</span><span class="mk-mi">dashboard</span><span class="mk-mi">menu_book</span><span class="mk-mi">apps</span><span class="mk-mi">rss_feed</span><span class="mk-mi">account_balance</span><span class="mk-mi">folder</span><span class="mk-mi">schedule</span></span></div>
+    <div class="mk-mc-row2"><span class="mk-mc-role"><span class="mk-mi">auto_awesome</span>General<span class="mk-mi">expand_more</span></span><span class="mk-mc-add"><span class="mk-mi">add</span></span><span class="mk-mi">web_asset</span></div>
+    <div class="mk-mc-body">
+      <div class="mk-mc-side">
+        <div class="mk-mc-sidehead"><span class="mk-mi">auto_awesome</span>General <small>不明</small><span class="mk-sp"></span><span class="mk-mi">content_copy</span><span class="mk-mi">build</span><span class="mk-mi">check_box_outline_blank</span></div>
+        <div class="mk-mc-msgs"></div>
+        <div class="mk-mc-input"><div class="mk-mc-textarea mk-focus">Claude にメッセージ…</div><div class="mk-mc-input-ic"><span class="mk-mi">lightbulb</span><span class="mk-mc-send"><span class="mk-mi">send</span></span><span class="mk-mi">attach_file</span></div></div>
+      </div>
+      <div class="mk-mc-canvas"><span class="mk-mi">auto_awesome</span><h5>General</h5><span class="mk-mc-sugg">Tell me about this app, MulmoClaude.</span><span class="mk-mc-sugg">What are collections in this app, and how do I build one just by describing what I want?</span><span class="mk-mc-sugg">What is the wiki in this app and how do I use it?</span><span class="mk-mc-sugg">Tell me about the sandbox feature of this app.</span><span class="mk-mc-sugg">What is the role of the Gemini API key in this app?</span></div>
+    </div>
+  </div>
+</div>
+</figure>
+<details><summary>ブラウザが開かないとき</summary>
+<p>ブラウザで http://localhost:3001 を開きます。ターミナルに別の番号（例：3002）の URL が出ていれば、そちらを開いてください。</p>
+</details>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">4</span>画面の見方</h3><div class="sub-body">
+<p>図の①〜⑥は、画面の各部を示しています。いちばんよく使うのは、左下の入力欄です。</p>
+<figure><div class="mk-win mk-mc-wrap">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-url">localhost:3001</span></div>
+  <div class="mk-mc">
+    <div class="mk-mc-top"><span class="mk-hl mk-pin-host" style="margin:0"><span class="mk-mc-logo"></span><span class="mk-pin mk-pin--corner">1</span></span><b class="mk-mc-title">MulmoClaude</b><span class="mk-hl mk-pin-host" style="margin:0"><span class="mk-mi">lock</span><span class="mk-pin mk-pin--corner">2</span></span><span class="mk-mi">notifications</span><span class="mk-mi">phonelink</span><span class="mk-hl mk-pin-host" style="margin:0"><span class="mk-mi">today</span><span class="mk-pin mk-pin--corner">3</span></span><span class="mk-hl mk-pin-host" style="margin:0"><span class="mk-mi">settings</span><span class="mk-pin mk-pin--corner">4</span></span><span class="mk-hl mk-pin-host" style="margin:0"><span class="mk-mc-launch" style="margin:0"><span class="mk-mi mk-on">forum</span><span class="mk-mi">dashboard</span><span class="mk-mi">menu_book</span><span class="mk-mi">apps</span><span class="mk-mi">rss_feed</span><span class="mk-mi">account_balance</span><span class="mk-mi">folder</span><span class="mk-mi">schedule</span></span><span class="mk-pin mk-pin--corner">5</span></span></div>
+    <div class="mk-mc-row2"><span class="mk-mc-role"><span class="mk-mi">auto_awesome</span>General<span class="mk-mi">expand_more</span></span><span class="mk-mc-add"><span class="mk-mi">add</span></span><span class="mk-mi">web_asset</span></div>
+    <div class="mk-mc-body">
+      <div class="mk-mc-side">
+        <div class="mk-mc-sidehead"><span class="mk-mi">auto_awesome</span>General <small>不明</small><span class="mk-sp"></span><span class="mk-mi">content_copy</span><span class="mk-mi">build</span><span class="mk-mi">check_box_outline_blank</span></div>
+        <div class="mk-mc-msgs"></div>
+        <div class="mk-mc-input"><div class="mk-mc-textarea mk-focus mk-pin-host" style="display:block">Claude にメッセージ…<span class="mk-pin mk-pin--corner">6</span></div><div class="mk-mc-input-ic"><span class="mk-mi">lightbulb</span><span class="mk-mc-send"><span class="mk-mi">send</span></span><span class="mk-mi">attach_file</span></div></div>
+      </div>
+      <div class="mk-mc-canvas"><span class="mk-mi">auto_awesome</span><h5>General</h5><span class="mk-mc-sugg">Tell me about this app, MulmoClaude.</span><span class="mk-mc-sugg">What are collections in this app, and how do I build one just by describing what I want?</span><span class="mk-mc-sugg">What is the wiki in this app and how do I use it?</span><span class="mk-mc-sugg">Tell me about the sandbox feature of this app.</span><span class="mk-mc-sugg">What is the role of the Gemini API key in this app?</span></div>
+    </div>
+  </div>
+</div>
+<ol class="mk-pins" style="grid-template-columns:1fr 1fr"><li><span class="mk-pin">1</span>ロゴ（最新のチャットに移動）</li><li><span class="mk-pin">2</span>鍵（サンドボックスの状態）</li><li><span class="mk-pin">3</span>今日のまとめ</li><li><span class="mk-pin">4</span>設定</li><li><span class="mk-pin">5</span>機能の切り替え（チャット・ファイルなど）</li><li><span class="mk-pin">6</span>入力欄（ここにメッセージを打つ）</li></ol>
+</figure>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">5</span>鍵のアイコンを確かめる</h3><div class="sub-body">
+<p>画面上部の鍵のアイコンを見ます。灰色の閉じた鍵なら、Docker のサンドボックスで動いています。鍵を押すと「サンドボックス有効」と表示されます。</p>
+<figure><div class="mk-win mk-mc-wrap">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-url">localhost:3001</span></div>
+  <div class="mk-mc">
+    <div class="mk-mc-top"><span class="mk-mc-logo"></span><b class="mk-mc-title">MulmoClaude</b><span class="mk-hl" style="margin:0;display:inline-grid"><span class="mk-mi">lock</span></span><span class="mk-mi">notifications</span><span class="mk-mi">phonelink</span><span class="mk-mi">today</span><span class="mk-mi">settings</span><span class="mk-mc-launch"><span class="mk-mi mk-on">forum</span><span class="mk-mi">dashboard</span><span class="mk-mi">menu_book</span><span class="mk-mi">apps</span><span class="mk-mi">rss_feed</span><span class="mk-mi">account_balance</span><span class="mk-mi">folder</span><span class="mk-mi">schedule</span></span></div>
+    <div class="mk-mc-row2"><span class="mk-mc-role"><span class="mk-mi">auto_awesome</span>General<span class="mk-mi">expand_more</span></span><span class="mk-mc-add"><span class="mk-mi">add</span></span><span class="mk-mi">web_asset</span></div>
+    <div class="mk-mc-body">
+      <div class="mk-mc-side">
+        <div class="mk-mc-sidehead"><span class="mk-mi">auto_awesome</span>General <small>不明</small><span class="mk-sp"></span><span class="mk-mi">content_copy</span><span class="mk-mi">build</span><span class="mk-mi">check_box_outline_blank</span></div>
+        <div class="mk-mc-msgs"></div>
+        <div class="mk-mc-input"><div class="mk-mc-textarea mk-focus">Claude にメッセージ…</div><div class="mk-mc-input-ic"><span class="mk-mi">lightbulb</span><span class="mk-mc-send"><span class="mk-mi">send</span></span><span class="mk-mi">attach_file</span></div></div>
+      </div>
+      <div class="mk-mc-canvas"><span class="mk-mi">auto_awesome</span><h5>General</h5><span class="mk-mc-sugg">Tell me about this app, MulmoClaude.</span><span class="mk-mc-sugg">What are collections in this app, and how do I build one just by describing what I want?</span><span class="mk-mc-sugg">What is the wiki in this app and how do I use it?</span><span class="mk-mc-sugg">Tell me about the sandbox feature of this app.</span><span class="mk-mc-sugg">What is the role of the Gemini API key in this app?</span></div>
+    </div>
+  </div><div class="mk-mc-pop"><span class="mk-mi">lock</span> <b>サンドボックス有効:</b> Docker が動作中です。ファイルシステムアクセスは隔離されています。</div>
+</div>
+</figure>
+<details><summary>黄色の開いた鍵のとき</summary>
+<p>Docker が見つかっていません（「サンドボックスなし (Docker 未検出)」）。Docker Desktop が起動しているかクジラのアイコンで確かめ、ターミナルで control+C を押して MulmoClaude を止めてから、2-1 のコマンドでもう一度起動してください。</p>
+</details>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">6</span>話しかける</h3><div class="sub-body">
+<p>左下の入力欄（「Claude にメッセージ…」）に、たとえば「何ができるか教えて」と日本語で打って送ります。</p>
+<figure><div class="mk-win mk-mc-wrap">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-url">localhost:3001</span></div>
+  <div class="mk-mc">
+    <div class="mk-mc-top"><span class="mk-mc-logo"></span><b class="mk-mc-title">MulmoClaude</b><span class="mk-mi">lock</span><span class="mk-mi">notifications</span><span class="mk-mi">phonelink</span><span class="mk-mi">today</span><span class="mk-mi">settings</span><span class="mk-mc-launch"><span class="mk-mi mk-on">forum</span><span class="mk-mi">dashboard</span><span class="mk-mi">menu_book</span><span class="mk-mi">apps</span><span class="mk-mi">rss_feed</span><span class="mk-mi">account_balance</span><span class="mk-mi">folder</span><span class="mk-mi">schedule</span></span></div>
+    <div class="mk-mc-row2"><span class="mk-mc-role"><span class="mk-mi">auto_awesome</span>General<span class="mk-mi">expand_more</span></span><span class="mk-mc-add"><span class="mk-mi">add</span></span><span class="mk-mi">web_asset</span></div>
+    <div class="mk-mc-body">
+      <div class="mk-mc-side">
+        <div class="mk-mc-sidehead"><span class="mk-mi">auto_awesome</span>General <small>不明</small><span class="mk-sp"></span><span class="mk-mi">content_copy</span><span class="mk-mi">build</span><span class="mk-mi">check_box_outline_blank</span></div>
+        <div class="mk-mc-msgs"><div class="mk-mc-msg mk-me"><i>You</i><b>何ができるか教えて</b></div><div class="mk-mc-msg mk-mc-active"><i>Assistant</i>コレクションを作ったり、文章や表を作ったり…</div></div>
+        <div class="mk-mc-input"><div class="mk-mc-textarea">Claude にメッセージ…</div><div class="mk-mc-input-ic"><span class="mk-mi">lightbulb</span><span class="mk-mc-send"><span class="mk-mi">send</span></span><span class="mk-mi">attach_file</span></div></div>
+      </div>
+      <div class="mk-mc-canvas mk-result"><div class="mk-mc-card"><small>アシスタント</small>集めた情報を貯めておく「コレクション」を作ったり、文章や表を作ったり、作業の手順を一緒に考えたりできます。何から始めましょうか？</div></div>
+    </div>
+  </div>
+</div>
+</figure>
+<div class="note ok"><strong>確認</strong>返事が表示されれば完了です。</div>
+<div class="note "><strong>メモ</strong>使い終わるときやステップ3へ進むときはターミナルで control+C を押し、次にコマンドから使うときは 2-1 のコマンドで起動します。</div>
+</div></div></section>
+<section class="step" id="step3"><h2><span class="no">ステップ 3</span>アイコンから起動できるようにする</h2>
+<p>毎回ターミナルにコマンドを打たずに、アプリのアイコンをダブルクリックして起動できるようにする、1回だけの設定です。</p>
+<div class="substep"><h3 class="sub"><span class="sn">1</span>アイコンを作る</h3><div class="sub-body">
+<p>ターミナルに次のコマンドを貼って return を押します。「Create /Applications/MulmoClaude.app? [Y/n]」と聞かれたら、そのまま return を押します。</p>
+<div class="cmd"><pre>npx mulmoclaude@latest create-shortcut</pre><button type="button">コピー</button></div>
+<figure><div class="mk-co">
+<div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-title">yourname — -zsh</span></div>
+  <div class="mk-term"><span class="mk-prompt">yourname@MacBook-Air ~ %</span> <span class="mk-typed">npx mulmoclaude@latest create-shortcut</span>
+<span class="mk-hl">Create /Applications/MulmoClaude.app? [Y/n] <span class="mk-cursor"></span><span class="mk-co-lead"></span></span><span class="mk-pin">1</span><span class="mk-co-note">そのまま return</span></div>
+</div>
+<ol class="mk-pins"><li><span class="mk-pin">1</span>そのまま return</li></ol>
+</div>
+</figure>
+</div></div>
+<div class="substep"><h3 class="sub"><span class="sn">2</span>アイコンから起動する</h3><div class="sub-body">
+<p>アプリケーションフォルダ（または Launchpad）の「MulmoClaude」をダブルクリックします。起動の準備が終わると、ブラウザで MulmoClaude が開きます。</p>
+<figure><div class="mk-win">
+  <div class="mk-bar"><i></i><i></i><i></i><span class="mk-bar-title">アプリケーション</span></div>
+  <div class="mk-finder">
+    <ul class="mk-finder-side"><li class="mk-head">よく使う項目</li><li class="mk-on">アプリケーション</li><li>書類</li><li>ダウンロード</li></ul>
+    <div>
+      <div class="mk-finder-path">アプリケーション</div>
+      <div class="mk-finder-grid">
+        <span><b class="mk-icon mk-icon--lg"></b>Docker</span>
+        <span class="mk-mark"><b class="mk-icon mk-icon--lg" style="background:#1f2937;color:#fff;font-weight:700">M</b>MulmoClaude</span>
+        <span><b class="mk-icon mk-icon--lg"></b>Safari</span>
+        <span><b class="mk-icon mk-icon--lg"></b>ユーティリティ</span>
+      </div>
+    </div>
+  </div>
+</div>
+</figure>
+<div class="note "><strong>メモ</strong>MulmoClaude を新しい版に更新したら、3-1 のコマンドをもう一度実行してください。</div>
+</div></div></section>
+<section class="step" id="trouble"><h2><span class="no"></span>うまくいかないとき</h2>
+<div class="tbl"><table><thead><tr><th>画面に出た文字</th><th>意味と対処</th></tr></thead><tbody><tr><td><code>command not found: npx</code></td><td>Node.js が入っていません。「MulmoClaude を使う前の準備」のステップ2へ戻ってください。</td></tr><tr><td><code>Claude Code CLI not found.</code></td><td>Claude Code が入っていないか、見つかりません。「MulmoClaude を使う前の準備」のステップ3へ戻ってください。</td></tr><tr><td><code>Port 3001 busy → using 3002 instead.</code></td><td>3001 番がほかで使われています。表示された URL（例：http://localhost:3002）を開いてください。</td></tr><tr><td>鍵のアイコンが黄色の開いた鍵になっている</td><td>Docker Desktop が起動していません。2-5 の「黄色の開いた鍵のとき」を見てください。</td></tr><tr><td><code>npx</code> が長く止まる、<code>ETIMEDOUT</code> や <code>ECONNRESET</code> が出る</td><td>会社のネットワークで npm の配布サイトへの接続が止められている可能性があります。「MulmoClaude を使う前の準備」の「管理者に伝えること」を見て、<code>registry.npmjs.org</code> を含めて管理者に相談してください。</td></tr><tr><td>初回の起動でサンドボックスの準備のところで止まる・失敗する</td><td>会社のネットワークで Docker の部品のダウンロードが止められている可能性があります。画面を撮って管理者に相談してください。</td></tr></tbody></table></div></section>
+<footer><p>画面はすべてイメージ図です。実際の表示は Mac の設定やソフトウェアの版によって少し違います。</p>
+<p>Docker and the Docker logo are trademarks or registered trademarks of Docker, Inc. in the United States and/or other countries. Docker, Inc. and other parties may also have trademark rights in other terms used herein.</p></footer>
+</div>
+<script src="manual.js"></script>
+<script src="mock.js"></script>
+</body>
+</html>
