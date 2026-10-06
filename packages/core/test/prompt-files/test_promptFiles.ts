@@ -154,6 +154,22 @@ describe("syncPromptFiles", () => {
     assert.deepEqual(readdirSync(root), []);
   });
 
+  it("an empty file set replaces the previous files with an empty directory", () => {
+    syncPromptFiles(root, [{ packageName: "pkg", definition: splitDef({ "old.md": "OLD" }) }]);
+    const result = syncPromptFiles(root, [{ packageName: "pkg", definition: splitDef({}) }]);
+    assert.ok(result.written.has("pkg"));
+    assert.deepEqual(readdirSync(path.join(root, "pkg")), []);
+  });
+
+  it("keeps the previous files when writing the new set fails partway", () => {
+    syncPromptFiles(root, [{ packageName: "pkg", definition: splitDef({ "old.md": "OLD" }) }]);
+    // `a.md` is written as a file, then `a.md/b.md` needs it to be a directory.
+    const result = syncPromptFiles(root, [{ packageName: "pkg", definition: splitDef({ "a.md": "x", "a.md/b.md": "y" }) }]);
+    assert.equal(result.written.has("pkg"), false);
+    assert.equal(readFileSync(path.join(root, "pkg", "old.md"), "utf-8"), "OLD");
+    assert.deepEqual(readdirSync(root), ["pkg"]);
+  });
+
   it("reports a write failure instead of throwing", () => {
     writeFileSync(path.join(root, "@scope"), "a file where the scope directory belongs");
     const result = syncPromptFiles(root, [{ packageName: "@scope/pkg", definition: splitDef() }]);

@@ -3,7 +3,7 @@
 // every instance, and one with a different plugin set must not delete the
 // others' files.
 
-import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { promptFilesSubdir, readPromptSplit } from "./split";
@@ -46,22 +46,40 @@ export function collectPackageFiles(sources: readonly PromptFilesSource[]): Map<
   return byPackage;
 }
 
+function writeStaging(staging: string, files: Readonly<Record<string, string>>): void {
+  mkdirSync(staging, { recursive: true });
+  for (const [name, content] of Object.entries(files)) {
+    const filePath = path.join(staging, ...name.split("/"));
+    mkdirSync(path.dirname(filePath), { recursive: true });
+    writeFileSync(filePath, content);
+  }
+}
+
+/** Swap `staging` in for `target`, keeping the old copy until the swap
+ *  lands — another instance sharing the root may be reading it. */
+function swapIn(staging: string, target: string): void {
+  const backup = `${target}.old-${randomUUID()}`;
+  const hadTarget = existsSync(target);
+  if (hadTarget) renameSync(target, backup);
+  try {
+    renameSync(staging, target);
+  } catch (err) {
+    if (hadTarget) renameSync(backup, target);
+    throw err;
+  }
+  rmSync(backup, { recursive: true, force: true });
+}
+
 /** Write into a fresh sibling directory, then swap it in, so a reader never
  *  sees a half-written package. */
 function writePackageDir(root: string, subdir: string, files: Readonly<Record<string, string>>): void {
   const target = path.join(root, ...subdir.split("/"));
   const staging = `${target}.tmp-${randomUUID()}`;
   try {
-    for (const [name, content] of Object.entries(files)) {
-      const filePath = path.join(staging, ...name.split("/"));
-      mkdirSync(path.dirname(filePath), { recursive: true });
-      writeFileSync(filePath, content);
-    }
-    rmSync(target, { recursive: true, force: true });
-    renameSync(staging, target);
-  } catch (err) {
+    writeStaging(staging, files);
+    swapIn(staging, target);
+  } finally {
     rmSync(staging, { recursive: true, force: true });
-    throw err;
   }
 }
 
