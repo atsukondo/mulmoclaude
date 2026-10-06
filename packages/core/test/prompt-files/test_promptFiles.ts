@@ -92,6 +92,20 @@ describe("referencedPromptFiles", () => {
       "b.md",
     ]);
   });
+  it("ends a reference at sentence punctuation, Japanese included", () => {
+    assert.deepEqual(
+      referencedPromptFiles(
+        `See ${PROMPT_FILES_DIR_PLACEHOLDER}/a.md! Or ${PROMPT_FILES_DIR_PLACEHOLDER}/b.md? 先に${PROMPT_FILES_DIR_PLACEHOLDER}/c.mdを読む。`,
+      ),
+      null,
+    );
+    assert.deepEqual(
+      referencedPromptFiles(
+        `See ${PROMPT_FILES_DIR_PLACEHOLDER}/a.md! Or ${PROMPT_FILES_DIR_PLACEHOLDER}/b.md? 「${PROMPT_FILES_DIR_PLACEHOLDER}/c.md」を読む。`,
+      ),
+      ["a.md", "b.md", "c.md"],
+    );
+  });
   it("is null when a reference is not a safe file name", () => {
     for (const compact of [
       `${PROMPT_FILES_DIR_PLACEHOLDER}/☃.md`,

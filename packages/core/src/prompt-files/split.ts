@@ -42,7 +42,7 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 
 /** Characters that end a file reference in prose: whitespace and the
  *  punctuation that wraps or follows a path (`…/guide.md`, (…/guide.md)). */
-const REFERENCE_TERMINATORS = new Set([" ", "\t", "\n", "\r", "`", "'", '"', ")", "]", ">", ",", ";", ":"]);
+const REFERENCE_TERMINATORS = new Set([" ", "\t", "\n", "\r", "`", "'", '"', ")", "]", ">", ",", ";", ":", "!", "?", "。", "、", "）", "」"]);
 
 function trimTrailingDots(token: string): string {
   let end = token.length;
