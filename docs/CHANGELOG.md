@@ -10,6 +10,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ### Highlights
 
+#### MulmoScript: the agent can write a Remotion beat's component itself (#3396)
+
+`presentMulmoScript` now describes mulmocast's `image: { type: "remotion", code }` form next to `prompt`: the agent writes
+the finished component (a `.tsx` file beside the script, or inline text) and mulmocast renders it as is, so the user can
+refine the scene in the conversation. The rules for that component — mulmocast's `REMOTION_COMPONENT_GUIDE` — ship as
+the prompt file `remotion-component-guide.md`, read before writing `code`.
+
 #### `manageCollection` sends a short summary instead of its full guidance (#3369)
 
 `manageCollection` is offered to every role, so its guidance was in every system prompt. The entry now keeps what decides
