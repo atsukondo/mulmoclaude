@@ -17,9 +17,15 @@ description, without making it a default choice.
    and launcher (the launcher must satisfy the plugin's peer range).
 3. View: `beatMayHaveMovie` (`src/vue/helpers.ts`) only knew `moviePrompt` and animated
    `html_tailwind`, so a remotion beat's `_animated.mp4` was never probed. Add `remotion`.
-   Server side needs nothing: mulmocast writes remotion output to
-   `getBeatAnimatedVideoPath`, which `beatMovieOp` already checks, and the still lands on the
-   normal beat `.png` path. Preview shows only title/description — no change.
+   Paths need nothing new: mulmocast writes remotion output to
+   `getBeatAnimatedVideoPath` (only once the beat's duration is known; before that it writes
+   only the still), and the still lands on the normal beat `.png` path. Preview shows only
+   title/description — no change.
+4. `beatMovieOp` picks the beat's own clip by kind (`src/server/beatMovieCandidates.ts`): a
+   plugin-video beat (animated `html_tailwind`, `remotion`) uses `_animated.mp4`, any other beat
+   the moviePrompt `.mov`, so a clip left over from the beat's earlier kind is never shown.
+5. Lockfile: `yarn add` dropped the root `resolutions` (incl. the patched `@xmldom/xmldom`);
+   a follow-up `yarn install` re-applied them.
 
 ## Not in scope
 
