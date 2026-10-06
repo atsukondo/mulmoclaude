@@ -17,6 +17,10 @@ export interface ServerPluginBinding {
   readonly def: ToolDefinition;
   /** Where the MCP bridge POSTs tool calls for this plugin. */
   readonly endpoint: string;
+  /** npm package the definition ships in. Needed only when the definition
+   *  splits its prompt (`promptCompact` + `promptFiles`): the files are
+   *  written under a directory named after it. */
+  readonly packageName?: string;
 }
 
 /** Resolve a plugin's MCP-dispatch URL from its META: looks up
