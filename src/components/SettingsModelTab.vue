@@ -45,6 +45,15 @@
       <label for="settings-model-user-settings" class="flex-1">
         <span class="block text-sm font-medium text-gray-800">{{ t("settingsModal.modelTab.userSettingsLabel") }}</span>
         <span class="block text-xs text-gray-500 mt-0.5">{{ t("settingsModal.modelTab.userSettingsHint") }}</span>
+        <span v-if="skillListing" class="block text-xs text-gray-600 mt-1" data-testid="settings-model-skill-listing">
+          {{ t("settingsModal.modelTab.skillListingSummary", { count: skillListing.skillCount }) }}
+          <template v-if="skillListing.pluginNames.length > 0">
+            {{ t("settingsModal.modelTab.skillListingPlugins", { plugins: skillListing.pluginNames.join(", ") }) }}
+          </template>
+        </span>
+        <span v-if="skillListing?.heavy" class="block text-xs text-amber-700 mt-1" data-testid="settings-model-skill-listing-heavy">
+          {{ t("settingsModal.modelTab.skillListingHeavy") }}
+        </span>
       </label>
     </div>
 
@@ -79,8 +88,15 @@ const emit = defineEmits<{
   saved: [];
 }>();
 
+interface SkillListing {
+  skillCount: number;
+  pluginNames: string[];
+  heavy: boolean;
+}
+
 interface SettingsResponse {
   settings: { extraAllowedTools: string[]; effortLevel?: EffortLevel; chatModel?: ChatModel; loadClaudeUserSettings?: boolean };
+  skillListing?: SkillListing | null;
 }
 
 // One select's whole state, so the save dance below is written once
@@ -107,6 +123,7 @@ const modelField: SettingField<ChatModel> = { key: "chatModel", draft: modelDraf
 const userSettingsEnabled = ref(true);
 const storedUserSettings = ref(true);
 const savingUserSettings = ref(false);
+const skillListing = ref<SkillListing | null>(null);
 
 const loaded = ref(false);
 const errorMessage = ref("");
@@ -142,6 +159,7 @@ async function load(): Promise<void> {
   modelDraft.value = storedModel.value;
   storedUserSettings.value = response.data.settings.loadClaudeUserSettings ?? true;
   userSettingsEnabled.value = storedUserSettings.value;
+  skillListing.value = response.data.skillListing ?? null;
   loaded.value = true;
 }
 

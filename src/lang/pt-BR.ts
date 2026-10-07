@@ -387,6 +387,9 @@ const ptBRMessages = {
       userSettingsLabel: "Carregar as configurações de usuário e os plugins do Claude Code",
       userSettingsHint:
         "Lê as skills, os plugins e os hooks de ~/.claude, os mesmos que o Claude Code usa. Desative se os plugins instalados trazem tantas skills que toda solicitação fica pesada; as skills do próprio workspace continuam funcionando. Vale a partir da próxima mensagem. Desativado, um modelo não definido também deixa de seguir ~/.claude/settings.json.",
+      skillListingSummary: "Skills carregadas no último turno: {count}.",
+      skillListingPlugins: "Dos plugins: {plugins}.",
+      skillListingHeavy: "Com tantas skills toda solicitação fica pesada; ao desativar, as de ~/.claude saem.",
       loadError: "Falha ao carregar as configurações",
       saveError: "Falha ao salvar",
     },

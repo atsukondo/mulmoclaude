@@ -18,6 +18,7 @@ import { resolveSandboxAuth } from "../sandboxMounts.js";
 import { pluginLedgerMountArgs, removePluginLedgerStaging, withPluginLedgerCleanup } from "../pluginLedgerMount.js";
 import { getCachedReferenceDirs, referenceDirMountArgs } from "../../workspace/reference-dirs.js";
 import { createStreamParser, type AgentEvent, type RawStreamEvent } from "../stream.js";
+import { noteSkillListing } from "../skillListingState.js";
 import { createMcpFailureMonitor } from "../mcpFailureMonitor.js";
 import { getBrokerReady, getBrokerStarted } from "../brokerReadiness.js";
 import { BUILTIN_MCP_TOOL_PREFIX } from "../activeTools.js";
@@ -372,6 +373,7 @@ async function* readAgentEvents(proc: ClaudeProc, turn: TurnMcpContext, abortSig
       } catch {
         continue;
       }
+      noteSkillListing(event);
       for (const agentEvent of parser.parse(event)) {
         builtinMcpToolWatcher.track(agentEvent);
         mcpFailureMonitor.track(agentEvent);

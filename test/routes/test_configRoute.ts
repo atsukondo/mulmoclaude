@@ -123,7 +123,21 @@ describe("GET /config", () => {
       mcp: { servers: [] },
       csp: {},
       macosReminders: macosRemindersContext,
+      skillListing: null,
     });
+  });
+
+  it("returns the latest turn's skill summary once one was recorded", async () => {
+    const listing = await import("../../server/agent/skillListingState.js");
+    listing.noteSkillListing({ type: "system", subtype: "init", skills: ["a", "b"], plugins: [{ name: "p", path: "/x" }] }, new Date("2026-10-07T00:00:00Z"));
+    try {
+      const { state, res } = mockRes();
+      getHandler({} as Request, res);
+      assert.ok(state.body && typeof state.body === "object" && "skillListing" in state.body);
+      assert.deepEqual(state.body.skillListing, { skillCount: 2, pluginNames: ["p"], heavy: false, seenAt: "2026-10-07T00:00:00.000Z" });
+    } finally {
+      listing._resetSkillListingForTest();
+    }
   });
 
   it("returns the persisted settings", () => {
@@ -137,6 +151,7 @@ describe("GET /config", () => {
       mcp: { servers: [] },
       csp: {},
       macosReminders: macosRemindersContext,
+      skillListing: null,
     });
   });
 });
@@ -151,7 +166,7 @@ describe("PUT /config/settings", () => {
     const { state, res } = mockRes();
     putSettingsHandler({ body } as Request, res);
     assert.equal(state.status, 200);
-    assert.deepEqual(state.body, { settings: body, mcp: { servers: [] }, csp: {}, macosReminders: macosRemindersContext });
+    assert.deepEqual(state.body, { settings: body, mcp: { servers: [] }, csp: {}, macosReminders: macosRemindersContext, skillListing: null });
     assert.deepEqual(configMod.loadSettings(), body);
   });
 
