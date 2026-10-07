@@ -123,6 +123,7 @@ describe("GET /config", () => {
       mcp: { servers: [] },
       csp: {},
       macosReminders: macosRemindersContext,
+      skillListing: null,
     });
   });
 
@@ -137,6 +138,7 @@ describe("GET /config", () => {
       mcp: { servers: [] },
       csp: {},
       macosReminders: macosRemindersContext,
+      skillListing: null,
     });
   });
 });
@@ -151,7 +153,7 @@ describe("PUT /config/settings", () => {
     const { state, res } = mockRes();
     putSettingsHandler({ body } as Request, res);
     assert.equal(state.status, 200);
-    assert.deepEqual(state.body, { settings: body, mcp: { servers: [] }, csp: {}, macosReminders: macosRemindersContext });
+    assert.deepEqual(state.body, { settings: body, mcp: { servers: [] }, csp: {}, macosReminders: macosRemindersContext, skillListing: null });
     assert.deepEqual(configMod.loadSettings(), body);
   });
 

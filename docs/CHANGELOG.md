@@ -14,6 +14,12 @@ A new checkbox, on by default, decides whether the agent reads `~/.claude` skill
 passes `--setting-sources project,local`, so a user whose installed plugins carry so many skills that every request
 gets heavy can drop them while keeping the workspace's own skills.
 
+#### Settings → Model shows how many skills the last turn listed (#3406)
+
+The CLI's start-up frame says how many skills it listed and which plugins they came from. MulmoClaude now keeps the
+latest numbers, shows them under the new checkbox (with a hint when there are many), and logs a warning once when the
+count is high.
+
 #### The Simple role drops `spawnBackgroundChat` (#3402)
 
 A role can now opt out of an always-active tool with `excludedAlwaysActiveTools`. The Simple role uses it to drop

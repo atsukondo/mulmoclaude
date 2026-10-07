@@ -393,6 +393,9 @@ const esMessages = {
       userSettingsLabel: "Cargar los ajustes de usuario y los plugins de Claude Code",
       userSettingsHint:
         "Lee las skills, los plugins y los hooks de ~/.claude, los mismos que usa Claude Code. Desactívalo si los plugins instalados traen tantas skills que cada petición se vuelve pesada; las skills del propio espacio de trabajo siguen funcionando. Se aplica desde el siguiente mensaje. Si está desactivado, un modelo sin configurar ya no sigue ~/.claude/settings.json.",
+      skillListingSummary: "Skills cargadas en el último turno: {count}.",
+      skillListingPlugins: "De los plugins: {plugins}.",
+      skillListingHeavy: "Con tantas skills cada petición pesa más; al desactivarlo se quitan las de ~/.claude.",
       loadError: "Error al cargar los ajustes",
       saveError: "Error al guardar",
     },

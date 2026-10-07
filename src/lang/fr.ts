@@ -389,6 +389,9 @@ const frMessages = {
       userSettingsLabel: "Charger les réglages utilisateur et les plugins de Claude Code",
       userSettingsHint:
         "Lit les skills, plugins et hooks de ~/.claude, les mêmes que ceux de Claude Code. Désactivez-le si les plugins installés apportent tant de skills que chaque requête devient lourde ; les skills de l'espace de travail restent disponibles. Prend effet à partir du message suivant. Désactivé, un modèle non défini ne suit plus non plus ~/.claude/settings.json.",
+      skillListingSummary: "Skills chargées au dernier tour : {count}.",
+      skillListingPlugins: "Depuis les plugins : {plugins}.",
+      skillListingHeavy: "Autant de skills alourdissent chaque requête ; le désactiver retire celles de ~/.claude.",
       loadError: "Échec du chargement des paramètres",
       saveError: "Échec de l'enregistrement",
     },
