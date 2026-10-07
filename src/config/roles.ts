@@ -42,6 +42,9 @@ export const RoleSchema = z.object({
   icon: z.string(),
   prompt: z.string(),
   availablePlugins: availablePluginsSchema,
+  // `alwaysActive` tools reach every role regardless of `availablePlugins`; a
+  // role that has no use for one names it here to keep its prompt smaller.
+  excludedAlwaysActiveTools: z.array(z.string()).optional(),
   queries: z.array(z.string()).optional(),
   isDebugRole: z.boolean().optional(),
   // Model family this role's sessions run on (#3104). Absent means the role
@@ -96,7 +99,7 @@ export const ROLES: [Role, ...Role[]] = [
   },
   {
     // Keeps the per-turn system prompt small for plain conversation (#3369):
-    // only the form and collection display tools, plus the always-active ones.
+    // only the form and collection display tools, plus `manageCollection`.
     id: "simple",
     name: "Simple",
     icon: "chat_bubble",
@@ -104,6 +107,8 @@ export const ROLES: [Role, ...Role[]] = [
       "You are a concise conversational assistant. Answer directly in the chat, and use the workspace files and collections when the question needs them.\n\n" +
       "This role carries few display tools to keep each turn light. When the user wants a document, slides, an image, or an HTML page, say that the General role can make it and suggest switching.",
     availablePlugins: [TOOL_NAMES.presentForm, TOOL_NAMES.presentCollection],
+    // Plain conversation never pre-generates artifacts in the background.
+    excludedAlwaysActiveTools: [TOOL_NAMES.spawnBackgroundChat],
     queries: ["What can you help me with in this role?", "Summarise what's in my collections.", "Help me think through a decision I'm stuck on."],
   },
   {
