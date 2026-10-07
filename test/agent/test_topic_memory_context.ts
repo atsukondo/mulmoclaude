@@ -140,9 +140,13 @@ describe("memory help files", () => {
   it("memory-topic.md carries the topic-file write procedure", async () => {
     const help = await readFile(path.join(helpsAssetDir(), "memory-topic.md"), "utf-8");
     assert.match(help, /H2 sections/);
-    assert.match(help, /Adding a new bullet/);
-    assert.match(help, /Creating a new topic file/);
-    assert.match(help, /MEMORY\.md/);
+    assert.match(help, /Read the system prompt's Memory section/);
+    assert.match(help, /`Read` that topic file/);
+    assert.match(help, /Append your bullet/);
+    assert.match(help, /`Write` the file back/);
+    assert.match(help, /also `Write` an updated `MEMORY\.md` line/);
+    assert.match(help, /<type>\/<topic>\.md/);
+    assert.match(help, /matching line into `conversations\/memory\/MEMORY\.md`/);
   });
 
   it("memory-atomic.md carries the typed-entry format and index line", async () => {
