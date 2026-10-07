@@ -6409,7 +6409,7 @@ gtoken@^8.0.0:
     gaxios "^7.0.0"
     jws "^4.0.0"
 
-gui-chat-protocol@^2.3.0:
+gui-chat-protocol@^2.1.0, gui-chat-protocol@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/gui-chat-protocol/-/gui-chat-protocol-2.3.0.tgz#6f2fa8e63be1207650e240b9781c928e05324606"
   integrity sha512-Fr8QRbTzn2IVH+IWN3NZQt38lHP2TfS+ObtY1t1wTNJQnkWK6owND59V9gNascWeFegzkjHN5Af+L1Ny52682Q==
@@ -10481,7 +10481,7 @@ vue-tsc@^3.3.12:
     "@volar/typescript" "2.4.28"
     "@vue/language-core" "3.3.12"
 
-vue@^3.5.43:
+vue@^3.5.0, vue@^3.5.43:
   version "3.5.43"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.5.43.tgz#bab91368e7b9aad9b89dd92e866b120081deb094"
   integrity sha512-o5qZoksdnjIKvW1srZ3ab7pcDNYAerBjRe54D0LBLfRdCYFrSgBHVXokMas35czQc0//lmx4/tuY4ZNQ+Rf2Ng==
