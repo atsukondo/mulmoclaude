@@ -253,6 +253,26 @@ describe("buildSystemPrompt", () => {
     assert.match(help, /never use an \*\*absolute path\*\*/i);
   });
 
+  it("routes collection custom views to the right help (#3402)", () => {
+    const result = buildSystemPrompt({ role: makeRole(), workspacePath: workspace, useDocker: false, memorySnapshot: EMPTY_ATOMIC_SNAPSHOT });
+    // The choice between the two contracts is made before any help is read,
+    // so both pointers and the phone-request rule stay in the prompt itself.
+    assert.ok(result.includes("config/helps/custom-view.md"));
+    assert.ok(result.includes("config/helps/custom-view-remote.md"));
+    assert.match(result, /`target: "mobile"` view/);
+    assert.match(result, /never bake records into a standalone HTML artifact/);
+    // The trigger words decide which help gets read, so they stay inline too.
+    for (const trigger of ["phone", "remote", "mobile", "リモート", "スマホ", "モバイル"]) {
+      assert.ok(result.includes(trigger), `custom-view trigger word: ${trigger}`);
+    }
+    // The contract details moved to the help files.
+    const remoteHelp = readFileSync(join(helpsAssetDir(), "custom-view-remote.md"), "utf-8");
+    assert.match(remoteHelp, /no `fetch` of any kind/);
+    assert.match(remoteHelp, /phone-sized frame/);
+    const desktopHelp = readFileSync(join(helpsAssetDir(), "custom-view.md"), "utf-8");
+    assert.match(desktopHelp, /dataUrl/);
+  });
+
   it("contains the file-link convention in chat replies (#1300 / PR #1325 layer B)", () => {
     // Layer B of #1325: SYSTEM_PROMPT tells the LLM to present
     // generated files as Markdown links instead of inline code or
