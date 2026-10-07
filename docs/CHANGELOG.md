@@ -16,18 +16,29 @@ a phone view is a `target: "mobile"` view, never a standalone HTML file. The con
 
 Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.11.0`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.2.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.3.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
-## [2.0.0] - 2026-10-07
+## [2.1.0] - 2026-10-07
 
-**`manageCollection`'s guidance — part of every role's system prompt — shrinks to a short summary backed by a prompt file, completing the system-prompt diet that began in 1.27.0.**
+**MulmoScript's Remotion beats can now be written by the agent itself, so a scene can be refined in the conversation instead of being regenerated.**
 
 ### Highlights
 
-#### MulmoScript: the agent can write a Remotion beat's component itself (#3396, PR #3398) — `@mulmoclaude/mulmoscript-plugin@5.3.0`, released 2026-10-07
+#### MulmoScript: the agent can write a Remotion beat's component itself (#3396, PR #3398) — `@mulmoclaude/mulmoscript-plugin@5.3.0`
 
 `presentMulmoScript` now describes mulmocast's `image: { type: "remotion", code }` form next to `prompt`: the agent writes
 the finished component (a `.tsx` file beside the script, or inline text) and mulmocast renders it as is, so the user can
 refine the scene in the conversation. The rules for that component — mulmocast's `REMOTION_COMPONENT_GUIDE` — ship as
 the prompt file `remotion-component-guide.md`, read before writing `code`.
+
+It needs mulmocast 2.15.0, the first release whose guide can be read without pulling Node-only code into the browser
+bundle, so the launcher now requires `mulmocast` / `@mulmocast/types` `^2.15.0`.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.11.0`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.2.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.3.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+
+## [2.0.0] - 2026-10-07
+
+**`manageCollection`'s guidance — part of every role's system prompt — shrinks to a short summary backed by a prompt file, completing the system-prompt diet that began in 1.27.0.**
+
+### Highlights
 
 #### `manageCollection` sends a short summary instead of its full guidance (#3369)
 
