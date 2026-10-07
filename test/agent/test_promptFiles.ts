@@ -121,7 +121,10 @@ describe("plugin prompt files in MulmoClaude", () => {
     const toldPath = "config/helps/plugins/@mulmoclaude/mulmoscript-plugin/presentMulmoScript.md";
     assert.ok(section.includes(toldPath));
     assert.equal(section.includes(MULMOSCRIPT_DEFINITION.description), false);
-    assert.equal(readFileSync(path.resolve(workspace, toldPath), "utf-8"), MULMOSCRIPT_DEFINITION.description);
+    const toldFile = readFileSync(path.resolve(workspace, toldPath), "utf-8");
+    assert.equal(toldFile, MULMOSCRIPT_DEFINITION.promptFiles["presentMulmoScript.md"]);
+    // The description is every prompt file joined, this one first.
+    assert.ok(toldFile.length > 0 && MULMOSCRIPT_DEFINITION.description.startsWith(toldFile));
   });
 
   it("every built-in that declares a split gets its compact text injected and every file it names on disk", () => {
