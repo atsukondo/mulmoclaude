@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+#### The Simple role drops `spawnBackgroundChat` (#3402)
+
+A role can now opt out of an always-active tool with `excludedAlwaysActiveTools`. The Simple role uses it to drop
+`spawnBackgroundChat`, which it has no use for, so its system prompt and tool list get smaller. `manageCollection`
+stays. Every other role is unchanged.
+
 #### Memory-writing guidance moves to help files (#3402)
 
 The memory section of every role's system prompt now keeps only the per-turn rules — save silently, where a memory file
