@@ -261,6 +261,10 @@ describe("buildSystemPrompt", () => {
     assert.ok(result.includes("config/helps/custom-view-remote.md"));
     assert.match(result, /`target: "mobile"` view/);
     assert.match(result, /never bake records into a standalone HTML artifact/);
+    // The trigger words decide which help gets read, so they stay inline too.
+    for (const trigger of ["phone", "remote", "mobile", "リモート", "スマホ", "モバイル"]) {
+      assert.ok(result.includes(trigger), `custom-view trigger word: ${trigger}`);
+    }
     // The contract details moved to the help files.
     const remoteHelp = readFileSync(join(helpsAssetDir(), "custom-view-remote.md"), "utf-8");
     assert.match(remoteHelp, /no `fetch` of any kind/);
