@@ -8,35 +8,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
-#### Settings → Model can stop loading Claude Code's user settings and plugins (#3406)
+## [2.2.0] - 2026-10-07
+
+**Every turn sends a shorter system prompt — the Simple role now runs at about 9,300 characters — and Settings → Model can stop loading the Claude Code plugins whose skill lists dominate each request.**
+
+### Highlights
+
+#### Settings → Model can stop loading Claude Code's user settings and plugins (#3406, PR #3410)
 
 A new checkbox, on by default, decides whether the agent reads `~/.claude` skills, plugins and hooks. Turning it off
 passes `--setting-sources project,local`, so a user whose installed plugins carry so many skills that every request
 gets heavy can drop them while keeping the workspace's own skills.
 
-#### Settings → Model shows how many skills the last turn listed (#3406)
+#### Settings → Model shows how many skills the last turn listed (#3406, PR #3412)
 
 The CLI's start-up frame says how many skills it listed and which plugins they came from. MulmoClaude now keeps the
 latest numbers, shows them under the new checkbox (with a hint when there are many), and logs a warning once when the
 count is high.
 
-#### A shorter custom-view section in the base prompt (#3402)
+#### A shorter custom-view section in the base prompt (#3402, PR #3405)
 
 The base prompt's collection custom-view section now keeps only which help to read (desktop or phone) and the rule that
 a phone view is a `target: "mobile"` view, never a standalone HTML file. The contract details were already in
 `config/helps/custom-view.md` and `custom-view-remote.md`.
 
-#### The Simple role drops `spawnBackgroundChat` (#3402)
+#### The Simple role drops `spawnBackgroundChat` (#3402, PR #3404)
 
 A role can now opt out of an always-active tool with `excludedAlwaysActiveTools`. The Simple role uses it to drop
 `spawnBackgroundChat`, which it has no use for, so its system prompt and tool list get smaller. `manageCollection`
 stays. Every other role is unchanged.
 
-#### Memory-writing guidance moves to help files (#3402)
+#### Memory-writing guidance moves to help files (#3402, PR #3403) — `@mulmoclaude/core@5.11.1`
 
 The memory section of every role's system prompt now keeps only the per-turn rules — save silently, where a memory file
 lives and its four types, when to write or skip, and (for the topic layout) recall before answering. The file format and step-by-step write procedure moved to
 `config/helps/memory-topic.md` and `memory-atomic.md`, which the agent reads before writing a memory entry.
+
+#### The MCP child only dispatches the tools it publishes (#3407, PR #3408)
+
+`tools/call` looked pure MCP tools up in the all-roles registry, so naming a tool the role does not carry still reached
+it. The broker now refuses any name that is not on its `tools/list` surface. Claude Code already refused such names
+before sending them, so nothing changes in normal use; this closes the gap on the server side too.
 
 Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.11.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.2.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.3.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
 
