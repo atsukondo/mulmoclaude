@@ -390,7 +390,7 @@ const deMessages = {
       notConfigured: "Nicht gesetzt",
       userSettingsLabel: "Benutzereinstellungen und Plugins von Claude Code laden",
       userSettingsHint:
-        "Liest Skills, Plugins und Hooks aus ~/.claude – dieselben, die Claude Code verwendet. Schalten Sie dies aus, wenn installierte Plugins so viele Skills mitbringen, dass jede Anfrage schwer wird; die Skills des Workspace bleiben nutzbar. Gilt ab der nächsten Nachricht.",
+        "Liest Skills, Plugins und Hooks aus ~/.claude – dieselben, die Claude Code verwendet. Schalten Sie dies aus, wenn installierte Plugins so viele Skills mitbringen, dass jede Anfrage schwer wird; die Skills des Workspace bleiben nutzbar. Gilt ab der nächsten Nachricht. Ausgeschaltet folgt ein nicht gesetztes Modell auch nicht mehr ~/.claude/settings.json.",
       loadError: "Einstellungen konnten nicht geladen werden",
       saveError: "Speichern fehlgeschlagen",
     },
