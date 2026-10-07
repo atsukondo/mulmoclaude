@@ -20,6 +20,12 @@ The CLI's start-up frame says how many skills it listed and which plugins they c
 latest numbers, shows them under the new checkbox (with a hint when there are many), and logs a warning once when the
 count is high.
 
+#### A shorter custom-view section in the base prompt (#3402)
+
+The base prompt's collection custom-view section now keeps only which help to read (desktop or phone) and the rule that
+a phone view is a `target: "mobile"` view, never a standalone HTML file. The contract details were already in
+`config/helps/custom-view.md` and `custom-view-remote.md`.
+
 #### The Simple role drops `spawnBackgroundChat` (#3402)
 
 A role can now opt out of an always-active tool with `excludedAlwaysActiveTools`. The Simple role uses it to drop
