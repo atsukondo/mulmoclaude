@@ -14,7 +14,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ### Highlights
 
-#### MulmoScript: the agent can write a Remotion beat's component itself (#3396)
+#### MulmoScript: the agent can write a Remotion beat's component itself (#3396, PR #3398) — `@mulmoclaude/mulmoscript-plugin@5.3.0`, released 2026-10-07
 
 `presentMulmoScript` now describes mulmocast's `image: { type: "remotion", code }` form next to `prompt`: the agent writes
 the finished component (a `.tsx` file beside the script, or inline text) and mulmocast renders it as is, so the user can
