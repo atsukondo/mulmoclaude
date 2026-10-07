@@ -8,6 +8,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+#### Memory-writing guidance moves to help files (#3402)
+
+The memory section of every role's system prompt now keeps only the per-turn rules — save silently, when to write or
+skip, and recall before answering. The file format and step-by-step write procedure moved to
+`config/helps/memory-topic.md` and `memory-atomic.md`, which the agent reads before writing a memory entry.
+
+Ships `@mulmoclaude/accounting-plugin@4.0.2`, `@mulmoclaude/chart-plugin@4.0.1`, `@mulmoclaude/collection-plugin@5.5.0`, `@mulmoclaude/common@1.4.0`, `@mulmoclaude/core@5.11.1`, `@mulmoclaude/form-plugin@2.1.0`, `@mulmoclaude/google-plugin@4.1.0`, `@mulmoclaude/html-plugin@5.0.1`, `@mulmoclaude/markdown-plugin@5.2.0`, `@mulmoclaude/markdown-utils@3.0.1`, `@mulmoclaude/mulmoscript-plugin@5.3.0`, `@mulmoclaude/spotify-plugin@2.0.2`, `@mulmoclaude/x-plugin@1.0.4`.
+
 ## [2.0.0] - 2026-10-07
 
 **`manageCollection`'s guidance — part of every role's system prompt — shrinks to a short summary backed by a prompt file, completing the system-prompt diet that began in 1.27.0.**
