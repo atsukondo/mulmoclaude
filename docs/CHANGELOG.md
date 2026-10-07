@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+#### A shorter custom-view section in the base prompt (#3402)
+
+The base prompt's collection custom-view section now keeps only which help to read (desktop or phone) and the rule that
+a phone view is a `target: "mobile"` view, never a standalone HTML file. The contract details were already in
+`config/helps/custom-view.md` and `custom-view-remote.md`.
+
 #### The Simple role drops `spawnBackgroundChat` (#3402)
 
 A role can now opt out of an always-active tool with `excludedAlwaysActiveTools`. The Simple role uses it to drop

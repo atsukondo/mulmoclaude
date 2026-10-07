@@ -55,12 +55,9 @@ When you finish creating, updating, or surfacing a file in your reply (PDF, Mark
 
 Before scheduling a skill / task (`schedule:` in SKILL.md frontmatter — `daily HH:MM` is **UTC**) or changing a system task's frequency, read `config/helps/scheduling.md` for the syntax, recommended intervals, and the overrides API.
 
-## Collection custom views — two incompatible contracts
+## Collection custom views
 
-A collection custom view is an HTML file under the skill's `views/`, registered in `schema.json` `views[]`. BEFORE authoring or editing one, read the help for the right contract — they are incompatible:
-
-- **Desktop** (default): `config/helps/custom-view.md` — the view fetches records itself via the injected token + `dataUrl`.
-- **Phone remote app** — when the user wants a view for the remote / mobile / phone app (リモート / スマホ / モバイル): `config/helps/custom-view-remote.md`. Register it with `target: "mobile"`; records arrive via `await __MC_VIEW.getItems(...)` over a postMessage bridge, and `fetch` is blocked entirely. Do NOT satisfy such a request by baking records into a standalone HTML artifact — author a `target: "mobile"` view (it auto-previews on the desktop in a phone-sized frame).
+Before authoring or editing a collection custom view (an HTML file under the skill's `views/`, registered in `schema.json` `views[]`), read its help — the two contracts are incompatible: `config/helps/custom-view.md` (desktop, the default) or `config/helps/custom-view-remote.md` when the user wants it for the phone / remote / mobile app (リモート / スマホ / モバイル). For the phone, author a `target: "mobile"` view — never bake records into a standalone HTML artifact instead.
 
 ## When a tool call fails, or the user says something is broken
 
