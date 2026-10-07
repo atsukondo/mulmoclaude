@@ -385,6 +385,9 @@ const jaMessages = {
       helperText: "高いレベルほど思考時間が長くなりますが、レイテンシとトークン消費も増えます。",
       configured: "Effort: {level}",
       notConfigured: "未設定",
+      userSettingsLabel: "Claude Code のユーザー設定とプラグインを読み込む",
+      userSettingsHint:
+        "~/.claude にある、Claude Code と共通のスキル・プラグイン・フックを読み込みます。インストールしたプラグインのスキルが多く、毎回の依頼が重くなるときはオフにしてください。ワークスペースのスキルはそのまま使えます。次のメッセージから反映されます。",
       loadError: "設定の読み込みに失敗しました",
       saveError: "保存に失敗しました",
     },

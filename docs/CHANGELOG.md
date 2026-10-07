@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Se
 
 ## [Unreleased]
 
+#### Settings → Model can stop loading Claude Code's user settings and plugins (#3406)
+
+A new checkbox, on by default, decides whether the agent reads `~/.claude` skills, plugins and hooks. Turning it off
+passes `--setting-sources project,local`, so a user whose installed plugins carry so many skills that every request
+gets heavy can drop them while keeping the workspace's own skills.
+
 #### The Simple role drops `spawnBackgroundChat` (#3402)
 
 A role can now opt out of an always-active tool with `excludedAlwaysActiveTools`. The Simple role uses it to drop

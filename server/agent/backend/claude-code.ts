@@ -404,6 +404,7 @@ export function cliArgsForInput(input: AgentInput, systemPromptPath: string): Cl
     extraAllowedTools: input.extraAllowedTools,
     effortLevel: input.effortLevel,
     chatModel: input.chatModel,
+    loadClaudeUserSettings: input.loadClaudeUserSettings,
   };
 }
 

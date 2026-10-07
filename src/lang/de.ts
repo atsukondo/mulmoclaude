@@ -388,6 +388,9 @@ const deMessages = {
       helperText: "Höhere Stufen erlauben mehr Denkzeit, erhöhen aber Latenz und Token-Verbrauch.",
       configured: "Effort: {level}",
       notConfigured: "Nicht gesetzt",
+      userSettingsLabel: "Benutzereinstellungen und Plugins von Claude Code laden",
+      userSettingsHint:
+        "Liest Skills, Plugins und Hooks aus ~/.claude – dieselben, die Claude Code verwendet. Schalten Sie dies aus, wenn installierte Plugins so viele Skills mitbringen, dass jede Anfrage schwer wird; die Skills des Workspace bleiben nutzbar. Gilt ab der nächsten Nachricht.",
       loadError: "Einstellungen konnten nicht geladen werden",
       saveError: "Speichern fehlgeschlagen",
     },

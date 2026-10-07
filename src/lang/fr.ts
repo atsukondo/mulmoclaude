@@ -386,6 +386,9 @@ const frMessages = {
       helperText: "Les niveaux plus élevés autorisent plus de temps de réflexion mais augmentent la latence et la consommation de tokens.",
       configured: "Effort : {level}",
       notConfigured: "Non défini",
+      userSettingsLabel: "Charger les réglages utilisateur et les plugins de Claude Code",
+      userSettingsHint:
+        "Lit les skills, plugins et hooks de ~/.claude, les mêmes que ceux de Claude Code. Désactivez-le si les plugins installés apportent tant de skills que chaque requête devient lourde ; les skills de l'espace de travail restent disponibles. Prend effet à partir du message suivant.",
       loadError: "Échec du chargement des paramètres",
       saveError: "Échec de l'enregistrement",
     },
