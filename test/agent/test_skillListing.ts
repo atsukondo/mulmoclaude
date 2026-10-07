@@ -61,4 +61,17 @@ describe("noteSkillListing", () => {
     noteSkillListing({ type: "assistant", message: { content: [] } });
     assert.equal(getLastSkillListing()?.skillCount, 1);
   });
+
+  it("warns once per heavy count, even when sessions with different counts interleave", () => {
+    const heavyFrame = (count: number): Record<string, unknown> => initFrame({ skills: skills(count) });
+    const warned = [HEAVY_SKILL_COUNT, HEAVY_SKILL_COUNT + 1, HEAVY_SKILL_COUNT, HEAVY_SKILL_COUNT + 1, HEAVY_SKILL_COUNT].map((count) =>
+      noteSkillListing(heavyFrame(count)),
+    );
+    assert.deepEqual(warned, [true, true, false, false, false]);
+  });
+
+  it("never warns for a listing under the threshold", () => {
+    assert.equal(noteSkillListing(initFrame({ skills: skills(HEAVY_SKILL_COUNT - 1) })), false);
+    assert.equal(noteSkillListing({ type: "assistant" }), false);
+  });
 });
