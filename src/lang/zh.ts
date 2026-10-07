@@ -375,6 +375,9 @@ const zhMessages = {
       helperText: "更高的等级会带来更多思考时间,但也会增加延迟和 token 消耗。",
       configured: "推理强度:{level}",
       notConfigured: "未设置",
+      userSettingsLabel: "加载 Claude Code 的用户设置和插件",
+      userSettingsHint:
+        "读取 ~/.claude 中与 Claude Code 共用的技能、插件和钩子。如果已安装插件的技能太多、导致每次请求都很重，请关闭此项；工作区自己的技能仍可使用。从下一条消息开始生效。关闭时，即使未设置模型，也不会再使用 ~/.claude/settings.json 中的模型。",
       loadError: "加载设置失败",
       saveError: "保存失败",
     },

@@ -385,6 +385,9 @@ const koMessages = {
       helperText: "레벨이 높을수록 사고 시간이 늘어나지만 지연 시간과 토큰 사용량도 증가합니다.",
       configured: "Effort: {level}",
       notConfigured: "미설정",
+      userSettingsLabel: "Claude Code 사용자 설정과 플러그인 불러오기",
+      userSettingsHint:
+        "~/.claude에 있는, Claude Code와 공유하는 스킬·플러그인·훅을 불러옵니다. 설치한 플러그인의 스킬이 너무 많아 요청마다 무거워진다면 끄세요. 워크스페이스 자체 스킬은 그대로 사용할 수 있습니다. 다음 메시지부터 적용됩니다. 끄면 모델이 미설정이어도 ~/.claude/settings.json의 모델 지정을 따르지 않습니다.",
       loadError: "설정을 불러오지 못했습니다",
       saveError: "저장에 실패했습니다",
     },

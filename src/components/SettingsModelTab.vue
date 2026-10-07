@@ -32,6 +32,22 @@
       <p class="text-xs text-gray-500">{{ t("settingsModal.modelTab.helperText") }}</p>
     </div>
 
+    <div class="flex items-start gap-3 border-t border-gray-200 pt-3">
+      <input
+        id="settings-model-user-settings"
+        v-model="userSettingsEnabled"
+        type="checkbox"
+        class="mt-1 h-4 w-4"
+        :disabled="savingUserSettings || !loaded"
+        data-testid="settings-model-user-settings-input"
+        @change="saveUserSettings"
+      />
+      <label for="settings-model-user-settings" class="flex-1">
+        <span class="block text-sm font-medium text-gray-800">{{ t("settingsModal.modelTab.userSettingsLabel") }}</span>
+        <span class="block text-xs text-gray-500 mt-0.5">{{ t("settingsModal.modelTab.userSettingsHint") }}</span>
+      </label>
+    </div>
+
     <div v-if="loaded && !errorMessage" class="flex items-center gap-3 text-xs">
       <span :class="colourOf(modelField)" data-testid="settings-model-model-status">
         {{ modelStatusText }}
@@ -64,7 +80,7 @@ const emit = defineEmits<{
 }>();
 
 interface SettingsResponse {
-  settings: { extraAllowedTools: string[]; effortLevel?: EffortLevel; chatModel?: ChatModel };
+  settings: { extraAllowedTools: string[]; effortLevel?: EffortLevel; chatModel?: ChatModel; loadClaudeUserSettings?: boolean };
 }
 
 // One select's whole state, so the save dance below is written once
@@ -86,6 +102,11 @@ const modelDraft = ref<ChatModel | "">("");
 const storedModel = ref<ChatModel | "">("");
 const savingModel = ref(false);
 const modelField: SettingField<ChatModel> = { key: "chatModel", draft: modelDraft, stored: storedModel, saving: savingModel };
+
+// Default true matches `isClaudeUserSettingsEnabled` on the server.
+const userSettingsEnabled = ref(true);
+const storedUserSettings = ref(true);
+const savingUserSettings = ref(false);
 
 const loaded = ref(false);
 const errorMessage = ref("");
@@ -119,6 +140,8 @@ async function load(): Promise<void> {
   effortDraft.value = storedEffort.value;
   storedModel.value = response.data.settings.chatModel ?? "";
   modelDraft.value = storedModel.value;
+  storedUserSettings.value = response.data.settings.loadClaudeUserSettings ?? true;
+  userSettingsEnabled.value = storedUserSettings.value;
   loaded.value = true;
 }
 
@@ -148,6 +171,22 @@ async function save<T extends string>(field: SettingField<T>): Promise<void> {
   if (resend) {
     void save(field);
   }
+}
+
+async function saveUserSettings(): Promise<void> {
+  if (savingUserSettings.value || userSettingsEnabled.value === storedUserSettings.value) return;
+  const requested = userSettingsEnabled.value;
+  savingUserSettings.value = true;
+  errorMessage.value = "";
+  const response = await apiPut<unknown>(API_ROUTES.config.settings, { loadClaudeUserSettings: requested });
+  savingUserSettings.value = false;
+  if (!response.ok) {
+    errorMessage.value = response.error || t("settingsModal.modelTab.saveError");
+    userSettingsEnabled.value = storedUserSettings.value;
+    return;
+  }
+  storedUserSettings.value = requested;
+  emit("saved");
 }
 
 watch(

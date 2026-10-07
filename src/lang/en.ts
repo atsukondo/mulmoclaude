@@ -406,6 +406,9 @@ const enMessages = {
       helperText: "Higher levels allow more thinking time but increase latency and token usage.",
       configured: "Effort: {level}",
       notConfigured: "Not set",
+      userSettingsLabel: "Load Claude Code's user settings and plugins",
+      userSettingsHint:
+        "Reads skills, plugins and hooks from ~/.claude, the same ones Claude Code uses. Turn this off if your installed plugins carry so many skills that every request gets heavy; the workspace's own skills keep working. Takes effect from the next message. When off, an unset model no longer follows ~/.claude/settings.json either.",
       loadError: "Failed to load settings",
       saveError: "Failed to save",
     },
